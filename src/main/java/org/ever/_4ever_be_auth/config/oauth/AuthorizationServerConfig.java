@@ -2,7 +2,11 @@ package org.ever._4ever_be_auth.config.oauth;
 
 import org.ever._4ever_be_auth.auth.client.filter.ClientValidationFilter;
 import org.ever._4ever_be_auth.auth.client.service.ClientValidationService;
-import org.ever._4ever_be_auth.auth.oauth.service.JpaRegisteredClientRepository;
+import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticationFailureHandler;
+import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticationSuccessHandler;
+import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationConsentJpaRepository;
+import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationJpaRepository;
+import org.ever._4ever_be_auth.auth.oauth.service.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +16,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
@@ -42,15 +48,24 @@ public class AuthorizationServerConfig {
     public SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             RegisteredClientRepository registeredClientRepository,
-            ClientValidationFilter clientValidationFilter
+            ClientValidationFilter clientValidationFilter,
+            OAuth2AuthorizationService authorizationService,
+            OAuth2AuthorizationConsentService authorizationConsentService,
+            RefreshTokenCookieAuthenticationSuccessHandler refreshTokenCookieAuthenticationSuccessHandler,
+            RefreshTokenCookieAuthenticationFailureHandler refreshTokenCookieAuthenticationFailureHandler
     ) throws Exception {
 
         // RegisteredClientRepository 주입: JDBC 기반 등록 클라이언트가 애플리케이션 기동 시점에 초기화되도록 보장
         // Configurer 인스턴스를 생성해 인가/토큰/JWKS 등 표준 엔드포인트를 등록하고 OIDC(JWKS 포함)를 활성화
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-        http.with(authorizationServerConfigurer, configurer -> {
-            configurer.registeredClientRepository(registeredClientRepository);
-        });
+        http.with(authorizationServerConfigurer, configurer -> configurer
+                .registeredClientRepository(registeredClientRepository)
+                .authorizationService(authorizationService)
+                .authorizationConsentService(authorizationConsentService)
+                .tokenEndpoint(endpoint -> endpoint
+                        .accessTokenResponseHandler(refreshTokenCookieAuthenticationSuccessHandler)
+                        .errorResponseHandler(refreshTokenCookieAuthenticationFailureHandler))
+        );
 
         // Configurer가 노출한 표준 엔드포인트와 일반 보안 체인을 분리하기 위한 매처
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
@@ -100,11 +115,13 @@ public class AuthorizationServerConfig {
                 .clientId("everp")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://localhost:3000/oauth2/callback")
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri("https://everp.co.kr/callback")
                 .scope("erp.user.profile")      // 접근 권한 설정
                 .tokenSettings(tokenSettings)
-                .clientSettings(ClientSettings.builder().requireProofKey(true).build())
+                .clientSettings(ClientSettings.builder().
+                        requireProofKey(true). // PKCE
+                                build())
                 .build();
 
         if (repository.findByClientId(erpWebClient.getClientId()) == null) {
@@ -117,6 +134,22 @@ public class AuthorizationServerConfig {
     @Bean
     public ClientValidationFilter clientValidationFilter(ClientValidationService clientValidationService) {
         return new ClientValidationFilter(clientValidationService);
+    }
+
+    @Bean
+    public OAuth2AuthorizationService authorizationService(
+            OAuth2AuthorizationMapper authorizationMapper,
+            OAuth2AuthorizationJpaRepository authorizationRepository
+    ) {
+        return new JpaOAuth2AuthorizationService(authorizationMapper, authorizationRepository);
+    }
+
+    @Bean
+    public OAuth2AuthorizationConsentService authorizationConsentService(
+            OAuth2AuthorizationConsentMapper consentMapper,
+            OAuth2AuthorizationConsentJpaRepository consentRepository
+    ) {
+        return new JpaOAuth2AuthorizationConsentService(consentMapper, consentRepository);
     }
 
 }
