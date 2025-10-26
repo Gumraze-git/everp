@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -26,127 +27,153 @@ public class OAuth2AuthorizationMapper {
 
     private final RegisteredClientRepository registeredClientRepository;
 
+    // ===== Domain -> Entity (저장) =====
     public OAuth2AuthorizationEntity toEntity(OAuth2Authorization authorization) {
+        Map<String, Object> attrs = new LinkedHashMap<>(authorization.getAttributes());
+
+        Object reqObj = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
+        if (reqObj instanceof OAuth2AuthorizationRequest req) {
+            // 1) 객체로 올라온 경우 → 안전한 Map으로 평탄화
+            Map<String, Object> reqMap = new LinkedHashMap<>();
+            reqMap.put("authorizationUri", req.getAuthorizationUri());
+            reqMap.put("clientId", req.getClientId());
+            reqMap.put("redirectUri", req.getRedirectUri());
+            reqMap.put("state", req.getState());
+            reqMap.put("scopes", new LinkedHashSet<>(req.getScopes()));
+            reqMap.put("additionalParameters", new LinkedHashMap<>(req.getAdditionalParameters()));
+            attrs.put(OAuth2AuthorizationRequest.class.getName(), reqMap);
+
+        } else if (reqObj instanceof Map<?, ?> m) {
+            // 2) 이미 평탄화된 Map으로 들어온 경우 → 키만 String으로 정규화해서 저장
+            Map<String, Object> reqMap = toStringObjectMap(m);
+            attrs.put(OAuth2AuthorizationRequest.class.getName(), reqMap);
+        }
+        // else: 없다면 저장 생략
+
         OAuth2AuthorizationEntity.OAuth2AuthorizationEntityBuilder builder = OAuth2AuthorizationEntity.builder()
                 .id(authorization.getId())
                 .registeredClientId(authorization.getRegisteredClientId())
                 .principalName(authorization.getPrincipalName())
                 .authorizationGrantType(authorization.getAuthorizationGrantType().getValue())
-                // ★ attributes 정화 후 저장
-                .attributes(sanitizeMap(authorization.getAttributes()))
+                .attributes(sanitizeMap(attrs))
                 .state(authorization.getAttribute(STATE));
 
-        var authorizationCode = authorization.getToken(OAuth2AuthorizationCode.class);
-        setAuthorizationCode(builder, authorizationCode);
-
-        var accessToken = authorization.getToken(OAuth2AccessToken.class);
-        if (accessToken != null) {
-            populateAccessToken(builder, accessToken);
+        // --- Authorization Code
+        var code = authorization.getToken(OAuth2AuthorizationCode.class);
+        if (code != null) {
+            var t = code.getToken();
+            builder.authorizationCodeValue(t.getTokenValue());
+            builder.authorizationCodeIssuedAt(t.getIssuedAt());
+            builder.authorizationCodeExpiresAt(t.getExpiresAt());
+            builder.authorizationCodeMetadata(sanitizeMap(code.getMetadata()));
         }
 
-        var refreshToken = authorization.getToken(OAuth2RefreshToken.class);
-        if (refreshToken != null) {
-            populateRefreshToken(builder, refreshToken);
+        // --- Access Token
+        var access = authorization.getToken(OAuth2AccessToken.class);
+        if (access != null) {
+            var t = access.getToken();
+            builder.accessTokenValue(t.getTokenValue());
+            builder.accessTokenIssuedAt(t.getIssuedAt());
+            builder.accessTokenExpiresAt(t.getExpiresAt());
+            builder.accessTokenMetadata(sanitizeMap(access.getMetadata()));
+            if (t.getTokenType() != null) builder.accessTokenType(t.getTokenType().getValue());
+            builder.accessTokenScopes(t.getScopes());
+        }
+
+        // --- Refresh Token
+        var refresh = authorization.getToken(OAuth2RefreshToken.class);
+        if (refresh != null) {
+            var t = refresh.getToken();
+            builder.refreshTokenValue(t.getTokenValue());
+            builder.refreshTokenIssuedAt(t.getIssuedAt());
+            builder.refreshTokenExpiresAt(t.getExpiresAt());
+            builder.refreshTokenMetadata(sanitizeMap(refresh.getMetadata()));
         }
 
         return builder.build();
     }
 
+    // ===== Entity -> Domain (복원) =====
     public OAuth2Authorization toDomain(OAuth2AuthorizationEntity entity) {
-        RegisteredClient registeredClient = registeredClientRepository.findById(entity.getRegisteredClientId());
-        if (registeredClient == null) {
+        RegisteredClient rc = registeredClientRepository.findById(entity.getRegisteredClientId());
+        if (rc == null) {
             throw new DataRetrievalFailureException(
                     "등록된 클라이언트를 찾을 수 없습니다. registeredClientId=" + entity.getRegisteredClientId());
         }
 
-        OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient)
+        Map<String, Object> attrMap = safeMap(entity.getAttributes());
+        OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(rc)
                 .id(entity.getId())
                 .principalName(entity.getPrincipalName())
                 .authorizationGrantType(new AuthorizationGrantType(entity.getAuthorizationGrantType()))
-                // ★ 저장 시 정화된 attributes 그대로 주입
-                .attributes(attrs -> populateAttributes(attrs, entity));
+                .attributes(attrs -> {
+                    attrs.putAll(attrMap);
+                    if (entity.getState() != null) attrs.put(STATE, entity.getState());
+                });
 
-        if (entity.getAuthorizationCodeValue() != null) {
-            OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-                    entity.getAuthorizationCodeValue(),
-                    entity.getAuthorizationCodeIssuedAt(),
-                    entity.getAuthorizationCodeExpiresAt());
-            builder.token(authorizationCode,
-                    metadata -> metadata.putAll(safeMap(entity.getAuthorizationCodeMetadata())));
+        // --- 평탄화된 OAuth2AuthorizationRequest 복원
+        Object reqObj = attrMap.get(OAuth2AuthorizationRequest.class.getName());
+        if (reqObj instanceof Map<?, ?> m) {
+            String authorizationUri = asString(m.get("authorizationUri"));
+            String clientId = asString(m.get("clientId"));
+            String redirectUri = asString(m.get("redirectUri"));
+            String state = asString(m.get("state"));
+            Set<String> scopes = toStringSet(m.get("scopes"));
+            Map<String, Object> additional = toStringObjectMap(m.get("additionalParameters"));
+
+            OAuth2AuthorizationRequest restored =
+                    OAuth2AuthorizationRequest.authorizationCode()
+                            .authorizationUri(authorizationUri)
+                            .clientId(clientId)
+                            .redirectUri(redirectUri)
+                            .scopes(scopes)
+                            .state(state)
+                            .additionalParameters(additional)
+                            .build();
+
+            builder.attributes(attrs ->
+                    attrs.put(OAuth2AuthorizationRequest.class.getName(), restored)
+            );
         }
 
+        // --- Authorization Code
+        if (entity.getAuthorizationCodeValue() != null) {
+            OAuth2AuthorizationCode code = new OAuth2AuthorizationCode(
+                    entity.getAuthorizationCodeValue(),
+                    entity.getAuthorizationCodeIssuedAt(),
+                    entity.getAuthorizationCodeExpiresAt()
+            );
+            builder.token(code, md -> md.putAll(safeMap(entity.getAuthorizationCodeMetadata())));
+        }
+
+        // --- Access Token
         if (entity.getAccessTokenValue() != null) {
             OAuth2AccessToken.TokenType tokenType = resolveAccessTokenType(entity.getAccessTokenType());
+            Set<String> scopes = Optional.ofNullable(entity.getAccessTokenScopes()).orElseGet(Set::of);
 
-            Set<String> scopes = Optional
-                    .ofNullable(entity.getAccessTokenScopes())
-                    .orElse(Collections.emptySet());
-
-            OAuth2AccessToken accessToken = new OAuth2AccessToken(
+            OAuth2AccessToken at = new OAuth2AccessToken(
                     tokenType,
                     entity.getAccessTokenValue(),
                     entity.getAccessTokenIssuedAt(),
                     entity.getAccessTokenExpiresAt(),
-                    scopes);
-            builder.token(accessToken, metadata -> metadata.putAll(safeMap(entity.getAccessTokenMetadata())));
-            builder.accessToken(accessToken);
+                    scopes
+            );
+            builder.token(at, md -> md.putAll(safeMap(entity.getAccessTokenMetadata())));
+            builder.accessToken(at);
         }
 
+        // --- Refresh Token
         if (entity.getRefreshTokenValue() != null) {
-            OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
+            OAuth2RefreshToken rt = new OAuth2RefreshToken(
                     entity.getRefreshTokenValue(),
                     entity.getRefreshTokenIssuedAt(),
-                    entity.getRefreshTokenExpiresAt());
-            builder.token(refreshToken, metadata -> metadata.putAll(safeMap(entity.getRefreshTokenMetadata())));
-            builder.refreshToken(refreshToken);
+                    entity.getRefreshTokenExpiresAt()
+            );
+            builder.token(rt, md -> md.putAll(safeMap(entity.getRefreshTokenMetadata())));
+            builder.refreshToken(rt);
         }
 
         return builder.build();
-    }
-
-    private void populateAttributes(Map<String, Object> attributes, OAuth2AuthorizationEntity entity) {
-        attributes.putAll(safeMap(entity.getAttributes()));
-        if (entity.getState() != null) {
-            attributes.put(STATE, entity.getState());
-        }
-    }
-
-    private void populateAccessToken(
-            OAuth2AuthorizationEntity.OAuth2AuthorizationEntityBuilder builder,
-            OAuth2Authorization.Token<OAuth2AccessToken> token) {
-        OAuth2AccessToken accessToken = token.getToken();
-        builder.accessTokenValue(accessToken.getTokenValue());
-        builder.accessTokenIssuedAt(accessToken.getIssuedAt());
-        builder.accessTokenExpiresAt(accessToken.getExpiresAt());
-        // ★ 메타데이터 정화 후 저장
-        builder.accessTokenMetadata(sanitizeMap(token.getMetadata()));
-        if (accessToken.getTokenType() != null) {
-            builder.accessTokenType(accessToken.getTokenType().getValue());
-        }
-        builder.accessTokenScopes(accessToken.getScopes());
-    }
-
-    private void populateRefreshToken(
-            OAuth2AuthorizationEntity.OAuth2AuthorizationEntityBuilder builder,
-            OAuth2Authorization.Token<OAuth2RefreshToken> token) {
-        OAuth2RefreshToken refreshToken = token.getToken();
-        builder.refreshTokenValue(refreshToken.getTokenValue());
-        builder.refreshTokenIssuedAt(refreshToken.getIssuedAt());
-        builder.refreshTokenExpiresAt(refreshToken.getExpiresAt());
-        // ★ 메타데이터 정화 후 저장
-        builder.refreshTokenMetadata(sanitizeMap(token.getMetadata()));
-    }
-
-    private void setAuthorizationCode(
-            OAuth2AuthorizationEntity.OAuth2AuthorizationEntityBuilder builder,
-            OAuth2Authorization.Token<OAuth2AuthorizationCode> token) {
-        if (token == null) return;
-        OAuth2AuthorizationCode authorizationCode = token.getToken();
-        builder.authorizationCodeValue(authorizationCode.getTokenValue());
-        builder.authorizationCodeIssuedAt(authorizationCode.getIssuedAt());
-        builder.authorizationCodeExpiresAt(authorizationCode.getExpiresAt());
-        // ★ 메타데이터 정화 후 저장
-        builder.authorizationCodeMetadata(sanitizeMap(token.getMetadata()));
     }
 
     private OAuth2AccessToken.TokenType resolveAccessTokenType(String tokenType) {
@@ -157,49 +184,28 @@ public class OAuth2AuthorizationMapper {
         return new OAuth2AccessToken.TokenType(tokenType);
     }
 
-    // ---------- 정화 유틸 ----------
-
     private Map<String, Object> safeMap(Map<String, Object> map) {
         return map == null ? Collections.emptyMap() : map;
     }
 
-    /**
-     * Map을 안전 값만 남기도록 재귀 정화.
-     */
     private Map<String, Object> sanitizeMap(Map<String, Object> src) {
-        if (src == null || src.isEmpty()) return Collections.emptyMap();
+        if (src == null || src.isEmpty()) return new LinkedHashMap<>();
         Map<String, Object> out = new LinkedHashMap<>(src.size());
         for (Map.Entry<String, Object> e : src.entrySet()) {
             Object v = sanitizeValue(e.getValue());
-            if (v != Removed.INSTANCE) {
-                out.put(e.getKey(), v);
-            }
+            if (v != Removed.INSTANCE) out.put(e.getKey(), v);
         }
-        return Collections.unmodifiableMap(out);
+        return out;
     }
 
-    /**
-     * 값 하나를 안전 타입으로 정화. 제거 대상은 Removed.INSTANCE 반환.
-     */
     private Object sanitizeValue(Object v) {
         if (v == null) return null;
-
-        // 허용: 문자열/숫자/불리언
         if (v instanceof CharSequence || v instanceof Number || v instanceof Boolean) return v;
-
-        // 허용: 열거형 → name()
         if (v instanceof Enum<?> en) return en.name();
-
-        // 허용: java.time 계열 → toString(ISO-8601)
         if (v instanceof TemporalAccessor) return v.toString();
-
-        // Authentication → principalName 문자열
         if (v instanceof Authentication a) return a.getName();
-
-        // UserDetails → username 문자열
         if (v instanceof UserDetails u) return u.getUsername();
 
-        // Map → 재귀
         if (v instanceof Map<?, ?> m) {
             Map<String, Object> cast = m.entrySet().stream()
                     .filter(en -> en.getKey() instanceof String)
@@ -212,15 +218,13 @@ public class OAuth2AuthorizationMapper {
             Map<String, Object> sanitized = sanitizeMap(cast);
             return sanitized.isEmpty() ? Removed.INSTANCE : sanitized;
         }
-
-        // Collection/배열 → 재귀
         if (v instanceof Collection<?> c) {
             List<Object> list = new ArrayList<>(c.size());
             for (Object o : c) {
                 Object sv = sanitizeValue(o);
                 if (sv != Removed.INSTANCE) list.add(sv);
             }
-            return list.isEmpty() ? Removed.INSTANCE : List.copyOf(list);
+            return list.isEmpty() ? Removed.INSTANCE : list;
         }
         if (v.getClass().isArray()) {
             int len = java.lang.reflect.Array.getLength(v);
@@ -229,15 +233,53 @@ public class OAuth2AuthorizationMapper {
                 Object sv = sanitizeValue(java.lang.reflect.Array.get(v, i));
                 if (sv != Removed.INSTANCE) list.add(sv);
             }
-            return list.isEmpty() ? Removed.INSTANCE : List.copyOf(list);
+            return list.isEmpty() ? Removed.INSTANCE : list;
         }
-
-        // 그 외 커스텀/복잡 객체는 저장 금지 (보안상 제거)
         return Removed.INSTANCE;
     }
 
-    /**
-     * 제거 표시용 센티널
-     */
     private enum Removed { INSTANCE }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> toStringObjectMap(Object v) {
+        if (!(v instanceof Map<?, ?> m)) return new LinkedHashMap<>();
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> e : m.entrySet()) {
+            if (e.getKey() instanceof String k) out.put(k, e.getValue());
+        }
+        return out;
+    }
+
+    private String asString(Object v) {
+        return (v == null) ? null : String.valueOf(v);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<String> toStringSet(Object v) {
+        if (v == null) return new LinkedHashSet<>();
+        Collection<?> col;
+        if (v instanceof Collection<?> c) {
+            col = c;
+        } else if (v.getClass().isArray()) {
+            int n = java.lang.reflect.Array.getLength(v);
+            List<Object> tmp = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) tmp.add(java.lang.reflect.Array.get(v, i));
+            col = tmp;
+        } else {
+            col = List.of(v);
+        }
+        LinkedHashSet<String> set = new LinkedHashSet<>();
+        for (Object o : col) if (o != null) set.add(String.valueOf(o));
+        return set;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> toStringObjectMap(Optional<?> v) {
+        return v.map(this::toStringObjectMap).orElseGet(LinkedHashMap::new);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> toStringObjectMapOrEmpty(Object v) {
+        return toStringObjectMap(v);
+    }
 }

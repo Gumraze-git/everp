@@ -27,66 +27,26 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.util.UUID;
+
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.*;
 
 // 하나 이상의 Bean 객체가 있는 경우의 각 Bean들을 인식하기 위해 등록하는 어노테이션
 @Configuration
 @EnableConfigurationProperties(TokenProperties.class)
 public class AuthorizationServerConfig {
     /**
-     * {@code authorizationServerSecurityFilterChain}:
-     * <ul>
-     *     <il>인가 서버 전용 보안 필터 체인을 만들어 스프링 Security에 등록함.</il>
-     *     <il>즉, OAuth 2.0 인가 서버의 엔드포인트를 처리할 보안 규칙을 세팅하는 것임.</il>
-     * </ul>
-     *
+     * 민감값 프리뷰
      */
-    // 메서드가 반환하는 객체를 스프링 컨테이너에 빈으로 등록하는 어노테이션
-    @Bean
-    @Order(1) // Bean 객체의 적용 순서를 지정하는 어노테이션
-    public SecurityFilterChain authorizationServerSecurityFilterChain(
-            HttpSecurity http,
-            RegisteredClientRepository registeredClientRepository,
-            ClientValidationFilter clientValidationFilter,
-            OAuth2AuthorizationService authorizationService,
-            OAuth2AuthorizationConsentService authorizationConsentService,
-            RefreshTokenCookieAuthenticationSuccessHandler refreshTokenCookieAuthenticationSuccessHandler,
-            RefreshTokenCookieAuthenticationFailureHandler refreshTokenCookieAuthenticationFailureHandler
-    ) throws Exception {
-
-        // RegisteredClientRepository 주입: JDBC 기반 등록 클라이언트가 애플리케이션 기동 시점에 초기화되도록 보장
-        // Configurer 인스턴스를 생성해 인가/토큰/JWKS 등 표준 엔드포인트를 등록하고 OIDC(JWKS 포함)를 활성화
-        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-        http.with(authorizationServerConfigurer, configurer -> configurer
-                .registeredClientRepository(registeredClientRepository)
-                .authorizationService(authorizationService)
-                .authorizationConsentService(authorizationConsentService)
-                .tokenEndpoint(endpoint -> endpoint
-                        .accessTokenResponseHandler(refreshTokenCookieAuthenticationSuccessHandler)
-                        .errorResponseHandler(refreshTokenCookieAuthenticationFailureHandler))
-        );
-
-        // Configurer가 노출한 표준 엔드포인트와 일반 보안 체인을 분리하기 위한 매처
-        RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-        http.securityMatcher(endpointsMatcher)
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                "/.well-known/openid-configuration",
-                                "/.well-known/jwks.json"
-                        ).permitAll()
-                        .anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .permitAll());
-        http.addFilterBefore(clientValidationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        // (JWT 검증은 별도 SecurityFilterChain에서 설정)
-
-        return http.build();
+    private static String preview(String v) {
+        if (v == null) return "null";
+        int n = Math.min(10, v.length());
+        return v.substring(0, n) + "...";
     }
 
     @Bean
@@ -194,6 +154,117 @@ public class AuthorizationServerConfig {
             OAuth2AuthorizationConsentJpaRepository consentRepository
     ) {
         return new JpaOAuth2AuthorizationConsentService(consentMapper, consentRepository);
+    }
+
+    /**
+     * {@code authorizationServerSecurityFilterChain}:
+     * <ul>
+     *     <il>인가 서버 전용 보안 필터 체인을 만들어 스프링 Security에 등록함.</il>
+     *     <il>즉, OAuth 2.0 인가 서버의 엔드포인트를 처리할 보안 규칙을 세팅하는 것임.</il>
+     * </ul>
+     *
+     */
+    // 메서드가 반환하는 객체를 스프링 컨테이너에 빈으로 등록하는 어노테이션
+    @Bean
+    @Order(1) // Bean 객체의 적용 순서를 지정하는 어노테이션
+    public SecurityFilterChain authorizationServerSecurityFilterChain(
+            HttpSecurity http,
+            RegisteredClientRepository registeredClientRepository,
+            ClientValidationFilter clientValidationFilter,
+            OAuth2AuthorizationService authorizationService,
+            OAuth2AuthorizationConsentService authorizationConsentService,
+            RefreshTokenCookieAuthenticationSuccessHandler refreshTokenCookieAuthenticationSuccessHandler,
+            RefreshTokenCookieAuthenticationFailureHandler refreshTokenCookieAuthenticationFailureHandler
+    ) throws Exception {
+
+        // RegisteredClientRepository 주입: JDBC 기반 등록 클라이언트가 애플리케이션 기동 시점에 초기화되도록 보장
+        // Configurer 인스턴스를 생성해 인가/토큰/JWKS 등 표준 엔드포인트를 등록하고 OIDC(JWKS 포함)를 활성화
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+        http.with(authorizationServerConfigurer, configurer -> configurer
+                .registeredClientRepository(registeredClientRepository)
+                .authorizationService(authorizationService)
+                .authorizationConsentService(authorizationConsentService)
+                .tokenEndpoint(endpoint -> endpoint
+                        .accessTokenResponseHandler(
+                                loggingTokenSuccessHandler(refreshTokenCookieAuthenticationSuccessHandler))
+                        .errorResponseHandler(
+                                loggingTokenFailureHandler(refreshTokenCookieAuthenticationFailureHandler))
+                )
+        );
+
+        // Configurer가 노출한 표준 엔드포인트와 일반 보안 체인을 분리하기 위한 매처
+        RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+        http.securityMatcher(endpointsMatcher)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(
+                                "/.well-known/jwks.json"
+                        ).permitAll()
+                        .anyRequest().authenticated())
+                .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll());
+        http.addFilterBefore(clientValidationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // (JWT 검증은 별도 SecurityFilterChain에서 설정)
+
+        return http.build();
+    }
+
+    /**
+     * 토큰 응답 성공 로깅 래퍼
+     */
+    private AuthenticationSuccessHandler loggingTokenSuccessHandler(AuthenticationSuccessHandler delegate) {
+        return (request, response, authentication) -> {
+            // 요청 파라미터(원인 파악에 중요한 것 위주)
+            String gt = request.getParameter(GRANT_TYPE);
+            String cid = request.getParameter(CLIENT_ID);
+            String redirect = request.getParameter(REDIRECT_URI);
+            String code = request.getParameter(CODE);
+            String verifier = request.getParameter("code_verifier"); // PkceParameterNames.CODE_VERIFIER 상수도 가능
+
+            // 요약 로그
+            // (성공 시에도 어떤 흐름으로 들어왔는지 남겨두면 이후 비교가 쉬움)
+            org.slf4j.LoggerFactory.getLogger(getClass())
+                    .info("[TOKEN][SUCCESS] grant_type={}, client_id={}, redirect_uri={}, code(10)={}, code_verifier(yn)={}",
+                            gt, cid, redirect,
+                            preview(code), (verifier != null && !verifier.isBlank()));
+
+            // 기존 핸들러에 위임
+            if (delegate != null) delegate.onAuthenticationSuccess(request, response, authentication);
+        };
+    }
+
+    /**
+     * 토큰 응답 실패 로깅 래퍼
+     */
+    private AuthenticationFailureHandler loggingTokenFailureHandler(AuthenticationFailureHandler delegate) {
+        return (request, response, exception) -> {
+            String gt = request.getParameter(GRANT_TYPE);
+            String cid = request.getParameter(CLIENT_ID);
+            String redirect = request.getParameter(REDIRECT_URI);
+            String code = request.getParameter(CODE);
+            String verifier = request.getParameter("code_verifier");
+            String msg = (exception != null ? exception.getMessage() : "n/a");
+            String ex = (exception != null ? exception.getClass().getSimpleName() : "n/a");
+
+            // 중요 포인트: invalid_grant의 흔한 원인들을 한 줄에 묶어서 확인
+            org.slf4j.LoggerFactory.getLogger(getClass())
+                    .warn("[TOKEN][FAIL] {}: {} | grant_type={}, client_id={}, redirect_uri={}, code(10)={}, code_verifier(yn)={}, cookies={}",
+                            ex, msg, gt, cid, redirect, preview(code),
+                            (verifier != null && !verifier.isBlank()),
+                            request.getHeader("Cookie"));
+
+            // 추가로, 헤더/파라미터를 더 보고 싶으면 디버그 레벨로 남겨도 좋음
+            if (org.slf4j.LoggerFactory.getLogger(getClass()).isDebugEnabled()) {
+                var paramNames = request.getParameterMap().keySet();
+                org.slf4j.LoggerFactory.getLogger(getClass())
+                        .debug("[TOKEN][REQ] params={}", paramNames);
+            }
+
+            // 기존 핸들러에 위임
+            if (delegate != null) delegate.onAuthenticationFailure(request, response, exception);
+        };
     }
 
 }

@@ -1,7 +1,10 @@
 package org.ever._4ever_be_auth.config.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
@@ -22,4 +25,14 @@ public class SecurityJacksonConfig {
         // Spring Authorization Server 모듈 (보강)
         objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
     }
+
+    @Bean(name = "plainJsonObjectMapper")
+    public ObjectMapper plainJsonObjectMapper() {
+        ObjectMapper om = new ObjectMapper();
+        om.registerModule(new JavaTimeModule());
+        om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        om.disable(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS);
+        return om;
+    }
+
 }
