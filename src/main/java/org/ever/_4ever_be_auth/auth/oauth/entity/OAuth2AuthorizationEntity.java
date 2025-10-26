@@ -39,17 +39,16 @@ public class OAuth2AuthorizationEntity {
     @Column(name = "authorization_grant_type", length = 100, nullable = false)
     private String authorizationGrantType;
 
-    // ===== attributes (인가 요청/컨텍스트 값 — redirect_uri, state 등 포함 가능) =====
+    // ===== attributes (redirect_uri, state 등 포함 가능) =====
     @Convert(converter = MapToJsonConverter.class)
-    @Column(name = "attributes", columnDefinition = "TEXT")
+    @Column(name = "attributes", columnDefinition = "text")
     private Map<String, Object> attributes;
 
-    @Column(name = "state", length = 200)
+    @Column(name = "state", length = 512) // 넉넉히
     private String state;
 
     // ===== Authorization Code =====
-    @Lob
-    @Column(name = "authorization_code_value")
+    @Column(name = "authorization_code_value", columnDefinition = "text")
     private String authorizationCodeValue;
 
     @Column(name = "authorization_code_issued_at")
@@ -58,14 +57,12 @@ public class OAuth2AuthorizationEntity {
     @Column(name = "authorization_code_expires_at")
     private Instant authorizationCodeExpiresAt;
 
-    // code_challenge, code_challenge_method 등은 여기 메타데이터(JSON)에 저장됩니다.
     @Convert(converter = MapToJsonConverter.class)
-    @Column(name = "authorization_code_metadata", columnDefinition = "TEXT")
+    @Column(name = "authorization_code_metadata", columnDefinition = "text")
     private Map<String, Object> authorizationCodeMetadata;
 
     // ===== Access Token =====
-    @Lob
-    @Column(name = "access_token_value")
+    @Column(name = "access_token_value", columnDefinition = "text")
     private String accessTokenValue;
 
     @Column(name = "access_token_issued_at")
@@ -75,19 +72,18 @@ public class OAuth2AuthorizationEntity {
     private Instant accessTokenExpiresAt;
 
     @Convert(converter = MapToJsonConverter.class)
-    @Column(name = "access_token_metadata", columnDefinition = "TEXT")
+    @Column(name = "access_token_metadata", columnDefinition = "text")
     private Map<String, Object> accessTokenMetadata;
 
     @Column(name = "access_token_type", length = 100)
-    private String accessTokenType; // "Bearer" 등
+    private String accessTokenType; // "Bearer"
 
     @Convert(converter = StringSetToJsonConverter.class)
-    @Column(name = "access_token_scopes", columnDefinition = "TEXT")
+    @Column(name = "access_token_scopes", columnDefinition = "text")
     private Set<String> accessTokenScopes;
 
     // ===== Refresh Token =====
-    @Lob
-    @Column(name = "refresh_token_value")
+    @Column(name = "refresh_token_value", columnDefinition = "text")
     private String refreshTokenValue;
 
     @Column(name = "refresh_token_issued_at")
@@ -97,6 +93,6 @@ public class OAuth2AuthorizationEntity {
     private Instant refreshTokenExpiresAt;
 
     @Convert(converter = MapToJsonConverter.class)
-    @Column(name = "refresh_token_metadata", columnDefinition = "TEXT")
+    @Column(name = "refresh_token_metadata", columnDefinition = "text")
     private Map<String, Object> refreshTokenMetadata;
 }
