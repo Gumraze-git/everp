@@ -1,5 +1,7 @@
 package org.ever._4ever_be_auth.config.oauth;
 
+import org.ever._4ever_be_auth.auth.account.handler.LoginFailureHandler;
+import org.ever._4ever_be_auth.auth.account.handler.LoginSuccessHandler;
 import org.ever._4ever_be_auth.auth.client.filter.ClientValidationFilter;
 import org.ever._4ever_be_auth.auth.client.service.ClientValidationService;
 import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticationFailureHandler;
@@ -77,12 +79,54 @@ public class AuthorizationServerConfig {
                         ).permitAll()
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-                .formLogin(Customizer.withDefaults());
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll());
         http.addFilterBefore(clientValidationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // 동일 애플리케이션에서 리소스 서버로 동작할 때 JWT 검증을 활성화
-        http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        // (JWT 검증은 별도 SecurityFilterChain에서 설정)
 
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurity(
+            HttpSecurity http,
+            ClientValidationFilter clientValidationFilter,
+            LoginFailureHandler loginFailureHandler,
+            LoginSuccessHandler loginSuccessHandler
+    ) throws Exception {
+        http
+                .securityMatcher("/login", "/error", "/css/**", "/js/**", "/images/**")
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .csrf(Customizer.withDefaults())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .failureHandler(loginFailureHandler)
+                        .successHandler(loginSuccessHandler)
+                        .permitAll()
+                );
+        http.addFilterBefore(clientValidationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(3)
+    public SecurityFilterChain resourceApi(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();
     }
 
