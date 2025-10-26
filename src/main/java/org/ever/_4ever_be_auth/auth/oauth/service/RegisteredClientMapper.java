@@ -9,9 +9,11 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ConfigurationSettingNames;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -94,9 +96,16 @@ public class RegisteredClientMapper {
 
     private TokenSettings readTokenSettings(String json) {
         Map<String, Object> settings = readJson(json);
-        TokenSettings.Builder builder = TokenSettings.builder();
-        settings.forEach(builder::setting);
-        return builder.build();
+
+        if (settings.isEmpty()) {
+            return TokenSettings.builder().build();
+        }
+
+        convertDurationSetting(settings, ConfigurationSettingNames.Token.AUTHORIZATION_CODE_TIME_TO_LIVE);
+        convertDurationSetting(settings, ConfigurationSettingNames.Token.ACCESS_TOKEN_TIME_TO_LIVE);
+        convertDurationSetting(settings, ConfigurationSettingNames.Token.REFRESH_TOKEN_TIME_TO_LIVE);
+
+        return TokenSettings.withSettings(settings).build();
     }
 
     private String join(Set<String> values) {
@@ -141,4 +150,12 @@ public class RegisteredClientMapper {
     private LocalDateTime toLocalDateTime(java.time.Instant instant) {
         return instant == null ? null : LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault());
     }
+
+    private void convertDurationSetting(Map<String, Object> settings, String key) {
+        Object value = settings.get(key);
+        if (value instanceof String strValue) {
+            settings.put(key, Duration.parse(strValue));
+        }
+    }
+
 }

@@ -11,6 +11,9 @@ import org.ever._4ever_be_auth.user.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -22,6 +25,7 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
     private static final String OAUTH_REQUEST_SESSION_KEY = "OAUTH2_AUTHORIZATION_REQUEST";
 
     private final UserRepository userRepository;
+    private final RequestCache requestCache = new HttpSessionRequestCache();
 
     @Override
     public void onAuthenticationSuccess(
@@ -30,6 +34,14 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
             Authentication authentication
     ) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
+
+        // 로그인 성공 흐름 로깅
+        SavedRequest savedRequest = requestCache.getRequest(request, response);
+        String targetUrl = (savedRequest != null) ? savedRequest.getRedirectUrl() : getDefaultTargetUrl();
+        log.info("[INFO] 로그인 성공: principal = {}, sessionId = {}, targetUrl ={}",
+                authentication.getName(),
+                (session != null ? session.getId() : "세션 아이디를 확인할 수 없습니다."),
+                targetUrl);
 
         if (session != null) {
             session.removeAttribute(OAUTH_REQUEST_SESSION_KEY);
@@ -45,5 +57,4 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
 
         super.onAuthenticationSuccess(request, response, authentication);
     }
-
 }

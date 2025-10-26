@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_auth.auth.oauth.entity.OAuth2AuthorizationEntity;
 import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationJpaRepository;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -23,6 +24,33 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
     @Override
     @Transactional
     public void save(OAuth2Authorization authorization) {
+        // 저장 전에 토큰 발급 여부 확인
+        var accessToken = authorization.getToken(OAuth2AccessToken.class);
+        var refreshToken = authorization.getToken(OAuth2AccessToken.class);
+
+        if (accessToken != null && accessToken.getToken() != null) {
+            var at = accessToken.getToken();
+            String atPreview = preview(at.getTokenValue());
+            log.info("[INFO] 액세스 토큰 이슈, clientId={}, principal={}, tokenType={}, expiresAt={}, scopes={}, accessToken({})",
+                    authorization.getRegisteredClientId(),
+                    authorization.getPrincipalName(),
+                    at.getTokenType() != null ? at.getTokenType().getValue() : "N/A",
+                    at.getExpiresAt(),
+                    at.getScopes(),
+                    atPreview
+            );
+        }
+        if (refreshToken != null && refreshToken.getToken() != null) {
+            var rt = refreshToken.getToken();
+            String rtPreview = preview(rt.getTokenValue());
+            log.info("[INFO] 리프레시 토큰 이슈, clientId={}, principal={}, expiresAt={}, refreshToken({})",
+                    authorization.getRegisteredClientId(),
+                    authorization.getPrincipalName(),
+                    rt.getExpiresAt(),
+                    rtPreview
+            );
+        }
+
         OAuth2AuthorizationEntity entity = authorizationMapper.toEntity(authorization);
         authorizationRepository.save(entity);
     }
@@ -85,5 +113,11 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                 .or(() -> authorizationRepository.findByAuthorizationCodeValue(token))
                 .or(() -> authorizationRepository.findByAccessTokenValue(token))
                 .or(() -> authorizationRepository.findByRefreshTokenValue(token));
+    }
+
+    private String preview(String tokenValue) {
+        if (tokenValue == null) return "null";
+        int n = Math.min(tokenValue.length(), 12);
+        return tokenValue.substring(0, n) + "...(masked)";
     }
 }
