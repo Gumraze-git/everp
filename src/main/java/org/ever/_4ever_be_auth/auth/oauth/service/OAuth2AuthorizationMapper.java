@@ -55,7 +55,7 @@ public class OAuth2AuthorizationMapper {
                 .registeredClientId(authorization.getRegisteredClientId())
                 .principalName(authorization.getPrincipalName())
                 .authorizationGrantType(authorization.getAuthorizationGrantType().getValue())
-                .attributes(sanitizeMap(attrs))
+                .attributes(attrs)
                 .state(authorization.getAttribute(STATE));
 
         // --- Authorization Code
@@ -203,8 +203,8 @@ public class OAuth2AuthorizationMapper {
         if (v instanceof CharSequence || v instanceof Number || v instanceof Boolean) return v;
         if (v instanceof Enum<?> en) return en.name();
         if (v instanceof TemporalAccessor) return v.toString();
-        if (v instanceof Authentication a) return a.getName();
-        if (v instanceof UserDetails u) return u.getUsername();
+//        if (v instanceof Authentication a) return a.getName();
+//        if (v instanceof UserDetails u) return u.getUsername();
 
         if (v instanceof Map<?, ?> m) {
             Map<String, Object> cast = m.entrySet().stream()

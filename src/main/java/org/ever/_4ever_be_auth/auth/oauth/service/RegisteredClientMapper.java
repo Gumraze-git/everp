@@ -148,6 +148,9 @@ public class RegisteredClientMapper {
             return TokenSettings.builder().build();
         }
 
+        // token normalizing
+        normalizeTokenSettings(settings);
+
         // 2) Duration 변환 보강 (String/Number/이미 Duration)
         convertDurationSetting(settings, ConfigurationSettingNames.Token.AUTHORIZATION_CODE_TIME_TO_LIVE);
         convertDurationSetting(settings, ConfigurationSettingNames.Token.ACCESS_TOKEN_TIME_TO_LIVE);
@@ -220,4 +223,51 @@ public class RegisteredClientMapper {
             settings.put(key, Duration.parse(s));
         }
     }
+
+    // RegisteredClientMapper 내부에 추가
+    private Map<String, Object> normalizeTokenSettings(Map<String, Object> s) {
+        if (s == null) return Map.of();
+
+        // 1) access-token-format: Map/문자열 → OAuth2TokenFormat
+        Object fmt = s.get(ConfigurationSettingNames.Token.ACCESS_TOKEN_FORMAT);
+        if (fmt instanceof Map<?, ?> m) {
+            Object v = m.get("value");
+            if (v instanceof String sv) {
+                s.put(ConfigurationSettingNames.Token.ACCESS_TOKEN_FORMAT,
+                        "self-contained".equalsIgnoreCase(sv)
+                                ? org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat.SELF_CONTAINED
+                                : org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat.REFERENCE);
+            }
+        } else if (fmt instanceof String sv) {
+            s.put(ConfigurationSettingNames.Token.ACCESS_TOKEN_FORMAT,
+                    "self-contained".equalsIgnoreCase(sv)
+                            ? org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat.SELF_CONTAINED
+                            : org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat.REFERENCE);
+        }
+
+        // 2) id-token-signature-algorithm: 문자열 → SignatureAlgorithm enum
+        var idAlgKey = ConfigurationSettingNames.Token.ID_TOKEN_SIGNATURE_ALGORITHM;
+        Object alg = s.get(idAlgKey);
+        if (alg instanceof String as && !as.isBlank()) {
+            try {
+                s.put(idAlgKey, org.springframework.security.oauth2.jose.jws.SignatureAlgorithm.valueOf(as));
+            } catch (IllegalArgumentException ignored) {
+                // 알 수 없는 값이면 그대로 둠(기본값 사용)
+            }
+        }
+
+        // 3) boolean 류 문자열 보정
+        coerceBoolean(s, ConfigurationSettingNames.Token.REUSE_REFRESH_TOKENS);
+        coerceBoolean(s, ConfigurationSettingNames.Token.X509_CERTIFICATE_BOUND_ACCESS_TOKENS);
+
+        return s;
+    }
+
+    private void coerceBoolean(Map<String, Object> s, String key) {
+        Object v = s.get(key);
+        if (v instanceof String sv) {
+            s.put(key, Boolean.parseBoolean(sv));
+        }
+    }
+
 }
