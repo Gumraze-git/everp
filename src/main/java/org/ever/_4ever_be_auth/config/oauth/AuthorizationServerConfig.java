@@ -124,15 +124,15 @@ public class AuthorizationServerConfig {
                 .scope("erp.user.profile")      // 접근 권한 설정
                 .scope("offline_access")        // 리프레시 토큰 쿠키 발급 허용 스코프
                 .tokenSettings(tokenSettings)
-                .clientSettings(ClientSettings.builder().
-                        requireProofKey(true). // PKCE
-                                build())
+                .clientSettings(ClientSettings.builder()
+                        .requireProofKey(true)  // PKCE
+                        .requireAuthorizationConsent(false) // 동의화면 없이 자동 승인
+                        .build())
                 .build();
 
         if (repository.findByClientId(erpWebClient.getClientId()) == null) {
             repository.save(erpWebClient);
         }
-
         return repository;
     }
 
@@ -267,5 +267,4 @@ public class AuthorizationServerConfig {
             if (delegate != null) delegate.onAuthenticationFailure(request, response, exception);
         };
     }
-
 }
