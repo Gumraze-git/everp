@@ -21,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Set;
@@ -66,24 +67,34 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
             addRefreshTokenCookie(response, tokenAuthentication.getRefreshToken().getTokenValue());
 
             log.info("[RT-COOKIE][SET] 리프레시 토큰 쿠키 로그: maxAgeSeconds={}, secure=true, httpOnly=true, sameSite=None",
-                refreshTokenTtl != null ? refreshTokenTtl.getSeconds() : -1);
+                    refreshTokenTtl != null ? refreshTokenTtl.getSeconds() : -1);
 
         }
 
-        OAuth2AccessTokenResponse sanitizedResponse = sanitizeResponse(
+        long expiresIn = 0L;
+            if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
+                expiresIn = java.time.temporal.ChronoUnit.SECONDS.between(
+                        accessToken.getIssuedAt(), accessToken.getExpiresAt());
+            }
+
+        var refreshToken = tokenAuthentication.getRefreshToken();
+        String refreshTokenValue = refreshToken != null ? refreshToken.getTokenValue() : null;
+
+        OAuth2AccessTokenResponse tokenResponse = sanitizeResponse(
                 accessToken.getTokenValue(),
                 accessToken.getTokenType(),
                 accessToken.getIssuedAt(),
                 accessToken.getExpiresAt(),
                 accessToken.getScopes(),
-                tokenAuthentication.getAdditionalParameters()
+                tokenAuthentication.getAdditionalParameters(),
+                refreshTokenValue
         );
 
         response.setStatus(HttpServletResponse.SC_OK);
         accessTokenResponseHttpMessageConverter.write(
-                sanitizedResponse,
+                tokenResponse,
                 MediaType.APPLICATION_JSON,
-                new ServletServerHttpResponse(response)
+                new org.springframework.http.server.ServletServerHttpResponse(response)
         );
     }
 
@@ -106,32 +117,33 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
     }
 
     private OAuth2AccessTokenResponse sanitizeResponse(
-            String accessTokenValue,
-            OAuth2AccessToken.TokenType tokenType,
-            java.time.Instant issuedAt,
-            java.time.Instant expiresAt,
-            Set<String> scopes,
-            Map<String, Object> additionalParameters
+        String accessTokenValue,
+        OAuth2AccessToken.TokenType tokenType,
+        java.time.Instant issuedAt,
+        java.time.Instant expiresAt,
+        Set<String> scopes,
+        Map<String, Object> additionalParameters,
+        String refreshTokenValue // ⬅︎ 추가
     ) {
-        OAuth2AccessTokenResponse.Builder builder = OAuth2AccessTokenResponse.withToken(accessTokenValue);
+        OAuth2AccessTokenResponse.Builder builder =
+                OAuth2AccessTokenResponse.withToken(accessTokenValue);
 
         if (tokenType != null) {
             builder.tokenType(tokenType);
         }
-
         if (issuedAt != null && expiresAt != null) {
             long expiresIn = ChronoUnit.SECONDS.between(issuedAt, expiresAt);
             builder.expiresIn(expiresIn);
         }
-
-        if (!CollectionUtils.isEmpty(scopes)) {
+        if (scopes != null && !scopes.isEmpty()) {
             builder.scopes(scopes);
         }
-
-        if (!CollectionUtils.isEmpty(additionalParameters)) {
+        if (refreshTokenValue != null) {                 // ⬅︎ refresh_token 포함
+            builder.refreshToken(refreshTokenValue);
+        }
+        if (additionalParameters != null && !additionalParameters.isEmpty()) {
             builder.additionalParameters(additionalParameters);
         }
-
         return builder.build();
     }
 }
