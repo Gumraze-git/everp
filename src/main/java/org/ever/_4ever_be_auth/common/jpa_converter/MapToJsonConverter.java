@@ -40,11 +40,15 @@ public class MapToJsonConverter implements AttributeConverter<Map<String, Object
             return new LinkedHashMap<>();
         }
         try {
-            return mapper.readValue(dbData, new TypeReference<Map<String, Object>>() {
-            });
+            ObjectMapper safe = mapper.copy();
+            try {
+                safe.deactivateDefaultTyping();
+            } catch (NoSuchMethodError | Exception ignore) {}
+            return safe.readValue(dbData, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
             log.error("JSON → Map 역직렬화 실패", e);
             throw new IllegalArgumentException("JSON을 Map으로 역직렬화하는 데 실패했습니다.", e);
         }
     }
+
 }
