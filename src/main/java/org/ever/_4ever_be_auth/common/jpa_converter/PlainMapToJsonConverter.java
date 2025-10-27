@@ -16,7 +16,7 @@ import java.util.Map;
 @Converter(autoApply = false)
 @Component
 @RequiredArgsConstructor
-public class MapToJsonConverter implements AttributeConverter<Map<String, Object>, String> {
+public class PlainMapToJsonConverter implements AttributeConverter<Map<String, Object>, String> {
 
     // 플레인 매퍼 주입 (SecurityJacksonConfig에서 제공)
     private final @Qualifier("plainJsonObjectMapper") ObjectMapper mapper;

@@ -2,7 +2,8 @@ package org.ever._4ever_be_auth.auth.oauth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.ever._4ever_be_auth.common.jpa_converter.MapToJsonConverter;
+import org.ever._4ever_be_auth.common.jpa_converter.PlainMapToJsonConverter;
+import org.ever._4ever_be_auth.common.jpa_converter.SecurityMapToJsonConverter;
 import org.ever._4ever_be_auth.common.jpa_converter.StringSetToJsonConverter;
 
 import java.time.Instant;
@@ -40,7 +41,7 @@ public class OAuth2AuthorizationEntity {
     private String authorizationGrantType;
 
     // ===== attributes (redirect_uri, state 등 포함 가능) =====
-    @Convert(converter = MapToJsonConverter.class)
+    @Convert(converter = SecurityMapToJsonConverter.class)
     @Column(name = "attributes", columnDefinition = "text")
     private Map<String, Object> attributes;
 
@@ -57,7 +58,7 @@ public class OAuth2AuthorizationEntity {
     @Column(name = "authorization_code_expires_at")
     private Instant authorizationCodeExpiresAt;
 
-    @Convert(converter = MapToJsonConverter.class)
+    @Convert(converter = PlainMapToJsonConverter.class)
     @Column(name = "authorization_code_metadata", columnDefinition = "text")
     private Map<String, Object> authorizationCodeMetadata;
 
@@ -71,7 +72,7 @@ public class OAuth2AuthorizationEntity {
     @Column(name = "access_token_expires_at")
     private Instant accessTokenExpiresAt;
 
-    @Convert(converter = MapToJsonConverter.class)
+    @Convert(converter = PlainMapToJsonConverter.class)
     @Column(name = "access_token_metadata", columnDefinition = "text")
     private Map<String, Object> accessTokenMetadata;
 
@@ -92,7 +93,7 @@ public class OAuth2AuthorizationEntity {
     @Column(name = "refresh_token_expires_at")
     private Instant refreshTokenExpiresAt;
 
-    @Convert(converter = MapToJsonConverter.class)
+    @Convert(converter = PlainMapToJsonConverter.class)
     @Column(name = "refresh_token_metadata", columnDefinition = "text")
     private Map<String, Object> refreshTokenMetadata;
 }

@@ -99,17 +99,16 @@ public class JpaOAuth2AuthorizationService implements org.springframework.securi
             var codeAfter = authorization.getToken(OAuth2AuthorizationCode.class);
             if (codeAfter != null && codeAfter.getToken() != null) {
                 var m2 = codeAfter.getMetadata();
-                log.info("[OAUTH][CODE_META] (final) keys={}, values={}", m2.keySet(), m2);
+                log.info("[OAUTH][CODE_META] (final) keys={}", m2.keySet());
                 log.info(
-                        "[OAUTH][CODE-ISSUED] 인가 코드 요청 시 로깅 clientId={}, principal={}, issuedAt={}, expiresAt={}, code={}, redirect_uri={}, state={}, code_challenge={}, method={}",
-                        clientId, principal,
-                        codeAfter.getToken().getIssuedAt(),
-                        codeAfter.getToken().getExpiresAt(),
-                        preview(codeAfter.getToken().getTokenValue()),
-                        m2.get(OAuth2ParameterNames.REDIRECT_URI),
-                        m2.get(OAuth2ParameterNames.STATE),
-                        m2.get(PkceParameterNames.CODE_CHALLENGE),
-                        m2.get(PkceParameterNames.CODE_CHALLENGE_METHOD)
+                    "[OAUTH][CODE-ISSUED] 인가 코드 요청 시 로깅 clientId={}, principal={}, issuedAt={}, expiresAt={}, code={}, redirect_uri={}, state={}, method={}",
+                    clientId, principal,
+                    codeAfter.getToken().getIssuedAt(),
+                    codeAfter.getToken().getExpiresAt(),
+                    preview(codeAfter.getToken().getTokenValue()),
+                    m2.get(OAuth2ParameterNames.REDIRECT_URI),
+                    m2.get(OAuth2ParameterNames.STATE),
+                    m2.get(PkceParameterNames.CODE_CHALLENGE_METHOD) // ← challenge 값은 로그 생략 권장
                 );
             }
         }
