@@ -71,14 +71,6 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
 
         }
 
-        long expiresIn = 0L;
-            if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
-                expiresIn = java.time.temporal.ChronoUnit.SECONDS.between(
-                        accessToken.getIssuedAt(), accessToken.getExpiresAt());
-            }
-
-        var refreshToken = tokenAuthentication.getRefreshToken();
-        String refreshTokenValue = refreshToken != null ? refreshToken.getTokenValue() : null;
 
         OAuth2AccessTokenResponse tokenResponse = sanitizeResponse(
                 accessToken.getTokenValue(),
@@ -86,8 +78,7 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
                 accessToken.getIssuedAt(),
                 accessToken.getExpiresAt(),
                 accessToken.getScopes(),
-                tokenAuthentication.getAdditionalParameters(),
-                refreshTokenValue
+                tokenAuthentication.getAdditionalParameters()
         );
 
         response.setStatus(HttpServletResponse.SC_OK);
@@ -122,8 +113,7 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
         java.time.Instant issuedAt,
         java.time.Instant expiresAt,
         Set<String> scopes,
-        Map<String, Object> additionalParameters,
-        String refreshTokenValue // ⬅︎ 추가
+        Map<String, Object> additionalParameters
     ) {
         OAuth2AccessTokenResponse.Builder builder =
                 OAuth2AccessTokenResponse.withToken(accessTokenValue);
@@ -138,9 +128,7 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
         if (scopes != null && !scopes.isEmpty()) {
             builder.scopes(scopes);
         }
-        if (refreshTokenValue != null) {                 // ⬅︎ refresh_token 포함
-            builder.refreshToken(refreshTokenValue);
-        }
+
         if (additionalParameters != null && !additionalParameters.isEmpty()) {
             builder.additionalParameters(additionalParameters);
         }
