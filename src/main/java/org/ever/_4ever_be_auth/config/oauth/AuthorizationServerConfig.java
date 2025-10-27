@@ -1,5 +1,9 @@
 package org.ever._4ever_be_auth.config.oauth;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.ever._4ever_be_auth.auth.account.handler.LoginFailureHandler;
 import org.ever._4ever_be_auth.auth.account.handler.LoginSuccessHandler;
 import org.ever._4ever_be_auth.auth.client.filter.ClientValidationFilter;
@@ -16,22 +20,36 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
 
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.*;
@@ -113,25 +131,36 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository(JpaRegisteredClientRepository repository,
-                                                                 TokenSettings tokenSettings) {
-        RegisteredClient erpWebClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("everp")
-                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("https://everp.co.kr/callback")
-                .scope("erp.user.profile")      // 접근 권한 설정
-                .scope("offline_access")        // 리프레시 토큰 쿠키 발급 허용 스코프
-                .tokenSettings(tokenSettings)
-                .clientSettings(ClientSettings.builder()
-                        .requireProofKey(true)  // PKCE
-                        .requireAuthorizationConsent(false) // 동의화면 없이 자동 승인
-                        .build())
-                .build();
+    public RegisteredClientRepository registeredClientRepository(
+            JpaRegisteredClientRepository repository,
+            TokenSettings tokenSettings,
+            PasswordEncoder passwordEncoder
+    ) {
+        RegisteredClient desired = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("everp")
+            .clientSecret(passwordEncoder.encode("super-secret")) // ← 평문 대신 인코딩
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .redirectUri("https://everp.co.kr/callback")
+            .scope("erp.user.profile")
+            .scope("offline_access")
+            .tokenSettings(tokenSettings)
+            .clientSettings(ClientSettings.builder()
+                .requireProofKey(true)
+                .requireAuthorizationConsent(false)
+                .build())
+            .build();
 
-        if (repository.findByClientId(erpWebClient.getClientId()) == null) {
-            repository.save(erpWebClient);
+        RegisteredClient existing = repository.findByClientId("everp");
+        if (existing == null) {
+            repository.save(desired);
+        } else {
+            RegisteredClient updated = RegisteredClient.from(existing)
+                .clientSecret(passwordEncoder.encode("super-secret")) // ← 기존도 갱신
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .build();
+            repository.save(updated);
         }
         return repository;
     }
@@ -266,5 +295,20 @@ public class AuthorizationServerConfig {
             // 기존 핸들러에 위임
             if (delegate != null) delegate.onAuthenticationFailure(request, response, exception);
         };
+    }
+
+    // 예시: AuthorizationServerConfig 등 구성 클래스에 추가
+    @Bean
+    OAuth2TokenGenerator<OAuth2Token> tokenGenerator(JwtEncoder jwtEncoder) {
+        JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder);
+        // jwtGenerator.setJwtCustomizer(myJwtCustomizer());
+        OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
+        return new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);
+    }
+
+    // 2) JwtEncoder 등록 (→ tokenGenerator에서 주입받음)
+    @Bean
+    JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new NimbusJwtEncoder(jwkSource);
     }
 }
