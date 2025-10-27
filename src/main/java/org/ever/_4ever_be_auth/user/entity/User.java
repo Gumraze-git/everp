@@ -90,6 +90,10 @@ public class User extends TimeStamp {
         this.passwordLastChangedAt = changedAt;
     }
 
+    public void updateContactEmail(String email) {
+        this.email = email;
+    }
+
     @PrePersist
     public void prePersist() {
         if (userId == null) {

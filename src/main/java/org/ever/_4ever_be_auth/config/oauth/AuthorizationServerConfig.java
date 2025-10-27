@@ -1,8 +1,18 @@
 package org.ever._4ever_be_auth.config.oauth;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import org.ever._4ever_be_auth.auth.account.handler.LoginFailureHandler;
+import org.ever._4ever_be_auth.auth.account.handler.LoginSuccessHandler;
 import org.ever._4ever_be_auth.auth.client.filter.ClientValidationFilter;
 import org.ever._4ever_be_auth.auth.client.service.ClientValidationService;
-import org.ever._4ever_be_auth.auth.oauth.service.JpaRegisteredClientRepository;
+import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticationFailureHandler;
+import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticationSuccessHandler;
+import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationConsentJpaRepository;
+import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationJpaRepository;
+import org.ever._4ever_be_auth.auth.oauth.service.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -10,71 +20,96 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.*;
 
 // 하나 이상의 Bean 객체가 있는 경우의 각 Bean들을 인식하기 위해 등록하는 어노테이션
 @Configuration
 @EnableConfigurationProperties(TokenProperties.class)
 public class AuthorizationServerConfig {
     /**
-     * {@code authorizationServerSecurityFilterChain}:
-     * <ul>
-     *     <il>인가 서버 전용 보안 필터 체인을 만들어 스프링 Security에 등록함.</il>
-     *     <il>즉, OAuth 2.0 인가 서버의 엔드포인트를 처리할 보안 규칙을 세팅하는 것임.</il>
-     * </ul>
-     *
+     * 민감값 프리뷰
      */
-    // 메서드가 반환하는 객체를 스프링 컨테이너에 빈으로 등록하는 어노테이션
+    private static String preview(String v) {
+        if (v == null) return "null";
+        int n = Math.min(10, v.length());
+        return v.substring(0, n) + "...";
+    }
+
     @Bean
-    @Order(1) // Bean 객체의 적용 순서를 지정하는 어노테이션
-    public SecurityFilterChain authorizationServerSecurityFilterChain(
+    @Order(2)
+    public SecurityFilterChain webSecurity(
             HttpSecurity http,
-            RegisteredClientRepository registeredClientRepository,
             ClientValidationFilter clientValidationFilter,
-            CorsConfigurationSource authorizationCorsConfigurationSource
+            LoginFailureHandler loginFailureHandler,
+            LoginSuccessHandler loginSuccessHandler
     ) throws Exception {
-
-        // RegisteredClientRepository 주입: JDBC 기반 등록 클라이언트가 애플리케이션 기동 시점에 초기화되도록 보장
-        // Configurer 인스턴스를 생성해 인가/토큰/JWKS 등 표준 엔드포인트를 등록하고 OIDC(JWKS 포함)를 활성화
-        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-        http.with(authorizationServerConfigurer, configurer -> {
-            configurer.registeredClientRepository(registeredClientRepository);
-        });
-
-        // Configurer가 노출한 표준 엔드포인트와 일반 보안 체인을 분리하기 위한 매처
-        RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-        http.securityMatcher(endpointsMatcher)
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                "/.well-known/openid-configuration",
-                                "/.well-known/jwks.json"
-                        ).permitAll()
-                        .anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-                .cors(cors -> cors.configurationSource(authorizationCorsConfigurationSource))
-                .formLogin(Customizer.withDefaults());
+        http
+                .securityMatcher("/login", "/error", "/css/**", "/js/**", "/images/**")
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .csrf(Customizer.withDefaults())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .failureHandler(loginFailureHandler)
+                        .successHandler(loginSuccessHandler)
+                        .permitAll()
+                );
         http.addFilterBefore(clientValidationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // 동일 애플리케이션에서 리소스 서버로 동작할 때 JWT 검증을 활성화
-        http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        return http.build();
+    }
 
+    @Bean
+    @Order(3)
+    public SecurityFilterChain resourceApi(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();
     }
 
@@ -101,23 +136,37 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository(JpaRegisteredClientRepository repository,
-                                                                 TokenSettings tokenSettings) {
-        RegisteredClient erpWebClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("everp")
-                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://localhost:3000/oauth2/callback")
-                .redirectUri("https://everp.co.kr/callback")
-                .scope("erp.user.profile")      // 접근 권한 설정
-                .tokenSettings(tokenSettings)
-                .clientSettings(ClientSettings.builder().requireProofKey(true).build())
+    public RegisteredClientRepository registeredClientRepository(
+            JpaRegisteredClientRepository repository,
+            TokenSettings tokenSettings,
+            PasswordEncoder passwordEncoder
+    ) {
+        RegisteredClient desired = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("everp")
+            .clientSecret(passwordEncoder.encode("super-secret")) // ← 평문 대신 인코딩
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .redirectUri("https://everp.co.kr/callback")
+            .scope("erp.user.profile")
+            .scope("offline_access")
+            .tokenSettings(tokenSettings)
+            .clientSettings(ClientSettings.builder()
+                .requireProofKey(true)
+                .requireAuthorizationConsent(false)
+                .build())
+            .build();
+
+        RegisteredClient existing = repository.findByClientId("everp");
+        if (existing == null) {
+            repository.save(desired);
+        } else {
+            RegisteredClient updated = RegisteredClient.from(existing)
+                .clientSecret(passwordEncoder.encode("super-secret")) // ← 기존도 갱신
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .build();
-
-        if (repository.findByClientId(erpWebClient.getClientId()) == null) {
-            repository.save(erpWebClient);
+            repository.save(updated);
         }
-
         return repository;
     }
 
@@ -127,22 +176,144 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public CorsConfigurationSource authorizationCorsConfigurationSource(
-            @Value("${app.security.cors.allowed-origins:https://everp.co.kr}") String allowedOrigins) {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(Stream.of(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isEmpty())
-                .collect(Collectors.toList()));
-        configuration.setAllowedMethods(Stream.of("GET", "POST", "OPTIONS").collect(Collectors.toList()));
-        configuration.setAllowedHeaders(Stream.of("Authorization", "Content-Type", "Accept", "Origin").collect(Collectors.toList()));
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/oauth2/**", configuration);
-        source.registerCorsConfiguration("/login", configuration);
-        return source;
+    public OAuth2AuthorizationService authorizationService(
+            OAuth2AuthorizationMapper authorizationMapper,
+            OAuth2AuthorizationJpaRepository authorizationRepository
+    ) {
+        return new JpaOAuth2AuthorizationService(authorizationMapper, authorizationRepository);
     }
 
+    @Bean
+    public OAuth2AuthorizationConsentService authorizationConsentService(
+            OAuth2AuthorizationConsentMapper consentMapper,
+            OAuth2AuthorizationConsentJpaRepository consentRepository
+    ) {
+        return new JpaOAuth2AuthorizationConsentService(consentMapper, consentRepository);
+    }
+
+    /**
+     * {@code authorizationServerSecurityFilterChain}:
+     * <ul>
+     *     <il>인가 서버 전용 보안 필터 체인을 만들어 스프링 Security에 등록함.</il>
+     *     <il>즉, OAuth 2.0 인가 서버의 엔드포인트를 처리할 보안 규칙을 세팅하는 것임.</il>
+     * </ul>
+     *
+     */
+    // 메서드가 반환하는 객체를 스프링 컨테이너에 빈으로 등록하는 어노테이션
+    @Bean
+    @Order(1) // Bean 객체의 적용 순서를 지정하는 어노테이션
+    public SecurityFilterChain authorizationServerSecurityFilterChain(
+            HttpSecurity http,
+            RegisteredClientRepository registeredClientRepository,
+            ClientValidationFilter clientValidationFilter,
+            OAuth2AuthorizationService authorizationService,
+            OAuth2AuthorizationConsentService authorizationConsentService,
+            RefreshTokenCookieAuthenticationSuccessHandler refreshTokenCookieAuthenticationSuccessHandler,
+            RefreshTokenCookieAuthenticationFailureHandler refreshTokenCookieAuthenticationFailureHandler
+    ) throws Exception {
+
+        // RegisteredClientRepository 주입: JDBC 기반 등록 클라이언트가 애플리케이션 기동 시점에 초기화되도록 보장
+        // Configurer 인스턴스를 생성해 인가/토큰/JWKS 등 표준 엔드포인트를 등록하고 OIDC(JWKS 포함)를 활성화
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+        http.with(authorizationServerConfigurer, configurer -> configurer
+                .registeredClientRepository(registeredClientRepository)
+                .authorizationService(authorizationService)
+                .authorizationConsentService(authorizationConsentService)
+                .tokenEndpoint(endpoint -> endpoint
+                        .accessTokenResponseHandler(
+                                loggingTokenSuccessHandler(refreshTokenCookieAuthenticationSuccessHandler))
+                        .errorResponseHandler(
+                                loggingTokenFailureHandler(refreshTokenCookieAuthenticationFailureHandler))
+                )
+        );
+
+        // Configurer가 노출한 표준 엔드포인트와 일반 보안 체인을 분리하기 위한 매처
+        RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+        http.securityMatcher(endpointsMatcher)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(
+                                "/.well-known/jwks.json"
+                        ).permitAll()
+                        .anyRequest().authenticated())
+                .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll());
+        http.addFilterBefore(clientValidationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // (JWT 검증은 별도 SecurityFilterChain에서 설정)
+
+        return http.build();
+    }
+
+    /**
+     * 토큰 응답 성공 로깅 래퍼
+     */
+    private AuthenticationSuccessHandler loggingTokenSuccessHandler(AuthenticationSuccessHandler delegate) {
+        return (request, response, authentication) -> {
+            // 요청 파라미터(원인 파악에 중요한 것 위주)
+            String gt = request.getParameter(GRANT_TYPE);
+            String cid = request.getParameter(CLIENT_ID);
+            String redirect = request.getParameter(REDIRECT_URI);
+            String code = request.getParameter(CODE);
+            String verifier = request.getParameter("code_verifier"); // PkceParameterNames.CODE_VERIFIER 상수도 가능
+
+            // 요약 로그
+            // (성공 시에도 어떤 흐름으로 들어왔는지 남겨두면 이후 비교가 쉬움)
+            org.slf4j.LoggerFactory.getLogger(getClass())
+                    .info("[TOKEN][SUCCESS] grant_type={}, client_id={}, redirect_uri={}, code(10)={}, code_verifier(yn)={}",
+                            gt, cid, redirect,
+                            preview(code), (verifier != null && !verifier.isBlank()));
+
+            // 기존 핸들러에 위임
+            if (delegate != null) delegate.onAuthenticationSuccess(request, response, authentication);
+        };
+    }
+
+    /**
+     * 토큰 응답 실패 로깅 래퍼
+     */
+    private AuthenticationFailureHandler loggingTokenFailureHandler(AuthenticationFailureHandler delegate) {
+        return (request, response, exception) -> {
+            String gt = request.getParameter(GRANT_TYPE);
+            String cid = request.getParameter(CLIENT_ID);
+            String redirect = request.getParameter(REDIRECT_URI);
+            String code = request.getParameter(CODE);
+            String verifier = request.getParameter("code_verifier");
+            String msg = (exception != null ? exception.getMessage() : "n/a");
+            String ex = (exception != null ? exception.getClass().getSimpleName() : "n/a");
+
+            // 중요 포인트: invalid_grant의 흔한 원인들을 한 줄에 묶어서 확인
+            org.slf4j.LoggerFactory.getLogger(getClass())
+                    .warn("[TOKEN][FAIL] {}: {} | grant_type={}, client_id={}, redirect_uri={}, code(10)={}, code_verifier(yn)={}, cookies={}",
+                            ex, msg, gt, cid, redirect, preview(code),
+                            (verifier != null && !verifier.isBlank()),
+                            request.getHeader("Cookie"));
+
+            // 추가로, 헤더/파라미터를 더 보고 싶으면 디버그 레벨로 남겨도 좋음
+            if (org.slf4j.LoggerFactory.getLogger(getClass()).isDebugEnabled()) {
+                var paramNames = request.getParameterMap().keySet();
+                org.slf4j.LoggerFactory.getLogger(getClass())
+                        .debug("[TOKEN][REQ] params={}", paramNames);
+            }
+
+            // 기존 핸들러에 위임
+            if (delegate != null) delegate.onAuthenticationFailure(request, response, exception);
+        };
+    }
+
+    // 예시: AuthorizationServerConfig 등 구성 클래스에 추가
+    @Bean
+    OAuth2TokenGenerator<OAuth2Token> tokenGenerator(JwtEncoder jwtEncoder) {
+        JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder);
+        // jwtGenerator.setJwtCustomizer(myJwtCustomizer());
+        OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
+        return new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);
+    }
+
+    // 2) JwtEncoder 등록 (→ tokenGenerator에서 주입받음)
+    @Bean
+    JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new NimbusJwtEncoder(jwkSource);
+    }
 }

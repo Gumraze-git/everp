@@ -6,6 +6,7 @@ import org.ever._4ever_be_auth.auth.account.handler.LoginSuccessHandler;
 import org.ever._4ever_be_auth.auth.client.filter.ClientValidationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
     @Bean
-    @Order(2)
+    @Order(Ordered.LOWEST_PRECEDENCE)
     public SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
             ClientValidationFilter clientValidationFilter,

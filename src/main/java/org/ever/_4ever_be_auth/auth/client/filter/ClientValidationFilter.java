@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_auth.auth.client.dto.OAuthRequestParams;
 import org.ever._4ever_be_auth.auth.client.exception.ClientValidationException;
 import org.ever._4ever_be_auth.auth.client.service.ClientValidationService;
@@ -19,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @AllArgsConstructor
 public class ClientValidationFilter extends OncePerRequestFilter {
 
@@ -38,6 +40,9 @@ public class ClientValidationFilter extends OncePerRequestFilter {
 
         if (AUTHORIZATION_PATH.equals(path)) {
             OAuthRequestParams params = extractParams(request);
+
+            log.info("[INFO] OAuth2 인가 요청: 클라이언트 Id={}, 리다이렉트 uri={}, scope={}, state={}",
+                    params.clientId(), params.redirectUri(), params.scope(), params.state());
 
             if (!validateParam(params.clientId(), params.redirectUri(), response)) {
                 return;

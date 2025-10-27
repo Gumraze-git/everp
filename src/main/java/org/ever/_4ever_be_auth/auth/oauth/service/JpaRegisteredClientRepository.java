@@ -2,6 +2,7 @@ package org.ever._4ever_be_auth.auth.oauth.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_auth.auth.oauth.entity.RegisteredClientEntity;
 import org.ever._4ever_be_auth.auth.oauth.repository.RegisteredClientJpaRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JpaRegisteredClientRepository implements RegisteredClientRepository {
@@ -26,6 +28,7 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
             RegisteredClientEntity target = existing.get();
             target.updateFrom(entity);
         } else {
+            log.info("[INFO] 새로운 등록된 클라이언트(RegisteredClient)를 저장합니다.: {}", entity.getId());
             jpaRepository.save(entity);
         }
     }
