@@ -49,8 +49,25 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
 
         OAuth2AccessToken accessToken = tokenAuthentication.getAccessToken();
 
+        Object p = tokenAuthentication.getPrincipal();
+        String principalName =
+                (p instanceof org.springframework.security.core.Authentication a) ? a.getName() :
+                (p instanceof java.security.Principal jp) ? jp.getName() :
+                (p != null ? p.toString() : "n/a");
+
+        log.info("[RT-COOKIE] 리프레시 토큰 쿠키 로그: refreshTokenPresent={}, principal={}, client={}",
+                (tokenAuthentication.getRefreshToken() != null),
+                principalName,
+                tokenAuthentication.getRegisteredClient() != null
+                        ? tokenAuthentication.getRegisteredClient().getClientId() : "n/a");
+
+
         if (tokenAuthentication.getRefreshToken() != null) {
             addRefreshTokenCookie(response, tokenAuthentication.getRefreshToken().getTokenValue());
+
+            log.info("[RT-COOKIE][SET] 리프레시 토큰 쿠키 로그: maxAgeSeconds={}, secure=true, httpOnly=true, sameSite=None",
+                refreshTokenTtl != null ? refreshTokenTtl.getSeconds() : -1);
+
         }
 
         OAuth2AccessTokenResponse sanitizedResponse = sanitizeResponse(
@@ -82,6 +99,9 @@ public class RefreshTokenCookieAuthenticationSuccessHandler implements Authentic
                 .path("/")
                 .maxAge(refreshTokenTtl)
                 .build();
+
+        log.info("[RT-COOKIE][HEADER] 쿠기 로그: {}", cookie);
+
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 

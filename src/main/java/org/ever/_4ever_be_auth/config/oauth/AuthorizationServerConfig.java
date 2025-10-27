@@ -122,6 +122,7 @@ public class AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri("https://everp.co.kr/callback")
                 .scope("erp.user.profile")      // 접근 권한 설정
+                .scope("offline_access")        // 리프레시 토큰 쿠키 발급 허용 스코프
                 .tokenSettings(tokenSettings)
                 .clientSettings(ClientSettings.builder().
                         requireProofKey(true). // PKCE
