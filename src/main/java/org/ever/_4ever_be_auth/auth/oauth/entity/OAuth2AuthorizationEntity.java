@@ -62,6 +62,9 @@ public class OAuth2AuthorizationEntity {
     @Column(name = "authorization_code_metadata", columnDefinition = "text")
     private Map<String, Object> authorizationCodeMetadata;
 
+    @Column(name = "authorized_scopes", length = 1000)
+    private String authorizedScopes;
+
     // ===== Access Token =====
     @Column(name = "access_token_value", columnDefinition = "text")
     private String accessTokenValue;

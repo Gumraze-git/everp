@@ -56,7 +56,9 @@ public class OAuth2AuthorizationMapper {
                 .principalName(authorization.getPrincipalName())
                 .authorizationGrantType(authorization.getAuthorizationGrantType().getValue())
                 .attributes(attrs)
+                .authorizedScopes(joinScopes(authorization.getAuthorizedScopes()))
                 .state(authorization.getAttribute(STATE));
+
 
         // --- Authorization Code
         var code = authorization.getToken(OAuth2AuthorizationCode.class);
@@ -110,6 +112,8 @@ public class OAuth2AuthorizationMapper {
                     attrs.putAll(attrMap);
                     if (entity.getState() != null) attrs.put(STATE, entity.getState());
                 });
+
+        builder.authorizedScopes(splitScopes(entity.getAuthorizedScopes()));
 
         // --- 평탄화된 OAuth2AuthorizationRequest 복원
         Object reqObj = attrMap.get(OAuth2AuthorizationRequest.class.getName());
@@ -282,4 +286,16 @@ public class OAuth2AuthorizationMapper {
     private Map<String, Object> toStringObjectMapOrEmpty(Object v) {
         return toStringObjectMap(v);
     }
+
+    private static String joinScopes(Set<String> scopes) {
+        return (scopes == null || scopes.isEmpty()) ? null : String.join(" ", scopes);
+    }
+
+    private static Set<String> splitScopes(String s) {
+        if (s == null || s.isBlank()) return Set.of();
+        return Arrays.stream(s.split("[\\s,]+"))
+                .filter(v -> !v.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
 }
