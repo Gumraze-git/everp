@@ -25,7 +25,7 @@
             </div>
 
             <form id="loginForm" method="post" th:action="@{/login}">
-                <input th:name="${_csrf.parameterName}" th:value="${_csrf.token}" type="hidden"/>
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
 
                 <th:block th:if="${oauth2Params != null}">
                     <input name="client_id" th:value="${oauth2Params.clientId()}" type="hidden"/>

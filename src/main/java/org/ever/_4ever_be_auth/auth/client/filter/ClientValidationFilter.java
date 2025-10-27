@@ -24,57 +24,38 @@ import java.io.IOException;
 @AllArgsConstructor
 public class ClientValidationFilter extends OncePerRequestFilter {
 
-    private static final String LOGIN_PATH = "/login";
     private static final String AUTHORIZATION_PATH = "/oauth2/authorize";
-    private static final String OAUTH_REQUEST_SESSION_KEY = "OAUTH2_AUTHORIZATION_REQUEST";
 
     private final ClientValidationService clientValidationService;
-    private final RequestCache requestCache = new HttpSessionRequestCache();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain
-    ) throws ServletException, IOException {
-        String path = request.getServletPath(); // 요청(request)에 대한 서블릿 경로를 가져옴, ex) /oauth2/authorize
+                                    FilterChain chain)
+            throws ServletException, IOException {
 
-        if (AUTHORIZATION_PATH.equals(path)) {
+        final String path = request.getServletPath();
+        final String method = request.getMethod();
+
+        // ✅ 인가 엔드포인트 GET에서만 전처리 검증
+        if (AUTHORIZATION_PATH.equals(path) && "GET".equalsIgnoreCase(method)) {
             OAuthRequestParams params = extractParams(request);
 
-            log.info("[INFO] OAuth2 인가 요청: 클라이언트 Id={}, 리다이렉트 uri={}, scope={}, state={}",
+            log.info("[INFO] OAuth2 인가 요청: client_id={}, redirect_uri={}, scope={}, state={}",
                     params.clientId(), params.redirectUri(), params.scope(), params.state());
 
-            if (!validateParam(params.clientId(), params.redirectUri(), response)) {
+            try {
+                clientValidationService.validateClient(params.clientId(), params.redirectUri());
+            } catch (ClientValidationException e) {
+                // 표준 방식으로 400만 내려주고 종료 (예외를 던져도 무방)
+                response.sendError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
                 return;
             }
-
-            HttpSession session = request.getSession();
-            session.setAttribute(OAUTH_REQUEST_SESSION_KEY, params);
-            request.setAttribute("oauth2Params", params);
-        } else if (LOGIN_PATH.equals(path)) {
-            SavedRequest savedRequest = requestCache.getRequest(request, response);
-
-            if (savedRequest == null) {
-                response.sendError(HttpStatus.BAD_REQUEST.value(), "직접 접근할 수 없는 경로입니다.");
-                return;
-            }
-
-            HttpSession session = request.getSession(false);
-            if (session == null) {
-                response.sendError(HttpStatus.BAD_REQUEST.value(), "만료된 인가 요청입니다.");
-                return;
-            }
-
-            OAuthRequestParams params =
-                    (OAuthRequestParams) session.getAttribute(OAUTH_REQUEST_SESSION_KEY);
-            if (params == null) {
-                response.sendError(HttpStatus.BAD_REQUEST.value(), "만료된 인가 요청입니다.");
-                return;
-            }
-
-            request.setAttribute("oauth2Params", params);
+            // SavedRequest/세션 저장은 Spring이 처리하므로 여기서 건드리지 않음
         }
-        filterChain.doFilter(request, response);
+
+        // 그 외 모든 경로(/login 포함)는 그대로 통과
+        chain.doFilter(request, response);
     }
 
     private OAuthRequestParams extractParams(HttpServletRequest request) {
