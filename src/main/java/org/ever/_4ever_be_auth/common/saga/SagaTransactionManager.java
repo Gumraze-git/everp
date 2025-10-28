@@ -2,9 +2,12 @@ package org.ever._4ever_be_auth.common.saga;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_auth.common.audit.EntityAuditListener;
+import org.ever._4ever_be_auth.common.audit.TransactionEntityChangeCollector;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
