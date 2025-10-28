@@ -8,6 +8,7 @@ import org.ever._4ever_be_auth.user.application.port.in.AuthUserSagaPort;
 import org.ever._4ever_be_auth.user.entity.User;
 import org.ever._4ever_be_auth.user.enums.UserRole;
 import org.ever._4ever_be_auth.user.repository.UserRepository;
+import org.ever._4ever_be_auth.user.service.UserNotificationService;
 import org.ever._4ever_be_auth.user.util.TemporaryPasswordGenerator;
 import org.ever.event.CreateAuthUserEvent;
 import org.ever.event.CreateAuthUserResultEvent;
@@ -38,6 +39,7 @@ public class AuthUserSagaService implements AuthUserSagaPort {
     private final PasswordEncoder passwordEncoder;
     private final TemporaryPasswordGenerator passwordGenerator;
     private final SagaRollbackService sagaRollbackService;
+    private final UserNotificationService notificationService;
 
 
     @Override
@@ -71,6 +73,11 @@ public class AuthUserSagaService implements AuthUserSagaPort {
             log.info("[SAGA][SUCCESS] 로그인 계정 생성 완료 - transactionId: {}",
                     event.getTransactionId());
 
+            // 이메일 발송
+            notificationService.sendUserNotification(event.getEmail(), loginEmail,
+                    temporaryPassword);
+            log.info("[SAGA][SUCCESS] 이메일 발송이 성공적으로 완료되었습니다. - transactionId: {}", event.getTransactionId());
+
             return CreateAuthUserResultEvent.builder()
                     .eventId(event.getEventId())
                     .transactionId(event.getTransactionId())
@@ -84,6 +91,7 @@ public class AuthUserSagaService implements AuthUserSagaPort {
                     .eventId(event.getEventId())
                     .transactionId(event.getTransactionId())
                     .success(false)
+                    .userId(event.getUserId())
                     .failureReason(error.getMessage())
                     .build();
         }
