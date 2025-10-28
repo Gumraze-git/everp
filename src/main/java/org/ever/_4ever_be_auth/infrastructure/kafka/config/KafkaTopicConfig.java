@@ -22,6 +22,14 @@ public class KafkaTopicConfig {
     public static final String BUSINESS_EVENT_TOPIC = "business-event";
     public static final String ALARM_EVENT_TOPIC = "alarm-event";
 
+    // 고객사 등록 토픽
+    public static final String CREATE_USER_TOPIC = "create-user";
+    public static final String USER_CREATED_TOPIC = "user-created";
+    public static final String USER_CREATION_FAILED_TOPIC = "user-creation-failed";
+    public static final String USER_ROLLBACK_TOPIC = "user-rollback";
+    public static final String PROCESS_COMPLETED_TOPIC = "process-completed";
+    public static final String AUTH_USER_RESULT_TOPIC = "auth-user-result";
+
     @Bean
     public NewTopic authUserRegisterTopic() {
         return TopicBuilder.name(AUTH_USER_REGISTER_TOPIC)
