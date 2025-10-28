@@ -156,7 +156,10 @@ public class AuthorizationServerConfig {
 
         RegisteredClient existing = repository.findByClientId("everp");
         if (existing == null) {
-            repository.save(desired);
+             RegisteredClient updated = RegisteredClient.from(existing)
+                .redirectUri("http://localhost:3000/callback")
+                .build();
+            repository.save(updated);
         } else {
             RegisteredClient updated = RegisteredClient.from(existing)
                 .clientSecret(passwordEncoder.encode("super-secret")) // ← 기존도 갱신
