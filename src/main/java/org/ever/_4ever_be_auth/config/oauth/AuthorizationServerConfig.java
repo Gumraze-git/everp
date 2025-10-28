@@ -144,6 +144,7 @@ public class AuthorizationServerConfig {
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
             .redirectUri("https://everp.co.kr/callback")
+            .redirectUri("http://localhost:3000/callback")
             .scope("erp.user.profile")
             .scope("offline_access")
             .tokenSettings(tokenSettings)
