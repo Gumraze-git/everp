@@ -15,8 +15,18 @@ public class SagaRollbackService {
 
     @Transactional
     public void rollbackUser(String userId, String transactionId) {
-        log.warn("[SAGA][ROLLBACK] 로그인 계정 삭제 - txId: {}, userId: {}",
-                transactionId, userId);
-        userRepository.deleteUserByUserId(userId);
+        if (userId == null || userId.isBlank()) {
+            log.warn("[SAGA][ROLLBACK] userId가 없어 보상 스킵 - txId: {}", transactionId);
+            return;
+        }
+
+        boolean exists = userRepository.existsByUserId(userId);
+        if (!exists) {
+            log.info("[SAGA][ROLLBACK] 이미 삭제된 사용자 - txId: {}, userId: {}", transactionId, userId);
+            return;
+        }
+
+        userRepository.deleteByUserId(userId);
+        log.warn("[SAGA][ROLLBACK] 로그인 계정 삭제 완료 - txId: {}, userId: {}", transactionId, userId);
     }
 }
