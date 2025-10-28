@@ -33,6 +33,7 @@ public class SecurityConfig {
         http.addFilterAfter(passwordChangeEnforcementFilter, UsernamePasswordAuthenticationFilter.class);
 
         http
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/auth/health",
