@@ -4,9 +4,8 @@ import org.ever._4ever_be_auth.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
-import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, String> {
 
     boolean existsByLoginEmail(String email);
 
@@ -14,5 +13,5 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
 
-    Optional<User> deleteUserByUserId(String userId);
+    void deleteUserByUserId(String userId);
 }

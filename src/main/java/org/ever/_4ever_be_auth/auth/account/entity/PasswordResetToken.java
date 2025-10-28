@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "password_reset_tokens")
@@ -16,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PasswordResetToken {
     @Id
-    private UUID id;
+    private String id;
 
     @Column(nullable = false, unique = true, length = 128)
     private String token;
@@ -28,17 +27,17 @@ public class PasswordResetToken {
     private boolean used;
 
     @Column(nullable = false)
-    private UUID userId;
+    private String userId;
 
     @Builder
-    private PasswordResetToken(String token, UUID userId, LocalDateTime expiresAt) {
+    private PasswordResetToken(String token, String userId, LocalDateTime expiresAt) {
         this.token = token;
         this.userId = userId;
         this.expiresAt = expiresAt;
         this.used = false;
     }
 
-    public static PasswordResetToken create(String token, UUID userId, LocalDateTime expiresAt) {
+    public static PasswordResetToken create(String token, String userId, LocalDateTime expiresAt) {
         return PasswordResetToken.builder()
                 .token(token)
                 .userId(userId)
@@ -57,7 +56,7 @@ public class PasswordResetToken {
     @PrePersist
     public void prePersist() {
         if (id == null) {
-            id = UuidCreator.getTimeOrderedEpoch();
+            id = UuidCreator.getTimeOrderedEpoch().toString();
         }
     }
 }
