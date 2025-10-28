@@ -1,7 +1,9 @@
 package org.ever._4ever_be_auth.user.application.port.in;
 
-import org.ever._4ever_be_auth.infrastructure.kafka.event.AuthUserCompletedEvent;
+import org.ever.event.CreateAuthUserEvent;
+import org.ever.event.CreateAuthUserResultEvent;
 
 public interface AuthUserSagaPort {
-    Void handleAuthUserCompleted(AuthUserCompletedEvent event);
+
+    CreateAuthUserResultEvent handleCreateAuthUser(CreateAuthUserEvent event);
 }
