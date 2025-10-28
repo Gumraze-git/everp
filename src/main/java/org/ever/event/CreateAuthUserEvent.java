@@ -18,6 +18,6 @@ public class CreateAuthUserEvent {
     // 카프카 이벤트로 전송할 데이터
     private String userId;
     private String email;
-    private String positionName;
-    private String departmentName;
+    private String positionCode;
+    private String departmentCode;
 }
