@@ -7,7 +7,6 @@ import jakarta.persistence.PreRemove;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Auditable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -25,6 +24,11 @@ public class EntityAuditListener {
     private static final ThreadLocal<Map<String, Object>> originalEntityStates = new ThreadLocal<>();
     private static TransactionEntityChangeCollector changeCollector;
 
+    @Autowired
+    public void setChangeCollector(TransactionEntityChangeCollector collector) {
+        EntityAuditListener.changeCollector = collector;
+    }
+
     /**
      * 쓰레드 로컬에 저장된 원본 상태 정보 정리
      */
@@ -32,14 +36,8 @@ public class EntityAuditListener {
         originalEntityStates.remove();
     }
 
-    @Autowired
-    public void setChangeCollector(TransactionEntityChangeCollector collector) {
-        EntityAuditListener.changeCollector = collector;
-    }
-
     /**
      * 엔티티 로드 시 원본 상태 저장
-     *
      * @param entity 로드된 엔티티
      */
     @PostLoad
@@ -67,7 +65,6 @@ public class EntityAuditListener {
 
     /**
      * 엔티티 생성 이후 호출
-     *
      * @param entity 생성된 엔티티
      */
     @PostPersist
@@ -85,7 +82,6 @@ public class EntityAuditListener {
 
     /**
      * 엔티티 업데이트 이후 호출
-     *
      * @param entity 업데이트된 엔티티
      */
     @PostUpdate
@@ -115,7 +111,6 @@ public class EntityAuditListener {
 
     /**
      * 엔티티 삭제 전 호출
-     *
      * @param entity 삭제할 엔티티
      */
     @PreRemove
