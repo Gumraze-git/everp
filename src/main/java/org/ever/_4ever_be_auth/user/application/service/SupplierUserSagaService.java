@@ -37,8 +37,9 @@ public class SupplierUserSagaService implements SupplierUserSagaPort {
                     .userId(result.user().getUserId())
                     .build();
         } catch (Exception error) {
-            log.error(\"[SAGA][SUPPLIER][FAIL] 공급사 사용자 계정 생성 실패 - txId: {}, cause: {}\", event.getTransactionId(), error.getMessage(), error);
-                    sagaRollbackService.rollbackUser(event.getUserId(), event.getTransactionId());
+            log.error("[SAGA][SUPPLIER][FAIL] 공급사 사용자 계정 생성 실패 - txId: {}, cause: {}",
+                    event.getTransactionId(), error.getMessage(), error);
+            sagaRollbackService.rollbackUser(event.getUserId(), event.getTransactionId());
             return CreateAuthUserResultEvent.builder()
                     .eventId(event.getEventId())
                     .transactionId(event.getTransactionId())
