@@ -5,14 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_auth.common.exception.BusinessException;
 import org.ever._4ever_be_auth.common.exception.ErrorCode;
 import org.ever._4ever_be_auth.user.application.port.in.AuthUserSagaPort;
-import org.ever._4ever_be_auth.user.entity.User;
 import org.ever._4ever_be_auth.user.enums.UserRole;
-import org.ever._4ever_be_auth.user.repository.UserRepository;
-import org.ever._4ever_be_auth.user.service.UserNotificationService;
-import org.ever._4ever_be_auth.user.util.TemporaryPasswordGenerator;
 import org.ever.event.CreateAuthUserEvent;
 import org.ever.event.CreateAuthUserResultEvent;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +17,6 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AuthUserSagaService implements AuthUserSagaPort {
-
-    private static final int TEMP_PASSWORD_LENGTH = 10;
 
     private static final Map<String, String> DEPARTMENT_ROLE_PREFIX = Map.of(
             "DEPT-001", "MM",
@@ -35,54 +28,30 @@ public class AuthUserSagaService implements AuthUserSagaPort {
     );
 
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final TemporaryPasswordGenerator passwordGenerator;
+    private final UserAccountCreationSupport accountCreationSupport;
     private final SagaRollbackService sagaRollbackService;
-    private final UserNotificationService notificationService;
 
 
     @Override
     @Transactional
     public CreateAuthUserResultEvent handleCreateAuthUser(CreateAuthUserEvent event) {
         try {
-            // userId
-            String externalUserId = event.getUserId();
-
-            // loginEmail 설정
-            String loginEmail = buildLoginEmail(event.getEmail());
-            validateDuplicate(loginEmail);      // 로그인 이메일 검증
-
-            // 비밀번호 설정
-            String temporaryPassword = passwordGenerator.generate(TEMP_PASSWORD_LENGTH);
-            String encodedPassword = passwordEncoder.encode(temporaryPassword);
-
-            // 사용자 역할 mapping
             UserRole userRole = resolveUserRole(event.getDepartmentCode(), event.getPositionCode());
 
-            User user = User.createWithExternalId(
-                    externalUserId,
+            UserAccountCreationSupport.AccountCreationResult result =
+                    accountCreationSupport.createAccount(
+                            event.getTransactionId(),
+                            event.getEventId(),
+                            event.getUserId(),
                     event.getEmail(),
-                    loginEmail,
-                    encodedPassword,
                     userRole
-            );
-
-            userRepository.save(user);
-
-            log.info("[SAGA][SUCCESS] 로그인 계정 생성 완료 - transactionId: {}",
-                    event.getTransactionId());
-
-            // 이메일 발송
-            notificationService.sendUserNotification(event.getEmail(), loginEmail,
-                    temporaryPassword);
-            log.info("[SAGA][SUCCESS] 이메일 발송이 성공적으로 완료되었습니다. - transactionId: {}", event.getTransactionId());
+                    );
 
             return CreateAuthUserResultEvent.builder()
                     .eventId(event.getEventId())
                     .transactionId(event.getTransactionId())
                     .success(true)
-                    .userId(user.getUserId())
+                    .userId(result.user().getUserId())
                     .build();
         } catch (Exception error) {
             log.error("[SAGA][FAIL] 로그인 계정 생성 실패 - transactionId: {}, cause: {}", event.getTransactionId(), error.getMessage(), error);
@@ -144,17 +113,4 @@ public class AuthUserSagaService implements AuthUserSagaPort {
 
     }
 
-    private void validateDuplicate(String loginEmail) {
-        if (userRepository.existsByLoginEmail(loginEmail)) {
-            throw new BusinessException(
-                    ErrorCode.DUPLICATE_RESOURCE,
-                    "[SAGA] 이미 존재하는 로그인 이메일 입니다."
-            );
-        }
-    }
-
-    private String buildLoginEmail(String email) {
-        String prefix = email.substring(0, email.indexOf("@"));
-        return prefix + "@everp.com";
-    }
 }
