@@ -1,5 +1,6 @@
 package org.ever._4ever_be_auth.auth.account.service;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -41,7 +41,7 @@ public class AccountServiceImpl implements AccountService {
 
         PasswordResetToken token = tokenRepository.save(
                 PasswordResetToken.create(
-                        UUID.randomUUID().toString(),
+                        UuidCreator.getTimeOrderedEpoch().toString(),
                         user.getUserId(),
                         LocalDateTime.now().plus(TOKEN_TTL)
                 )

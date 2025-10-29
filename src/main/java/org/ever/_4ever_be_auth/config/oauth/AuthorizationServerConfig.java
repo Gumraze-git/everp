@@ -75,6 +75,7 @@ public class AuthorizationServerConfig {
         var handler = new CsrfTokenRequestAttributeHandler();
         http
                 .securityMatcher("/login", "/error", "/css/**", "/js/**", "/images/**")
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated()
@@ -101,6 +102,7 @@ public class AuthorizationServerConfig {
     public SecurityFilterChain resourceApi(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/**")
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated()
                 )
@@ -139,7 +141,8 @@ public class AuthorizationServerConfig {
     ) {
         RegisteredClient desired = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("everp")
-            .clientSecret(passwordEncoder.encode("super-secret")) // ← 평문 대신 인코딩
+            .clientSecret(passwordEncoder.encode("super-secret")) // 평문 대신 인코딩
+            // 클라이언트 HTTP Basic 인증 방식 지정
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -153,15 +156,34 @@ public class AuthorizationServerConfig {
                 .build())
             .build();
 
+        // 2) 로컬 개발용 SPA(public) 클라이언트 추가
+        RegisteredClient spa = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("everp-spa")
+            // secret 제거 (public client)
+            .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+            // Authorization Code + PKCE
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .redirectUri("http://localhost:3000/callback")
+            .scope("erp.user.profile")
+            .scope("offline_access") // 필요 시 refresh token 발급
+            .tokenSettings(tokenSettings)
+            .clientSettings(ClientSettings.builder()
+                .requireProofKey(true)              // PKCE 필수
+                .requireAuthorizationConsent(false) // 동의 화면 필요 없으면 false
+                .build())
+            .build();
+
+        // 저장/업데이트
         RegisteredClient existing = repository.findByClientId("everp");
-        if (existing == null) {
-            repository.save(desired);
-        } else {
-            RegisteredClient updated = RegisteredClient.from(existing)
-                .clientSecret(passwordEncoder.encode("super-secret")) // ← 기존도 갱신
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .build();
-            repository.save(updated);
+        if (existing == null) repository.save(desired);
+        else repository.save(RegisteredClient.from(existing)
+            .clientSecret(passwordEncoder.encode("super-secret"))
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .build());
+
+        // spa 저장
+        if (repository.findByClientId("everp-spa") == null) {
+            repository.save(spa);
         }
         return repository;
     }
@@ -226,6 +248,7 @@ public class AuthorizationServerConfig {
         // Configurer가 노출한 표준 엔드포인트와 일반 보안 체인을 분리하기 위한 매처
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
         http.securityMatcher(endpointsMatcher)
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/.well-known/jwks.json"
