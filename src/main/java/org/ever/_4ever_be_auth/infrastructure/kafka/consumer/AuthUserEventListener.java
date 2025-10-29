@@ -24,7 +24,7 @@ public class AuthUserEventListener {
 
     @KafkaListener(
             topics = KafkaTopicConfig.CREATE_USER_TOPIC,
-            groupId = "auth-user-saga"
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     public void handleEvent(CreateAuthUserEvent event) {
         log.info("[KAFKA] CreateAuthUserEvent 수신 - transactionId: {}, userId: {}", event.getTransactionId(), event.getUserId());
