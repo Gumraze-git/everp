@@ -11,7 +11,7 @@ import org.ever._4ever_be_auth.common.entity.TimeStamp;
 import org.ever._4ever_be_auth.user.enums.UserRole;
 import org.ever._4ever_be_auth.user.enums.UserStatus;
 import org.ever._4ever_be_auth.user.enums.UserType;
-import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -21,11 +21,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
-public class User extends TimeStamp {
+public class User extends TimeStamp implements Persistable<String> {
 
     @Id
-    @GeneratedValue
-    @UuidGenerator
     @Column(name = "user_id", nullable = false, updatable = false, unique = true, length = 36)
     private String userId;
 
@@ -112,5 +110,15 @@ public class User extends TimeStamp {
         if (userId == null) {
             userId = UuidCreator.getTimeOrdered().toString();
         }
+    }
+
+    @Override
+    public String getId() {
+        return userId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return userId == null;
     }
 }
