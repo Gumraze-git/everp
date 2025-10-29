@@ -33,6 +33,7 @@ public class JwtTokenCustomizerConfig {
             userRepository.findByLoginEmail(username).ifPresent(user -> {
                 JwtClaimsSet.Builder claims = context.getClaims();
                 claims.claim("user_id", user.getUserId());
+                claims.claim("login_email", user.getLoginEmail());
                 claims.claim("user_role", user.getUserRole().name());
                 claims.claim("user_type", user.getUserType().name());
             });
