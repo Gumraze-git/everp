@@ -5,7 +5,6 @@ import org.ever._4ever_be_auth.common.exception.BusinessException;
 import org.ever._4ever_be_auth.common.exception.ErrorCode;
 import org.ever._4ever_be_auth.user.dto.CreateUserRequestDto;
 import org.ever._4ever_be_auth.user.entity.User;
-import org.ever._4ever_be_auth.user.enums.Permission;
 import org.ever._4ever_be_auth.user.enums.UserRole;
 import org.ever._4ever_be_auth.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,11 +23,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(CreateUserRequestDto requestDto, UserRole requesterUserRole) {
-        if (!requesterUserRole.getPermissions().contains(Permission.CREATE_USER)) {
-            throw new BusinessException(
-                    ErrorCode.FORBIDDEN_OPERATION,
-                    String.format("사용자 생성 권한이 없습니다. (missing: %s)", Permission.CREATE_USER.name()));
-        }
         String contactEmail = requestDto.getContactEmail();
         String loginEmail = contactEmail.substring(0, contactEmail.indexOf("@")) + EVERP_DOMAIN;
 

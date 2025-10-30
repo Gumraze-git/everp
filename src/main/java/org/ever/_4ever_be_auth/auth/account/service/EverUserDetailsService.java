@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +44,7 @@ public class EverUserDetailsService implements UserDetailsService {
      * JSON 직렬화 시 안전(기본 타입만 포함)하고, 비밀번호 해시는 @JsonIgnore 처리.
      */
     public record EverUserPrincipal(
-            UUID userId,
+            String userId,
             String loginEmail,
             String roleName,            // ex) "ADMIN"
             UserStatus userStatus,

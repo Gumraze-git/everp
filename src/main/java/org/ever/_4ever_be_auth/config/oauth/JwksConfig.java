@@ -1,5 +1,6 @@
 package org.ever._4ever_be_auth.config.oauth;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -14,7 +15,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
 
 @Configuration
 public class JwksConfig {
@@ -37,7 +37,7 @@ public class JwksConfig {
 
         return new RSAKey.Builder(publicKey)
                 .privateKey(privateKey)
-                .keyID(UUID.randomUUID().toString())
+                .keyID(UuidCreator.getTimeOrderedEpoch().toString())
                 .build();
     }
 

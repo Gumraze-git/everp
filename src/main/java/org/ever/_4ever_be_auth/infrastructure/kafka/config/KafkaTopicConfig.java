@@ -22,6 +22,18 @@ public class KafkaTopicConfig {
     public static final String BUSINESS_EVENT_TOPIC = "business-event";
     public static final String ALARM_EVENT_TOPIC = "alarm-event";
 
+    // 고객사 등록 토픽
+    public static final String CREATE_USER_TOPIC = "create-user";
+    public static final String USER_CREATED_TOPIC = "user-created";
+    public static final String USER_CREATION_FAILED_TOPIC = "user-creation-failed";
+    public static final String USER_ROLLBACK_TOPIC = "user-rollback";
+    public static final String PROCESS_COMPLETED_TOPIC = "process-completed";
+    public static final String AUTH_USER_RESULT_TOPIC = "auth-user-result";
+    public static final String CREATE_CUSTOMER_USER_TOPIC = "create-customer-user";
+    public static final String CUSTOMER_USER_RESULT_TOPIC = "customer-user-result";
+    public static final String CREATE_SUPPLIER_USER_TOPIC = "create-supplier-user";
+    public static final String SUPPLIER_USER_RESULT_TOPIC = "supplier-user-result";
+
     @Bean
     public NewTopic authUserRegisterTopic() {
         return TopicBuilder.name(AUTH_USER_REGISTER_TOPIC)
@@ -100,5 +112,37 @@ public class KafkaTopicConfig {
             .partitions(3)
             .replicas(1)
             .build();
+    }
+
+    @Bean
+    public NewTopic createCustomerUserTopic() {
+        return TopicBuilder.name(CREATE_CUSTOMER_USER_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic customerUserResultTopic() {
+        return TopicBuilder.name(CUSTOMER_USER_RESULT_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic createSupplierUserTopic() {
+        return TopicBuilder.name(CREATE_SUPPLIER_USER_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic supplierUserResultTopic() {
+        return TopicBuilder.name(SUPPLIER_USER_RESULT_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
     }
 }
