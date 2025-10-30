@@ -23,6 +23,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
     private static final String OAUTH_REQUEST_SESSION_KEY = "OAUTH2_AUTHORIZATION_REQUEST";
+    private static final String AUTHZ_ORIGINAL_URL_KEY = "AUTHZ_ORIGINAL_URL";
 
     private final UserRepository userRepository;
     private final RequestCache requestCache = new HttpSessionRequestCache();
@@ -37,6 +38,7 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
 
         // 로그인 성공 흐름 로깅
         SavedRequest savedRequest = requestCache.getRequest(request, response);
+        log.info("[INFO] 저장된 request: {}", savedRequest);
         String targetUrl = (savedRequest != null) ? savedRequest.getRedirectUrl() : getDefaultTargetUrl();
         log.info("[INFO] 로그인 성공: principal = {}, sessionId = {}, targetUrl ={}",
                 authentication.getName(),
@@ -45,6 +47,16 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
 
         if (session != null) {
             session.removeAttribute(OAUTH_REQUEST_SESSION_KEY);
+        }
+
+        // SavedRequest가 비어있으면, 인가 요청 폴백 URL로 복귀 시도
+        if (savedRequest == null && session != null) {
+            Object original = session.getAttribute(AUTHZ_ORIGINAL_URL_KEY);
+            if (original instanceof String orig && orig.contains("/oauth2/authorize")) {
+                session.removeAttribute(AUTHZ_ORIGINAL_URL_KEY);
+                getRedirectStrategy().sendRedirect(request, response, orig);
+                return;
+            }
         }
 
         if (authentication.getPrincipal() instanceof UserDetails userDetails) {

@@ -256,10 +256,20 @@ public class AuthorizationServerConfig {
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .requestCache(c -> c.requestCache(new HttpSessionRequestCache()))
+                .requestCache(c -> {
+                    // 인가 코드 플로우에서는 반드시 SavedRequest가 남도록 보장
+                    HttpSessionRequestCache cache = new HttpSessionRequestCache();
+                    cache.setRequestMatcher(req ->
+                            "GET".equalsIgnoreCase(req.getMethod()) &&
+                                    req.getRequestURI() != null &&
+                                    req.getRequestURI().startsWith("/oauth2/authorize")
+                    );
+                    c.requestCache(cache);
+                })
                 .exceptionHandling(e -> e
                     .defaultAuthenticationEntryPointFor(
                         new LoginUrlAuthenticationEntryPoint("/login"),
+                        // HTML 요청은 기존 규칙 유지
                         new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                     )
                     .defaultAuthenticationEntryPointFor(
