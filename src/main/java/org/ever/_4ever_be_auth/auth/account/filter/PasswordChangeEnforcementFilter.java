@@ -23,6 +23,7 @@ public class PasswordChangeEnforcementFilter extends OncePerRequestFilter {
     private static final Set<String> ALLOWED_PATHS = Set.of(
             "/password/change",
             "/logout",
+            "/oauth2/authorize",
             "/css/",
             "/js/",
             "/images/",

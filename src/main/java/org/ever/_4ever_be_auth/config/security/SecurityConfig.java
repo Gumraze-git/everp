@@ -10,6 +10,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -53,12 +54,16 @@ public class SecurityConfig {
                                 // 비밀번호 찾기 url
                                 "/password/reset",
                                 "/password/reset/confirm",
-                                "/password/change"
+                                "/password/change",
+                                // API 로그아웃 엔드포인트 허용
+                                "/logout"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/auth/health"));
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/auth/health", "/logout"))
+                // 기본 Spring Security LogoutFilter 비활성화 → 컨트롤러에서 /logout 처리
+                .logout(AbstractHttpConfigurer::disable);
 
         http.formLogin(form -> form
                 .loginPage("/login")
