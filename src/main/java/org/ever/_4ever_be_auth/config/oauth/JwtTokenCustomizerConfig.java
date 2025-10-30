@@ -29,7 +29,7 @@ public class JwtTokenCustomizerConfig {
             }
 
             if (username == null || username.isBlank()) {
-                log.debug("[JWT-CUSTOMIZER] principal username is empty; skip claim enrichment");
+                log.debug("[DEBUG][JWT] 사용자 이름이 비어 있습니다.; skip claim enrichment");
                 return;
             }
 
@@ -58,7 +58,7 @@ public class JwtTokenCustomizerConfig {
                 claims.claim("user_role", role);
                 claims.claim("user_type", userType);
 
-                log.info("[JWT] claims set for user: username={}, userId={}, role={}, userType={}",
+                log.info("[INFO][JWT] claims 클레임 정보: username={}, userId={}, role={}, userType={}",
                         principalUsername, userId, role, userType);
             }, () -> {
                 // loginEmail로 조회되지 않을 경우, email 필드로도 조회 시도(운영 데이터 이행/정합성 대비)
@@ -79,7 +79,7 @@ public class JwtTokenCustomizerConfig {
                     claims.claim("user_role", role);
                     claims.claim("user_type", userType);
 
-                    log.info("[JWT-CUSTOMIZER] claims set via contact email: username={}, userId={}, role={}, userType={}",
+                    log.info("[INFO}[JWT] 클레임 정보: username={}, userId={}, role={}, userType={}",
                             principalUsername, userId, role, userType);
                 });
             });
