@@ -45,6 +45,7 @@ public class AdminInitializer implements CommandLineRunner {
     }
 
     private void seedModuleAccounts() {
+        log.info("[INFO] 테스트용 계정이 생성되었습니다. {}", ADMIN_LOGIN_EMAIL);
         List<ModuleAccount> accounts = List.of(
                 moduleAccount("mm-user@everp.com", UserRole.MM_USER),
                 moduleAccount("mm-admin@everp.com", UserRole.MM_ADMIN),
