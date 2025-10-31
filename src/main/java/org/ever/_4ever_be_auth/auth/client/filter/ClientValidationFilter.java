@@ -25,6 +25,7 @@ import java.io.IOException;
 public class ClientValidationFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_PATH = "/oauth2/authorize";
+    private static final String AUTHZ_ORIGINAL_URL_KEY = "AUTHZ_ORIGINAL_URL";
 
     private final ClientValidationService clientValidationService;
 
@@ -51,7 +52,12 @@ public class ClientValidationFilter extends OncePerRequestFilter {
                 response.sendError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
                 return;
             }
-            // SavedRequest/세션 저장은 Spring이 처리하므로 여기서 건드리지 않음
+            // SavedRequest가 유실되는 환경(비-HTML Accept 등)을 대비해 원본 인가 요청 URL을 세션에 폴백으로 보관
+            HttpSession session = request.getSession(true);
+            String q = request.getQueryString();
+            String full = request.getRequestURL() + (q != null ? ("?" + q) : "");
+            session.setAttribute(AUTHZ_ORIGINAL_URL_KEY, full);
+            // SavedRequest/세션 저장은 Spring이 처리함 (위 세션 저장은 폴백)
         }
 
         // 그 외 모든 경로(/login 포함)는 그대로 통과

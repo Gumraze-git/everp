@@ -35,10 +35,7 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
-import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.*;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.*;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -256,10 +253,20 @@ public class AuthorizationServerConfig {
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .requestCache(c -> c.requestCache(new HttpSessionRequestCache()))
+                .requestCache(c -> {
+                    // 인가 코드 플로우에서는 반드시 SavedRequest가 남도록 보장
+                    HttpSessionRequestCache cache = new HttpSessionRequestCache();
+                    cache.setRequestMatcher(req ->
+                            "GET".equalsIgnoreCase(req.getMethod()) &&
+                                    req.getRequestURI() != null &&
+                                    req.getRequestURI().startsWith("/oauth2/authorize")
+                    );
+                    c.requestCache(cache);
+                })
                 .exceptionHandling(e -> e
                     .defaultAuthenticationEntryPointFor(
                         new LoginUrlAuthenticationEntryPoint("/login"),
+                        // HTML 요청은 기존 규칙 유지
                         new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                     )
                     .defaultAuthenticationEntryPointFor(
@@ -335,9 +342,12 @@ public class AuthorizationServerConfig {
 
     // 예시: AuthorizationServerConfig 등 구성 클래스에 추가
     @Bean
-    OAuth2TokenGenerator<OAuth2Token> tokenGenerator(JwtEncoder jwtEncoder) {
+    OAuth2TokenGenerator<OAuth2Token> tokenGenerator(
+            JwtEncoder jwtEncoder,
+            OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer
+    ) {
         JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder);
-        // jwtGenerator.setJwtCustomizer(myJwtCustomizer());
+        jwtGenerator.setJwtCustomizer(jwtCustomizer);
         OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
         return new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);
     }
