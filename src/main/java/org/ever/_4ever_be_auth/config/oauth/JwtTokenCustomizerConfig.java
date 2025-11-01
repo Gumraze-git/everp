@@ -16,10 +16,12 @@ public class JwtTokenCustomizerConfig {
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer(UserRepository userRepository) {
         return context -> {
+            // 액세스 토큰만 커스터마이징함.
             if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-                return; // Access Token에만 적용 (버전 호환)
+                return;
             }
 
+            // 사용자 이름 결정 로직
             String username = null;
             if (context.getAuthorization() != null) {
                 username = context.getAuthorization().getPrincipalName();
@@ -35,7 +37,7 @@ public class JwtTokenCustomizerConfig {
 
             final String principalUsername = username;
 
-            userRepository.findByLoginEmail(principalUsername).ifPresentOrElse(user -> {
+            userRepository.findByLoginEmail(principalUsername).ifPresent(user -> {
                 JwtClaimsSet.Builder claims = context.getClaims();
 
                 // 표준/일반 호환 키와 스네이크/카멜 케이스 모두 제공
@@ -47,11 +49,6 @@ public class JwtTokenCustomizerConfig {
                 // subject를 고정 식별자로 설정(게이트웨이 호환성 향상)
                 claims.subject(userId);
 
-                // 표준/일반 필드
-                claims.claim("email", loginEmail);
-                claims.claim("preferred_username", loginEmail);
-                claims.claim("roles", java.util.List.of("ROLE_" + role));
-
                 // 도메인 전용(snake_case)
                 claims.claim("user_id", userId);
                 claims.claim("login_email", loginEmail);
@@ -60,29 +57,9 @@ public class JwtTokenCustomizerConfig {
 
                 log.info("[INFO][JWT] claims 클레임 정보: username={}, userId={}, role={}, userType={}",
                         principalUsername, userId, role, userType);
-            }, () -> {
-                // loginEmail로 조회되지 않을 경우, email 필드로도 조회 시도(운영 데이터 이행/정합성 대비)
-                userRepository.findByEmail(principalUsername).ifPresent(u2 -> {
-                    JwtClaimsSet.Builder claims = context.getClaims();
-                    String userId = u2.getUserId();
-                    String loginEmail = u2.getLoginEmail();
-                    String role = u2.getUserRole().name();
-                    String userType = u2.getUserType().name();
-
-                    claims.subject(userId);
-                    claims.claim("email", loginEmail);
-                    claims.claim("preferred_username", loginEmail);
-                    claims.claim("roles", java.util.List.of("ROLE_" + role));
-
-                    claims.claim("user_id", userId);
-                    claims.claim("login_email", loginEmail);
-                    claims.claim("user_role", role);
-                    claims.claim("user_type", userType);
-
-                    log.info("[INFO}[JWT] 클레임 정보: username={}, userId={}, role={}, userType={}",
-                            principalUsername, userId, role, userType);
-                });
-            });
+                    }
+            );
         };
-    }
+        }
+}
 }
