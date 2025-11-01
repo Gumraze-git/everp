@@ -10,6 +10,7 @@ import org.ever._4ever_be_auth.user.application.port.in.AuthUserSagaPort;
 import org.ever.event.CreateAuthUserEvent;
 import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -26,18 +27,23 @@ public class AuthUserEventListener {
             topics = KafkaTopicConfig.CREATE_USER_TOPIC,
             groupId = "${spring.kafka.consumer.group-id}"
     )
-    public void handleEvent(CreateAuthUserEvent event) {
-        log.info("[KAFKA] CreateAuthUserEvent 수신 - transactionId: {}, userId: {}", event.getTransactionId(), event.getUserId());
+    public void handleEvent(
+            CreateAuthUserEvent event,
+            Acknowledgment acknowledgement
+    ) {
+        log.info("[INFO][KAFKA] CreateAuthUserEvent 수신 - transactionId: {}, userId: {}", event.getTransactionId(), event.getUserId());
 
         String transactionId = event.getTransactionId();
 
         if (transactionId == null || transactionId.isBlank()) {
-            log.error("[KAFKA] 트랜잭션 ID가 없는 이벤트입니다.: {}", event);
+            log.error("[ERROR][KAFKA] 트랜잭션 ID가 없는 이벤트입니다.: {}", event);
+            acknowledgement.acknowledge(); // 수동 커밋
             return;
         }
 
         if (!sagaTransactionStatusService.startProcessing(transactionId)) {
-            log.warn("[KAFKA] 트랜잭션 {} 은 이미 처리된 상태입니다. 이벤트를 무시합니다.", transactionId);
+            log.warn("[WARN][KAFKA] 트랜잭션 {} 은 이미 처리된 상태입니다. 이벤트를 무시합니다.", transactionId);
+            acknowledgement.acknowledge(); // 수동 커밋
             return;
         }
 
@@ -50,9 +56,11 @@ public class AuthUserEventListener {
                         result.getUserId(),
                         result
                 );
-                log.info("[KAFKA] 인증 사용자 생성 완료 이벤트 발행 완료 - transactionId: {}", transactionId);
+                log.info("[INFO][KAFKA] 인증 사용자 생성 완료 이벤트 발행 완료 - transactionId: {}", transactionId);
+                acknowledgement.acknowledge(); // 수동 커밋
             } catch (Exception error) {
-                log.error("[KAFKA] 인증 사용자 생성 처리 실패 - transactionId: {}, cause: {}", transactionId, error.getMessage(), error);
+                log.error("[ERROR][KAFKA] 인증 사용자 생성 처리 실패 - transactionId: {}, cause: {}", transactionId, error.getMessage(), error);
+
                 sagaTransactionStatusService.markFailed(transactionId);
 
                 CreateAuthUserResultEvent failureEvent =
@@ -68,6 +76,7 @@ public class AuthUserEventListener {
                         event.getUserId(),
                         failureEvent
                 );
+                acknowledgement.acknowledge(); // 수동 커밋
             }
             return null;
         });
