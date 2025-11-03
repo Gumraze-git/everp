@@ -12,7 +12,6 @@ import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticati
 import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationConsentJpaRepository;
 import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationJpaRepository;
 import org.ever._4ever_be_auth.auth.oauth.service.*;
-import org.hibernate.id.uuid.UuidGenerator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -138,7 +137,7 @@ public class AuthorizationServerConfig {
             TokenSettings tokenSettings,
             PasswordEncoder passwordEncoder
     ) {
-        RegisteredClient desired = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient desired = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
             .clientId("everp")
             .clientSecret(passwordEncoder.encode("super-secret")) // 평문 대신 인코딩
             // 클라이언트 HTTP Basic 인증 방식 지정
@@ -156,7 +155,7 @@ public class AuthorizationServerConfig {
             .build();
 
         // 2) 로컬 개발용 SPA(public) 클라이언트 추가
-        RegisteredClient spa = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient spa = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
             .clientId("everp-spa")
             // secret 제거 (public client)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
