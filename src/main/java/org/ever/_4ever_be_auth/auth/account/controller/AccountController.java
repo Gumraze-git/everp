@@ -2,6 +2,7 @@ package org.ever._4ever_be_auth.auth.account.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_auth.auth.account.service.AccountService;
 import org.ever._4ever_be_auth.common.exception.BusinessException;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AccountController {
 
     private final AccountService accountService;
+    private static final String AUTHZ_ORIGINAL_URL_KEY = "AUTHZ_ORIGINAL_URL";
 
     // 로그인
     @GetMapping("/login")
@@ -109,7 +111,21 @@ public class AccountController {
             throw e;
         }
 
+        HttpSession session = request.getSession(false);
+        String originalAuthRequest = null;
+        if (session != null) {
+            Object original = session.getAttribute(AUTHZ_ORIGINAL_URL_KEY);
+            if (original instanceof String) {
+                originalAuthRequest = (String) original;
+            }
+        }
+
         new SecurityContextLogoutHandler().logout(request, response, authentication);
+
+        if (originalAuthRequest != null) {
+            request.getSession(true).setAttribute(AUTHZ_ORIGINAL_URL_KEY, originalAuthRequest);
+        }
+
         redirectAttributes.addFlashAttribute("message", "비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해 주세요.");
         return "redirect:/login?passwordChanged";
     }
