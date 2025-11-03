@@ -1,5 +1,6 @@
 package org.ever._4ever_be_auth.config.oauth;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.ever._4ever_be_auth.auth.account.handler.LoginFailureHandler;
@@ -136,7 +137,7 @@ public class AuthorizationServerConfig {
             TokenSettings tokenSettings,
             PasswordEncoder passwordEncoder
     ) {
-        RegisteredClient desired = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient desired = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
             .clientId("everp")
             .clientSecret(passwordEncoder.encode("super-secret")) // 평문 대신 인코딩
             // 클라이언트 HTTP Basic 인증 방식 지정
@@ -154,7 +155,7 @@ public class AuthorizationServerConfig {
             .build();
 
         // 2) 로컬 개발용 SPA(public) 클라이언트 추가
-        RegisteredClient spa = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient spa = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
             .clientId("everp-spa")
             // secret 제거 (public client)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
@@ -181,6 +182,48 @@ public class AuthorizationServerConfig {
         // spa 저장
         if (repository.findByClientId("everp-spa") == null) {
             repository.save(spa);
+        }
+
+        // ios
+        RegisteredClient ios = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
+                .clientId("everp-ios")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("everp-ios://callback")
+                .scope("erp.user.profile")
+                .scope("offline_access") // 필요 시 refresh token 발급
+                .tokenSettings(tokenSettings)
+                .clientSettings(ClientSettings.builder()
+                    .requireProofKey(true)              // PKCE 필수
+                    .requireAuthorizationConsent(false) // 동의 화면 필요 없으면 false
+                    .build())
+                .build();
+
+        // ios 저장
+        if (repository.findByClientId("everp-ios") == null) {
+            repository.save(ios);
+        }
+
+        // aos
+        RegisteredClient aos = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
+                .clientId("everp-aos")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("everp-aos://callback")
+                .scope("erp.user.profile")
+                .scope("offline_access") // 필요 시 refresh token 발급
+                .tokenSettings(tokenSettings)
+                .clientSettings(ClientSettings.builder()
+                    .requireProofKey(true)              // PKCE 필수
+                    .requireAuthorizationConsent(false) // 동의 화면 필요 없으면 false
+                    .build())
+                .build();
+
+        // aos 저장
+        if (repository.findByClientId("everp-aos") == null) {
+            repository.save(aos);
         }
         return repository;
     }
