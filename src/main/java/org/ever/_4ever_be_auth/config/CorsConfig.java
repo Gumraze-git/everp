@@ -12,7 +12,11 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://localhost:3000"));
+        cfg.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "https://everp.co.kr"
+
+        ));
         cfg.setAllowedMethods(List.of("GET","POST","OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","X-Requested-With"));
         cfg.setAllowCredentials(true);
