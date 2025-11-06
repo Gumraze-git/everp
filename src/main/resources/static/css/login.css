@@ -251,7 +251,9 @@ input.error:focus {
 
 @media (max-width: 1024px) {
     .video-section {
-        display: none;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
     }
 
     .login-section {
