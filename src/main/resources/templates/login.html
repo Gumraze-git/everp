@@ -13,6 +13,21 @@
         ];
     </script>
     <script defer th:src="@{/js/login.js}"></script>
+    <style>
+        @media (max-width: 768px) {
+            .video-section {
+                display: none;
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          if (window.innerWidth <= 1024) {
+            const videoSection = document.querySelector(".video-section");
+            if (videoSection) videoSection.remove();
+          }
+        });
+    </script>
 </head>
 <body>
 <div class="auth-container">
