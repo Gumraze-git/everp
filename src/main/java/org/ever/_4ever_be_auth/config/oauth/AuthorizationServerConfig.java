@@ -46,8 +46,6 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import java.util.UUID;
-
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.*;
 
 // 하나 이상의 Bean 객체가 있는 경우의 각 Bean들을 인식하기 위해 등록하는 어노테이션
