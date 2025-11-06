@@ -272,7 +272,7 @@ public class AdminInitializer implements CommandLineRunner {
 
             // SUPPLIER series
             Map.entry("supplier-admin1@everp.com", "019a52d5-2824-7c7e-9826-e5c56987d189"),
-            Map.entry("supplier-admin2@everp.com", "019a52d5-2824-7c7e-9826-e5c56987d189"),
+            Map.entry("supplier-admin2@everp.com", "019a59a5-f5d5-7003-98b0-f8d77df4f031"),
             Map.entry("supplier-admin3@everp.com", "019a52d5-1ad8-754d-af67-e541f85473c4"),
             Map.entry("supplier-admin4@everp.com", "019a52d5-0df8-724b-a16f-7a9d3bcd5384"),
             Map.entry("supplier-admin5@everp.com", "019a52d5-01a5-758a-8d36-e2ef00d8ffb7"),
