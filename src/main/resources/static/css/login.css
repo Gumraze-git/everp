@@ -263,6 +263,11 @@ input.error:focus {
 }
 
 @media (max-width: 640px) {
+    .video-section {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
     .login-section {
         padding: 20px;
     }
