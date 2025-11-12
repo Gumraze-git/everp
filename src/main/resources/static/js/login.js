@@ -3,7 +3,10 @@
 let currentVideoIndex = 0;
 const videoPlayer = document.getElementById('videoPlayer');
 
-if (videoPlayer && typeof VIDEO_PATHS !== 'undefined') {
+// 미디어 쿼리(1024px)와 일치하는 조건 추가
+const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+
+if (videoPlayer && typeof VIDEO_PATHS !== 'undefined' && !isMobile) {
     videoPlayer.addEventListener('ended', function() {
         videoPlayer.classList.add('fade-out');
 
