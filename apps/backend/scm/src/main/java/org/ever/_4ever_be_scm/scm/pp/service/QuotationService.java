@@ -1,0 +1,56 @@
+package org.ever._4ever_be_scm.scm.pp.service;
+
+import org.ever._4ever_be_scm.common.response.ApiResponse;
+import org.ever._4ever_be_scm.scm.mm.dto.ToggleCodeLabelDto;
+import org.ever._4ever_be_scm.scm.pp.dto.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.async.DeferredResult;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public interface QuotationService {
+
+    /**
+     * 견적 목록 조회 (그룹핑된 형태)
+     */
+    QuotationGroupListResponseDto getQuotationList(
+            String statusCode,
+            String availableStatus,
+            LocalDate startDate,
+            LocalDate endDate,
+            int page,
+            int size
+    );
+
+    Page<QuotationSimulateResponseDto> simulateQuotations(QuotationSimulateRequestDto requestDto, Pageable pageable);
+    List<MpsPreviewResponseDto> previewMps(List<String> quotationIds);
+    void confirmQuotations(QuotationConfirmRequestDto requestDto);
+
+    /**
+     * 견적 확정 (비동기 - 분산 트랜잭션)
+     */
+    DeferredResult<ResponseEntity<ApiResponse<Void>>> confirmQuotationsAsync(QuotationConfirmRequestDto requestDto);
+
+    /**
+     * MPS 조회 (주차별, bomId 기준)
+     */
+    MpsQueryResponseDto getMps(String bomId, LocalDate startDate, LocalDate endDate, int page, int size);
+
+    /**
+     * MRP 조회 (원자재별 그룹핑)
+     */
+    org.springframework.data.domain.Page<MrpQueryResponseDto.MrpItemDto> getMrp(String bomId, String quotationId, String availableStatusCode, int page, int size);
+
+    /**
+     * BOM 목록 조회 (bomId와 productName)
+     */
+    List<ToggleCodeLabelDto> getBomList();
+
+    /**
+     * MRP에 존재하는 견적 목록 조회 (quotationId와 quotationNumber)
+     */
+    List<ToggleCodeLabelDto> getMrpQuotationList();
+}
