@@ -1,0 +1,11 @@
+package org.ever._4ever_be_auth.auth.oauth.repository;
+
+import org.ever._4ever_be_auth.auth.oauth.entity.RegisteredClientEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface RegisteredClientJpaRepository extends JpaRepository<RegisteredClientEntity, String> {
+
+    Optional<RegisteredClientEntity> findByClientId(String clientId);
+}

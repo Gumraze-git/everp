@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>EvERP 로그인</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link rel="stylesheet" href="/static/css/login.css" th:href="@{/css/login.css}">
+    <script th:inline="javascript">
+        const VIDEO_PATHS = [
+            "/videos/hy-autoever-intro1.mp4",
+            "/videos/hy-autoever-intro2.mp4",
+            "/videos/hy-autoever-intro3.mp4"
+        ];
+    </script>
+    <script defer th:src="@{/js/login.js}"></script>
+    <style>
+        @media (max-width: 768px) {
+            .video-section {
+                display: none;
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          if (window.innerWidth <= 1024) {
+            const videoSection = document.querySelector(".video-section");
+            if (videoSection) videoSection.remove();
+          }
+        });
+    </script>
+</head>
+<body>
+<div class="auth-container">
+    <div class="login-section">
+        <div class="login-container">
+            <div class="brand">
+                <img src="/static/images/brand-logo.png" alt="EvERP Logo" class="brand-logo" th:src="@{/images/brand-logo.png}">
+                <h1>로그인</h1>
+                <p>Log in to join the journey with EvERP.</p>
+            </div>
+
+            <form id="loginForm" method="post" th:action="@{/login}">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+
+                <th:block th:if="${oauth2Params != null}">
+                    <input name="client_id" th:value="${oauth2Params.clientId()}" type="hidden"/>
+                    <input name="redirect_uri" th:value="${oauth2Params.redirectUri()}" type="hidden"/>
+                    <input name="response_type" th:value="${oauth2Params.responseType()}" type="hidden"/>
+                    <input name="scope" th:value="${oauth2Params.scope()}" type="hidden"/>
+                    <input name="state" th:value="${oauth2Params.state()}" type="hidden"/>
+                    <input name="code_challenge" th:value="${oauth2Params.codeChallenge()}" type="hidden"/>
+                    <input name="code_challenge_method" th:value="${oauth2Params.codeChallengeMethod()}" type="hidden"/>
+                </th:block>
+
+                <div class="form-field">
+                    <label for="email">이메일</label>
+                    <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="example@everp.com"
+                            autocomplete="username"
+                            required
+                    >
+                    <div class="error-message" id="emailError"></div>
+                </div>
+
+                <div class="form-field">
+                    <label for="password">비밀번호</label>
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="********"
+                            autocomplete="current-password"
+                            required
+                    >
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+
+                <div class="notice" th:if="${param.error}">
+                    <strong>로그인에 실패했어요.</strong>
+                    <p>입력한 정보를 다시 확인하고 재시도하거나 비밀번호를 재설정할 수 있어요.</p>
+                    <div class="notice-actions">
+                        <button class="link-button" id="retryButton" type="button">다시 입력하기</button>
+                        <a class="link-button" th:href="@{/password/reset}">비밀번호 찾기</a>
+                    </div>
+                </div>
+
+                <div class="notice notice--success" th:if="${param.success}">
+                    <strong>로그인이 완료되었습니다.</strong>
+                    <p>잠시 후 자동으로 이동하지 않으면 <a th:href="@{/}">여기</a>를 눌러 주세요.</p>
+                </div>
+
+                <div class="notice notice--success" th:if="${param.logout}">
+                    <strong>정상적으로 로그아웃되었습니다.</strong>
+                    <p>다시 로그인하려면 아래에 계정 정보를 입력해 주세요.</p>
+                </div>
+
+                <div class="notice notice--success" th:if="${param.passwordChanged}">
+                    <strong>비밀번호가 변경되었습니다.</strong>
+                    <p>새 비밀번호로 다시 로그인해 주세요.</p>
+                </div>
+
+                <button type="submit" class="submit-button" id="submitBtn">로그인</button>
+
+                <div class="auth-switch">
+                    <span>비밀번호를 잊으셨나요?</span>
+                    <a th:href="@{/password/reset}">비밀번호 재설정</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="video-section">
+        <video id="videoPlayer" muted playsinline autoplay>
+            <source src="/static/videos/hy-autoever-intro1.mp4" th:src="@{/videos/hy-autoever-intro1.mp4}" type="video/mp4">
+        </video>
+    </div>
+
+</div>
+</body>
+</html>

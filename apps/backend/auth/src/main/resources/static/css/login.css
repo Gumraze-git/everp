@@ -1,0 +1,297 @@
+
+:root {
+    color-scheme: light dark;
+    --bg-color: #f9fafb;
+    --panel-bg: #ffffff;
+    --primary: #1f4c91;
+    --accent: #31418c;
+    --accent-dark: #1d4ed8;
+    --text-primary: #101828;
+    --text-secondary: #99a1af;
+    --error-color: #ef4444;
+    --error-bg: #fef2f2;
+    --success-color: #16a34a;
+    --success-bg: #ecfdf3;
+    --border-color: #31418c;
+    --input-bg: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    background: var(--bg-color);
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text-primary);
+}
+
+.auth-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.login-section {
+    width: 40%;
+    min-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+}
+
+.video-section {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+}
+
+.video-section video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.video-section video.fade-out {
+    opacity: 0;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 512px;
+    padding: 0 16px;
+    margin-bottom: 48px;
+}
+
+.brand {
+    margin-bottom: 36px;
+}
+
+.brand-logo {
+    width: 136px;
+    margin-bottom: 36px;
+}
+
+.brand h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.brand p {
+    margin: 0;
+    font-size: 17px;
+    color: var(--text-secondary);
+}
+
+.form-field {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    outline: 1px solid var(--border-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    outline: 2px solid var(--primary);
+}
+
+input.valid {
+    outline: 1px solid var(--primary);
+}
+
+input.error {
+    outline: 1px solid var(--error-color);
+}
+
+input.error:focus {
+    outline: 1.5px solid var(--error-color);
+}
+
+.error-message {
+    margin-top: 6px;
+    min-height: 18px; /* 항상 자리 확보 */
+    font-size: 13px;
+    color: var(--error-color);
+}
+
+.notice {
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: var(--error-bg);
+}
+
+.notice strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 6px;
+}
+
+.notice p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.notice--success {
+    border-color: rgba(22, 163, 74, 0.25);
+    background: var(--success-bg);
+}
+
+.notice--success strong {
+    color: var(--success-color);
+}
+
+.notice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.link-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--accent);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.link-button:hover {
+    background: rgba(37, 99, 235, 0.18);
+}
+
+.link-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 14px 16px;
+    margin-top: 18px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--accent);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s;
+}
+
+.submit-button:hover:not(:disabled) {
+    opacity: 90%;
+}
+
+.submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.auth-switch {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.auth-switch a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 1024px) {
+    .video-section {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+
+    .login-section {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .video-section {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    .login-section {
+        padding: 20px;
+    }
+
+    .brand h1 {
+        font-size: 28px;
+    }
+
+    .brand-logo {
+        width: 180px;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #0f172a;
+        --panel-bg: #111c34;
+        --text-primary: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --border-color: #1e293b;
+        --input-bg: #0f172a;
+    }
+
+    .submit-button {
+        box-shadow: none;
+    }
+}

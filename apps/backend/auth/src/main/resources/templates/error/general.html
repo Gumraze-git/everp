@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${error.title}">문제가 발생했습니다</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link rel="stylesheet" th:href="@{/css/error.css}">
+</head>
+<body>
+<div class="error-overlay" data-error-modal th:attr="data-error-fallback=${error.actionUrl}">
+    <div class="error-modal">
+        <div class="error-header">
+            <span class="error-badge" th:text="${status}">500</span>
+            <h1 th:text="${error.title}">문제가 발생했습니다.</h1>
+            <p class="error-message" th:text="${error.message}">
+                요청을 처리하는 동안 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.
+            </p>
+            <p class="error-detail" th:if="${error.detail != null}" th:text="${error.detail}"></p>
+        </div>
+
+        <div class="error-actions">
+            <a class="error-primary" th:href="${error.actionUrl}" th:text="${error.actionLabel}">다시 시도하기</a>
+            <button class="error-secondary" data-error-close type="button">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script defer th:src="@{/js/error-modal.js}"></script>
+</body>
+</html>

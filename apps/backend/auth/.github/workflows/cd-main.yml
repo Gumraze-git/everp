@@ -1,0 +1,224 @@
+name: CD - Main Branch
+
+on:
+  workflow_run:
+    workflows: ["CI - Main Branch"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    name: Docker 이미지 빌드 및 푸시
+    runs-on: ubuntu-latest
+    # CI가 성공한 경우에만 실행
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 커밋 ID 추출 (6자리)
+        id: commit
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-6)
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Commit ID (short): $SHORT_SHA"
+
+      - name: Docker Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Docker 메타데이터 추출
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: hojipkim/everp_user
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.commit.outputs.short_sha }}
+            type=sha,prefix=,format=short
+
+      - name: Docker 이미지 빌드 및 푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            hojipkim/everp_user:latest
+            hojipkim/everp_user:${{ steps.commit.outputs.short_sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 배포 정보 출력
+        run: |
+          echo "========================================="
+          echo "Docker 이미지 배포 완료"
+          echo "========================================="
+          echo "이미지: hojipkim/everp_user"
+          echo "태그 1: latest"
+          echo "태그 2: ${{ steps.commit.outputs.short_sha }}"
+          echo "커밋: ${{ github.sha }}"
+          echo "========================================="
+
+  deploy:
+    name: 프로덕션 서버 배포
+    runs-on: self-hosted
+    needs: build-and-push
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: S3에서 application.yml 다운로드
+        run: |
+          cd ~/autoever
+          mkdir -p _4EVER_BE_AUTH/src/main/resources
+
+          # 기존 application.yml 삭제 (디렉토리인 경우도 처리)
+          if [ -d "_4EVER_BE_AUTH/src/main/resources/application.yml" ]; then
+            rm -rf _4EVER_BE_AUTH/src/main/resources/application.yml
+          elif [ -f "_4EVER_BE_AUTH/src/main/resources/application.yml" ]; then
+            rm -f _4EVER_BE_AUTH/src/main/resources/application.yml
+          fi
+
+          # S3에서 최신 application.yml 다운로드
+          aws s3 cp s3://kimprun-s3/everp/user/application.yml \
+            _4EVER_BE_AUTH/src/main/resources/application.yml
+
+          if [ $? -eq 0 ]; then
+            echo "✅ application.yml 다운로드 성공"
+          else
+            echo "❌ application.yml 다운로드 실패"
+            exit 1
+          fi
+
+      - name: Makefile로 Auth 서비스 배포
+        run: |
+          cd ~/autoever
+          make prod-deploy-auth
+
+      - name: 배포 완료
+        run: |
+          echo "========================================="
+          echo "✅ Auth 서비스 배포 완료"
+          echo "========================================="
+
+  notify:
+    name: CD 결과 알림
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+
+    steps:
+      - name: CD 결과 설정
+        id: cd-result
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "status=성공" >> $GITHUB_OUTPUT
+            echo "emoji=🚀" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "status=건너뜀 (CI 실패)" >> $GITHUB_OUTPUT
+            echo "emoji=⏭️" >> $GITHUB_OUTPUT
+          else
+            echo "status=실패" >> $GITHUB_OUTPUT
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 커밋 ID 추출
+        id: commit
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-6)
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Slack 알림 전송
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST $SLACK_WEBHOOK_URL \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "text": "Main 브랜치 CD ${{ steps.cd-result.outputs.status }}",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "${{ steps.cd-result.outputs.emoji }} Main 브랜치 CD ${{ steps.cd-result.outputs.status }}",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*저장소:*\n${{ github.repository }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*브랜치:*\n`main`"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*커밋:*\n`${{ github.sha }}`"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*작성자:*\n${{ github.actor }}"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Docker 이미지:*\n`hojipkim/everp_user`"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*태그:*\n`latest`, `${{ steps.commit.outputs.short_sha }}`"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "${{ needs.deploy.result == 'success' && '✅ Docker Hub에 이미지가 성공적으로 푸시되었습니다.' || needs.deploy.result == 'skipped' && '⏭️ CI 실패로 인해 CD가 건너뛰어졌습니다.' || '❌ Docker 이미지 푸시에 실패했습니다.' }}"
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "워크플로우 보기"
+                    },
+                    "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  },
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Docker Hub 보기"
+                    },
+                    "url": "https://hub.docker.com/r/hojipkim/everp_user"
+                  }
+                ]
+              }
+            ]
+          }'
