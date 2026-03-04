@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true, // 저장 시 자동 코드 스타일 수정
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "true"
+  }
+}

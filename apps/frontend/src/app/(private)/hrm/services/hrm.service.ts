@@ -1,0 +1,29 @@
+import { createStatCard } from '@/lib/CreateStatCard';
+import { StatCardType } from '@/app/types/StatType';
+import { HrmStatResponse } from '../types/HrmStatsApiType';
+
+// 변환 함수
+export const mapHrmStatsToCards = (data: HrmStatResponse): Record<string, StatCardType[]> => {
+  return Object.entries(data).reduce(
+    (acc, [period, stats]) => {
+      const cards: StatCardType[] = [
+        createStatCard(
+          '총 직원 수',
+          stats.totalEmployeeCount.value,
+          stats.totalEmployeeCount.delta_rate,
+          '명',
+        ),
+        createStatCard(
+          '신규 입사자 수',
+          stats.newEmployeeCount.value,
+          stats.newEmployeeCount.delta_rate,
+          '명',
+        ),
+      ];
+
+      acc[period] = cards;
+      return acc;
+    },
+    {} as Record<string, StatCardType[]>,
+  );
+};
