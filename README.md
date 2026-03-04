@@ -1,0 +1,3 @@
+# everp monorepo
+
+Bootstrapping monorepo.
