@@ -133,7 +133,8 @@ public class AuthorizationServerConfig {
     public RegisteredClientRepository registeredClientRepository(
             JpaRegisteredClientRepository repository,
             TokenSettings tokenSettings,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            @Value("${EVERP_OAUTH_REDIRECT_URI:http://localhost:13000/callback}") String spaRedirectUri
     ) {
         RegisteredClient desired = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
             .clientId("everp")
@@ -159,7 +160,7 @@ public class AuthorizationServerConfig {
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
             // Authorization Code + PKCE
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .redirectUri("http://localhost:3000/callback")
+            .redirectUri(spaRedirectUri)
             .scope("erp.user.profile")
             .scope("offline_access") // 필요 시 refresh token 발급
             .tokenSettings(tokenSettings)
@@ -178,8 +179,16 @@ public class AuthorizationServerConfig {
             .build());
 
         // spa 저장
-        if (repository.findByClientId("everp-spa") == null) {
+        RegisteredClient existingSpa = repository.findByClientId("everp-spa");
+        if (existingSpa == null) {
             repository.save(spa);
+        } else {
+            repository.save(RegisteredClient.from(existingSpa)
+                .redirectUris(redirectUris -> {
+                    redirectUris.clear();
+                    redirectUris.add(spaRedirectUri);
+                })
+                .build());
         }
 
         // ios

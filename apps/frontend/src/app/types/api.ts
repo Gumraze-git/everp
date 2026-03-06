@@ -1,6 +1,14 @@
 // 공통 API Base URL
-export const API_BASE_URL = 'https://api.everp.co.kr/api';
-// export const API_BASE_URL = 'https://b5bd9b62ef90.ngrok-free.app/api';
+const DEFAULT_API_BASE_URL = 'http://localhost:18080/api';
+const DEFAULT_AUTH_BASE_URL = 'http://localhost:18081';
+
+const ENV_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+const ENV_AUTH_BASE_URL = process.env.NEXT_PUBLIC_AUTH_BASE_URL?.trim();
+
+export const API_BASE_URL =
+  ENV_API_BASE_URL && ENV_API_BASE_URL.length > 0 ? ENV_API_BASE_URL : DEFAULT_API_BASE_URL;
+export const AUTH_BASE_URL =
+  ENV_AUTH_BASE_URL && ENV_AUTH_BASE_URL.length > 0 ? ENV_AUTH_BASE_URL : DEFAULT_AUTH_BASE_URL;
 
 export const SALES_BASE_PATH = `${API_BASE_URL}/business/sd`;
 export const FINANCE_BASE_PATH = `${API_BASE_URL}/business/fcm`;
@@ -111,8 +119,8 @@ export const WAREHOUSE_ENDPOINTS = {
 
 // ----------------------- USER -----------------------
 export const USER_ENDPOINTS = {
-  LOGIN: 'https://auth.everp.co.kr/oauth2/token',
-  LOGOUT: 'https://auth.everp.co.kr/logout',
+  LOGIN: `${AUTH_BASE_URL}/oauth2/token`,
+  LOGOUT: `${AUTH_BASE_URL}/logout`,
   USER_INFO: `${API_BASE_URL}/user/info`,
   USER_PROFILE_INFO: `${HRM_BASE_PATH}/employees/by-internel-user`,
 };
