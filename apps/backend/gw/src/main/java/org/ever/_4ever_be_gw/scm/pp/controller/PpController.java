@@ -162,12 +162,12 @@ public class PpController {
     }
 
     // MES 상태 조회
-    @GetMapping("/mes/status/toggle")
+    @GetMapping("/mes/status-options")
     public ResponseEntity<Object> getMesStatusDetail() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/mes/status/toggle")
+                .uri("/scm-pp/pp/mes/status-options")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
@@ -208,7 +208,7 @@ public class PpController {
     }
 
     // MES 시작
-    @PutMapping("/mes/{mesId}/start")
+    @PostMapping("/mes/{mesId}/starts")
     public ResponseEntity<Object> startMes(
             @PathVariable String mesId,
             @AuthenticationPrincipal EverUserPrincipal principal
@@ -216,9 +216,9 @@ public class PpController {
         String requesterId = principal.getUserId();
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .put()
+                .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/pp/mes/{mesId}/start")
+                        .path("/scm-pp/pp/mes/{mesId}/starts")
                         .queryParam("requesterId", requesterId)
                         .build(mesId))
                 .exchangeToMono(response -> {
@@ -237,7 +237,7 @@ public class PpController {
     }
 
     // 공정 시작
-    @PutMapping("/mes/{mesId}/operations/{operationId}/start")
+    @PostMapping("/mes/{mesId}/operations/{operationId}/starts")
     public ResponseEntity<Object> startOperation(
             @PathVariable String mesId,
             @PathVariable String operationId,
@@ -247,9 +247,9 @@ public class PpController {
 
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .put()
+                .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/pp/mes/{mesId}/operations/{logId}/start")
+                        .path("/scm-pp/pp/mes/{mesId}/operations/{logId}/starts")
                         .queryParam("managerId", managerId)
                         .build(mesId, operationId))
                 .exchangeToMono(response -> {
@@ -268,14 +268,14 @@ public class PpController {
     }
 
     // 공정 완료
-    @PutMapping("/mes/{mesId}/operations/{operationId}/complete")
+    @PostMapping("/mes/{mesId}/operations/{operationId}/completions")
     public ResponseEntity<Object> completeOperation(
             @PathVariable String mesId,
             @PathVariable String operationId) {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .put()
-                .uri("/scm-pp/pp/mes/{mesId}/operations/{logId}/complete", mesId, operationId)
+                .post()
+                .uri("/scm-pp/pp/mes/{mesId}/operations/{logId}/completions", mesId, operationId)
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -292,7 +292,7 @@ public class PpController {
     }
 
     // MES 완료
-    @PutMapping("/mes/{mesId}/complete")
+    @PostMapping("/mes/{mesId}/completions")
     public ResponseEntity<Object> completeMes(
             @PathVariable String mesId,
             @AuthenticationPrincipal EverUserPrincipal principal
@@ -301,9 +301,9 @@ public class PpController {
 
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .put()
+                .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/pp/mes/{mesId}/complete")
+                        .path("/scm-pp/pp/mes/{mesId}/completions")
                         .queryParam("requesterId", requesterId)
                         .build(mesId))
                 .exchangeToMono(response -> {
@@ -322,13 +322,13 @@ public class PpController {
     }
 
     // MRP → MRP_RUN 계획주문 전환
-    @PostMapping("/mrp/convert")
+    @PostMapping("/mrp-runs")
     @PreAuthorize("hasAnyAuthority('PP_USER', 'PP_ADMIN', 'ALL_ADMIN')")
     public ResponseEntity<Object> convertToMrpRun(@RequestBody MrpRunConvertRequestDto requestDto) {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
-                .uri("/scm-pp/pp/mrp/convert")
+                .uri("/scm-pp/pp/mrp-runs")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .exchangeToMono(response -> {
@@ -347,7 +347,7 @@ public class PpController {
     }
 
     // MRP 계획주문 목록 조회
-    @GetMapping("/mrp/runs")
+    @GetMapping("/mrp-runs")
     public ResponseEntity<Object> getMrpRunList(
             @RequestParam(defaultValue = "ALL") String status,
             @RequestParam(required = false) String quotationId,
@@ -357,79 +357,13 @@ public class PpController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/pp/mrp/runs")
+                        .path("/scm-pp/pp/mrp-runs")
                         .queryParam("status", status)
                         .queryParam("quotationId", quotationId)
                         .queryParam("page", page)
                         .queryParam("size", size)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
-    }
-
-    // MRP 계획주문 승인
-    @PutMapping("/mrp/runs/{mrpRunId}/approve")
-    public ResponseEntity<Object> approveMrpRun(@PathVariable String mrpRunId) {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .put()
-                .uri("/scm-pp/pp/mrp/runs/{mrpRunId}/approve", mrpRunId)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
-    }
-
-    // MRP 계획주문 거부
-    @PutMapping("/mrp/runs/{mrpRunId}/reject")
-    public ResponseEntity<Object> rejectMrpRun(@PathVariable String mrpRunId) {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .put()
-                .uri("/scm-pp/pp/mrp/runs/{mrpRunId}/reject", mrpRunId)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
-    }
-
-    // MRP 계획주문 입고 처리
-    @PutMapping("/mrp/runs/{mrpRunId}/receive")
-    public ResponseEntity<Object> receiveMrpRun(@PathVariable String mrpRunId) {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .put()
-                .uri("/scm-pp/pp/mrp/runs/{mrpRunId}/receive", mrpRunId)
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -484,7 +418,7 @@ public class PpController {
     }
 
     // 견적 시뮬레이션
-    @PostMapping("/quotations/simulate")
+    @PostMapping("/quotations/simulations/search")
     @PreAuthorize("hasAnyAuthority('PP_USER', 'PP_ADMIN', 'ALL_ADMIN')")
     public ResponseEntity<Object> simulateQuotations(
             @RequestBody QuotationSimulateRequestDto requestDto,
@@ -495,7 +429,7 @@ public class PpController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/pp/quotations/simulate")
+                        .path("/scm-pp/pp/quotations/simulations/search")
                         .queryParam("page", page)
                         .queryParam("size", size)
                         .build())
@@ -517,12 +451,12 @@ public class PpController {
     }
 
     // MPS 프리뷰 생성
-    @PostMapping("/quotations/preview")
+    @PostMapping("/quotations/mps-previews")
     public ResponseEntity<Object> previewMps(@RequestBody List<String> quotationIds) {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
-                .uri("/scm-pp/pp/quotations/preview")
+                .uri("/scm-pp/pp/quotations/mps-previews")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(quotationIds)
                 .exchangeToMono(response -> {
@@ -541,13 +475,13 @@ public class PpController {
     }
 
     // 견적 확정
-    @PostMapping("/quotations/confirm")
+    @PostMapping("/quotations/reviews")
     @PreAuthorize("hasAnyAuthority('PP_USER', 'PP_ADMIN', 'ALL_ADMIN')")
     public ResponseEntity<Object> confirmQuotations(@RequestBody QuotationConfirmRequestDto requestDto) {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
-                .uri("/scm-pp/pp/quotations/confirm")
+                .uri("/scm-pp/pp/quotations/reviews")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .exchangeToMono(response -> {
@@ -566,12 +500,12 @@ public class PpController {
     }
 
     // 견적 상태 토글
-    @GetMapping("/status/toggle")
+    @GetMapping("/quotations/status-options")
     public ResponseEntity<Object> getQuotationsStatusToggle() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/quotations/status/toggle")
+                .uri("/scm-pp/pp/quotations/status-options")
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -588,12 +522,12 @@ public class PpController {
     }
 
     // 견적 상태 토글
-    @GetMapping("mrp/available/status/toggle")
+    @GetMapping("/quotations/mrp/available-status-options")
     public ResponseEntity<Object> getMrpStatusToggle() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/quotations/mrp/available/status/toggle")
+                .uri("/scm-pp/pp/quotations/mrp/available-status-options")
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -611,12 +545,12 @@ public class PpController {
 
 
     // 견적 체크 토글
-    @GetMapping("/available/status/toggle")
+    @GetMapping("/quotations/available-status-options")
     public ResponseEntity<Object> getQuotationAvailableStatusToggle() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/quotations/available/status/toggle")
+                .uri("/scm-pp/pp/quotations/available-status-options")
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -669,12 +603,12 @@ public class PpController {
     }
 
     // 견적 체크 토글
-    @GetMapping("/mps/boms/toggle")
+    @GetMapping("/quotations/bom-options")
     public ResponseEntity<Object> getMpsBomToggle() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/quotations/boms/toggle")
+                .uri("/scm-pp/pp/quotations/bom-options")
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -691,12 +625,12 @@ public class PpController {
     }
 
     //MRP 견적 목록 조회 토글
-    @GetMapping("/mrp/quotations/toggle")
+    @GetMapping("/mrp-runs/quotation-options")
     public ResponseEntity<Object> getMpsQuotationToggle() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/quotations/mrp/quotations/toggle")
+                .uri("/scm-pp/pp/mrp-runs/quotation-options")
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -714,12 +648,12 @@ public class PpController {
 
 
     //MRP 계획주문 상태 조회
-    @GetMapping("/mrp/runs/status/toggle")
+    @GetMapping("/mrp-runs/status-options")
     public ResponseEntity<Object> getMpsRunsToggle() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/mrp/runs/status/toggle")
+                .uri("/scm-pp/pp/mrp-runs/status-options")
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -736,12 +670,12 @@ public class PpController {
     }
 
     //MRP 계획주문 상태 조회
-    @GetMapping("/mrp/runs/quotations/toggle")
+    @GetMapping("/quotations/mrp/quotation-options")
     public ResponseEntity<Object> getMpsRunsQuotationsToggle() {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
-                .uri("/scm-pp/pp/mrp/runs/quotations/toggle")
+                .uri("/scm-pp/pp/quotations/mrp/quotation-options")
                 .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
                                 .map(body -> ResponseEntity.status(response.statusCode())
@@ -875,7 +809,7 @@ public class PpController {
         }
     }
 
-    @GetMapping("/statistic")
+    @GetMapping("/metrics")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "PP 통계 조회",
             description = "생산관리의 통계를 반환합니다. 생산중인 품목, 완료된 생산, 완제품 개수 포함"
@@ -886,7 +820,7 @@ public class PpController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/pp/statistic")
+                        .path("/scm-pp/pp/metrics")
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
                 .exchangeToMono(response -> {

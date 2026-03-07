@@ -2,7 +2,6 @@ package org.ever._4ever_be_scm.scm.pp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.iv.entity.Product;
 import org.ever._4ever_be_scm.scm.iv.entity.ProductStock;
 import org.ever._4ever_be_scm.scm.iv.repository.ProductRepository;
@@ -22,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -646,11 +646,11 @@ public class QuotationServiceImpl implements QuotationService {
 
     @Override
     @Transactional
-    public DeferredResult<ResponseEntity<ApiResponse<Void>>> confirmQuotationsAsync(QuotationConfirmRequestDto requestDto) {
+    public DeferredResult<ResponseEntity<?>> confirmQuotationsAsync(QuotationConfirmRequestDto requestDto) {
         log.info("견적 확정 비동기 처리 시작: quotationIds={}", requestDto.getQuotationIds());
 
         // DeferredResult 생성 (타임아웃 30초)
-        DeferredResult<ResponseEntity<ApiResponse<Void>>> deferredResult =
+        DeferredResult<ResponseEntity<?>> deferredResult =
                 new DeferredResult<>(30000L);
 
         // 타임아웃 처리
@@ -658,7 +658,7 @@ public class QuotationServiceImpl implements QuotationService {
             log.warn("견적 확정 처리 타임아웃");
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.REQUEST_TIMEOUT)
-                    .body(ApiResponse.fail("처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.REQUEST_TIMEOUT, "처리 시간이 초과되었습니다.")));
         });
 
         try {
@@ -712,7 +712,10 @@ public class QuotationServiceImpl implements QuotationService {
             log.error("견적 확정 처리 중 오류 발생", e);
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("견적 확정 처리 실패: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR)));
+                    .body(ProblemDetail.forStatusAndDetail(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "견적 확정 처리 실패: " + e.getMessage()
+                    )));
         }
 
         return deferredResult;
