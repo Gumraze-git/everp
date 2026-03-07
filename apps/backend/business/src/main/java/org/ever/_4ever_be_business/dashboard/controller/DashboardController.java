@@ -2,10 +2,9 @@ package org.ever._4ever_be_business.dashboard.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.dashboard.dto.response.DashboardStatisticsResponseDto;
 import org.ever._4ever_be_business.dashboard.service.DashboardService;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,11 +34,11 @@ public class DashboardController {
      *   ...
      * }
      */
-    @GetMapping("/statistics")
-    public ApiResponse<DashboardStatisticsResponseDto> getDashboardStatistics() {
+    @GetMapping("/metrics")
+    public ResponseEntity<DashboardStatisticsResponseDto> getDashboardStatistics() {
         log.info("종합 대시보드 통계 조회 API 호출");
         DashboardStatisticsResponseDto result = dashboardService.getDashboardStatistics();
         log.info("종합 대시보드 통계 조회 성공");
-        return ApiResponse.success(result, "대시보드 통계를 조회했습니다.", HttpStatus.OK);
+        return ResponseEntity.ok(result);
     }
 }
