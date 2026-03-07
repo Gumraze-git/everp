@@ -1,10 +1,12 @@
 package org.ever._4ever_be_business.common.async;
 
+import java.net.URI;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -20,12 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 public class GenericAsyncResultManager<T> implements AsyncResultManager<T> {
 
     // 트랜잭션 ID를 키로 하는 DeferredResult 저장소
-    private final Map<String, DeferredResult<ResponseEntity<ApiResponse<T>>>> pendingResults = 
+    private final Map<String, DeferredResult<ResponseEntity<?>>> pendingResults =
             new ConcurrentHashMap<>();
     
     @Override
     public void registerResult(String transactionId, 
-            DeferredResult<ResponseEntity<ApiResponse<T>>> result) {
+            DeferredResult<ResponseEntity<?>> result) {
         log.info("트랜잭션 {} 에 대한 DeferredResult 등록", transactionId);
         pendingResults.put(transactionId, result);
         
@@ -48,15 +50,19 @@ public class GenericAsyncResultManager<T> implements AsyncResultManager<T> {
             String message,
             HttpStatus status
     ) {
-        DeferredResult<ResponseEntity<ApiResponse<T>>> result = pendingResults.get(transactionId);
+        DeferredResult<ResponseEntity<?>> result = pendingResults.get(transactionId);
         if (result != null && !result.isSetOrExpired()) {
             log.info("[INFO] 트랜잭션 {} 성공 결과 설정", transactionId);
             HttpStatus httpStatus = status != null ? status : HttpStatus.OK;
-
-            result.setResult(
-                    ResponseEntity.status(httpStatus)
-                            .body(ApiResponse.success(data, message, httpStatus))
-            );
+            if (data == null) {
+                if (httpStatus == HttpStatus.CREATED) {
+                    result.setResult(ResponseEntity.status(httpStatus).build());
+                } else {
+                    result.setResult(ResponseEntity.noContent().build());
+                }
+            } else {
+                result.setResult(ResponseEntity.status(httpStatus).body(data));
+            }
         } else {
             log.warn("[WARN] 트랜잭션 {}에 대한 DeferredResult를 찾을 수 없거나 이미 완료됨", transactionId);
         }
@@ -68,7 +74,7 @@ public class GenericAsyncResultManager<T> implements AsyncResultManager<T> {
             String errorMessage,
             HttpStatus status
     ) {
-        DeferredResult<ResponseEntity<ApiResponse<T>>> result =
+        DeferredResult<ResponseEntity<?>> result =
                 pendingResults.get(transactionId);
 
         if (result != null && !result.isSetOrExpired()) {
@@ -76,10 +82,11 @@ public class GenericAsyncResultManager<T> implements AsyncResultManager<T> {
 
             HttpStatus httpStatus = status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
 
-            result.setResult(
-                    ResponseEntity.status(httpStatus)
-                            .body(ApiResponse.fail(errorMessage, httpStatus))
-            );
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(httpStatus, errorMessage);
+            problemDetail.setTitle(errorMessage);
+            problemDetail.setType(URI.create("https://ever.dev/problems/" + httpStatus.value()));
+            problemDetail.setProperty("traceId", UUID.randomUUID().toString());
+            result.setResult(ResponseEntity.status(httpStatus).body(problemDetail));
         } else {
             log.warn("[WARN] 트랜잭션 {}에 대한 DeferredResult를 찾을 수 없거나 이미 완료됨", transactionId);
         }
@@ -87,7 +94,7 @@ public class GenericAsyncResultManager<T> implements AsyncResultManager<T> {
 
     @Override
     public boolean hasPendingResult(String transactionId) {
-        DeferredResult<ResponseEntity<ApiResponse<T>>> result = pendingResults.get(transactionId);
+        DeferredResult<ResponseEntity<?>> result = pendingResults.get(transactionId);
         return result != null && !result.isSetOrExpired();
     }
 }
