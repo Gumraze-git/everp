@@ -33,17 +33,17 @@
 ### 3) Docker
 - 빌드: `docker build -t 4ever-gw .`
 - 실행 예시:
-  - `docker run --rm -p 8080:8080 \
-      -e SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
+  - `docker run --rm -p 18080:8080 \
+      -e SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:19092 \
       -e SPRING_REDIS_HOST=localhost \
-      -e SPRING_REDIS_PORT=6379 \
+      -e SPRING_REDIS_PORT=16379 \
       --name 4ever-gw 4ever-gw`
 
 ## 환경 변수
 - `SERVER_PORT` (기본 8080)
-- `SPRING_KAFKA_BOOTSTRAP_SERVERS` (기본 `localhost:9092`)
+- `SPRING_KAFKA_BOOTSTRAP_SERVERS` (로컬 compose 호스트 기본값 `localhost:19092`)
 - `SPRING_REDIS_HOST` (기본 `localhost`)
-- `SPRING_REDIS_PORT` (기본 `6379`)
+- `SPRING_REDIS_PORT` (로컬 compose 호스트 기본값 `16379`)
 - `SPRING_REDIS_PASSWORD` (기본 빈 값)
 - Swagger/Actuator 경로 등은 `application.yml:1` 참조
 
@@ -65,8 +65,8 @@
   - 구현: `src/main/java/org/ever/_4ever_be_gw/scmpp/controller/MmController.java:1160`
 
 예시 호출
-- 발주서 목록: `curl 'http://localhost:8080/api/purchase-orders?status=PENDING'`
-- 발주서 승인: `curl -X POST 'http://localhost:8080/api/purchase-orders/1002/approve' -H 'Authorization: Bearer PO_APPROVER'`
+- 발주서 목록: `curl 'http://localhost:18080/api/purchase-orders?status=PENDING'`
+- 발주서 승인: `curl -X POST 'http://localhost:18080/api/purchase-orders/1002/approve' -H 'Authorization: Bearer PO_APPROVER'`
 
 ## 보안/권한
 - 일부 쓰기/승인 API는 `Authorization` 헤더에 특정 권한 토큰을 요구합니다.
