@@ -3,6 +3,7 @@
 ## Workflow
 - Follow `Issue -> Branch -> Commit -> Pull Request` for every new change.
 - Start new work from a GitHub issue. Use the repository issue templates.
+- Title issues with a type prefix such as `[refac]`, `[feat]`, `[fix]`, `[docs]`, `[chore]`, or `[test]`.
 - Open pull requests with the repository PR template. If a section does not apply, write `N/A`.
 - Keep each branch and PR scoped to a single issue or a tightly related delivery unit.
 
@@ -21,7 +22,7 @@
 - `fix(gw): 하위 서비스 오류 응답 전달 개선`
 
 ## Templates and Tracking
-- Use the task issue template for both new work and retrospective tracking.
+- Use the single repository issue template for both new work and retrospective tracking.
 - Record commit hashes in issue bodies when you are documenting work that was already published.
 - Link the related issue in every pull request.
 

@@ -1,7 +1,7 @@
 ---
-name: Task
-about: 하나의 구현 단위나 수정 작업을 추적하는 작업 이슈
-title: '[Task] '
+name: Issue
+about: 구현 단위 또는 retrospective 정리를 추적하는 이슈
+title: '[refac] '
 ---
 
 ## 배경
