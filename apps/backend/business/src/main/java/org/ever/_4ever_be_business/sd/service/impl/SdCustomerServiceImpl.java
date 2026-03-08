@@ -3,7 +3,6 @@ package org.ever._4ever_be_business.sd.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.async.AsyncResultManager;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.common.saga.SagaTransactionManager;
@@ -27,6 +26,7 @@ import org.ever.event.CreateCustomerUserEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,7 +89,7 @@ public class SdCustomerServiceImpl implements SdCustomerService {
     @Transactional
     public void createCustomer(
         CreateCustomerRequestDto dto,
-        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+        DeferredResult<ResponseEntity<?>> deferredResult
     ) {
         log.info("[SAGA] 고객사 등록 비동기 처리 시작 - companyName: {}, businessNumber: {}",
             dto.getCompanyName(), dto.getBusinessNumber());
@@ -98,7 +98,7 @@ public class SdCustomerServiceImpl implements SdCustomerService {
             log.warn("[SAGA][FAIL] 고객사 담당자 정보가 없습니다.");
             deferredResult.setResult(
                 ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.fail("고객사 담당자 정보는 필수입니다.", HttpStatus.BAD_REQUEST))
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "고객사 담당자 정보는 필수입니다."))
             );
             return;
         }

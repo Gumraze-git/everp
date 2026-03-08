@@ -2,12 +2,10 @@ package org.ever._4ever_be_business.sd.integration.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.sd.dto.request.InventoryCheckRequestDto;
 import org.ever._4ever_be_business.sd.dto.response.InventoryCheckResponseDto;
 import org.ever._4ever_be_business.sd.integration.port.InventoryServicePort;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -32,21 +30,21 @@ public class ScmInventoryServiceAdapter implements InventoryServicePort {
         log.info("SCM Inventory 서비스 호출 - items count: {}", requestDto.getItems().size());
 
         try {
-            ApiResponse<InventoryCheckResponseDto> response = restClient.post()
+            InventoryCheckResponseDto response = restClient.post()
                     .uri(scmServiceUrl + "/scm/scm-pp/inventory/stock-check")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestDto)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<ApiResponse<InventoryCheckResponseDto>>() {});
+                    .body(InventoryCheckResponseDto.class);
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SCM Inventory 서비스 호출 성공 - 결과 items count: {}",
-                        response.getData().getItems().size());
-                return response.getData();
-            } else {
-                log.error("SCM Inventory 서비스 응답 실패 - response: {}", response);
-                throw new RuntimeException("Failed to check inventory from SCM service");
+                        response.getItems().size());
+                return response;
             }
+
+            log.error("SCM Inventory 서비스 응답 실패 - response is null");
+            throw new RuntimeException("Failed to check inventory from SCM service");
         } catch (Exception e) {
             log.error("SCM Inventory 서비스 호출 중 오류 발생", e);
             throw new RuntimeException("Error calling SCM Inventory service", e);
