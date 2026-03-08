@@ -2,7 +2,6 @@ package org.ever._4ever_be_scm.scm.iv.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.iv.dto.PagedResponseDto;
 import org.ever._4ever_be_scm.scm.iv.dto.StockDeliveryRequestDto;
 import org.ever._4ever_be_scm.scm.iv.dto.StockTransferDto;
@@ -10,7 +9,6 @@ import org.ever._4ever_be_scm.scm.iv.dto.StockTransferRequestDto;
 import org.ever._4ever_be_scm.scm.iv.service.StockTransferService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,11 +32,11 @@ public class StockTransferController {
     @io.swagger.v3.oas.annotations.Operation(
             summary = "재고 이동 목록 조회 (상위 5개)"
     )
-    public ResponseEntity<ApiResponse<PagedResponseDto<StockTransferDto>>> getStockTransfers() {
+    public ResponseEntity<PagedResponseDto<StockTransferDto>> getStockTransfers() {
         PageRequest pageable = PageRequest.of(0, 5); // 항상 첫 페이지에서 5개만 조회
         Page<StockTransferDto> stockTransfers = stockTransferService.getStockTransfers(pageable);
         PagedResponseDto<StockTransferDto> response = PagedResponseDto.from(stockTransfers);
-        return ResponseEntity.ok(ApiResponse.success(response, "상위 5개의 재고 이력 목록을 조회했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -51,17 +49,12 @@ public class StockTransferController {
     @io.swagger.v3.oas.annotations.Operation(
             summary = "창고간 재고 이동"
     )
-    public ResponseEntity<ApiResponse<String>> createStockTransfer(
+    public ResponseEntity<Void> createStockTransfer(
             @RequestBody StockTransferRequestDto request,
             @RequestParam String requesterId
     ) {
-        try {
-            stockTransferService.createStockTransfer(request,requesterId);
-            return ResponseEntity.ok(ApiResponse.success(null, "재고 이동이 성공적으로 처리되었습니다.", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("재고 이동 처리 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        stockTransferService.createStockTransfer(request,requesterId);
+        return ResponseEntity.noContent().build();
     }
     
     /**
@@ -74,13 +67,8 @@ public class StockTransferController {
     @io.swagger.v3.oas.annotations.Operation(
             summary = "재고 입출고 처리"
     )
-    public ResponseEntity<ApiResponse<String>> processStockDelivery(@RequestBody StockDeliveryRequestDto request) {
-        try {
-//            stockTransferService.processStockDelivery(request);
-            return ResponseEntity.ok(ApiResponse.success(null, "재고 입출고가 성공적으로 처리되었습니다.", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("재고 입출고 처리 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+    public ResponseEntity<Void> processStockDelivery(@RequestBody StockDeliveryRequestDto request) {
+//        stockTransferService.processStockDelivery(request);
+        return ResponseEntity.noContent().build();
     }
 }

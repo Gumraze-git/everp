@@ -6,7 +6,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_scm.common.async.AsyncResultManager;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
+import org.ever._4ever_be_scm.common.exception.ErrorCode;
+import org.ever._4ever_be_scm.common.exception.handler.ProblemDetailFactory;
 import org.ever._4ever_be_scm.common.saga.SagaTransactionManager;
 import org.ever._4ever_be_scm.scm.iv.entity.SupplierCompany;
 import org.ever._4ever_be_scm.scm.iv.entity.SupplierUser;
@@ -144,14 +145,20 @@ public class SupplierServiceImpl implements SupplierService {
     @Transactional
     public void createSupplier(
         SupplierCreateRequestDto dto,
-        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+        DeferredResult<ResponseEntity<?>> deferredResult
     ) {
         log.info("[SAGA][SUPPLIER] 공급사 등록 시작 - supplierName: {}", dto.getSupplierInfo() != null ? dto.getSupplierInfo().getSupplierName() : null);
 
         if (dto.getSupplierInfo() == null || dto.getManagerInfo() == null) {
             deferredResult.setResult(
                 ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.fail("공급사 정보와 담당자 정보는 필수입니다.", HttpStatus.BAD_REQUEST))
+                    .body(ProblemDetailFactory.badRequest(
+                        ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+                        "공급사 정보와 담당자 정보는 필수입니다.",
+                        null,
+                        null,
+                        ErrorCode.INVALID_INPUT_VALUE.getCode()
+                    ))
             );
             return;
         }

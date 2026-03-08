@@ -1,6 +1,5 @@
 package org.ever._4ever_be_alarm.common.async;
 
-import org.ever._4ever_be_alarm.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -19,7 +18,7 @@ public interface AsyncResultManager<T> {
      * @param result        비동기 결과 객체
      */
     void registerResult(String transactionId,
-        DeferredResult<ResponseEntity<ApiResponse<T>>> result);
+        DeferredResult<ResponseEntity<?>> result);
 
     /**
      * 성공 결과 설정
@@ -47,4 +46,6 @@ public interface AsyncResultManager<T> {
      * @param status        HTTP 상태 코드
      */
     void setErrorResult(String transactionId, String errorMessage, HttpStatus status);
+
+    boolean hasPendingResult(String transactionId);
 }

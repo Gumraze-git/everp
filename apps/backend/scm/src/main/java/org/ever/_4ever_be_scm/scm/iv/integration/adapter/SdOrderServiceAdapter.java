@@ -2,7 +2,6 @@ package org.ever._4ever_be_scm.scm.iv.integration.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_scm.scm.iv.integration.dto.SdApiResponse;
 import org.ever._4ever_be_scm.scm.iv.integration.dto.SdOrderDetailResponseDto;
 import org.ever._4ever_be_scm.scm.iv.integration.dto.SdOrderListResponseDto;
 import org.ever._4ever_be_scm.scm.iv.integration.port.SdOrderServicePort;
@@ -26,14 +25,14 @@ public class SdOrderServiceAdapter implements SdOrderServicePort {
         log.info("SD 서비스 호출 - 판매 주문 목록 조회: page={}, size={}, status={}", page, size, status);
 
         try {
-            SdApiResponse<SdOrderListResponseDto> response = restClient.get()
+            SdOrderListResponseDto response = restClient.get()
                     .uri(sdServiceUrl + "/business/sd/orders?page={page}&size={size}&status={status}", page, size, status)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<SdApiResponse<SdOrderListResponseDto>>() {});
+                    .body(new ParameterizedTypeReference<SdOrderListResponseDto>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SD 서비스 호출 성공 - 판매 주문 목록 조회");
-                return response.getData();
+                return response;
             } else {
                 log.error("SD 서비스 응답 실패 - response: {}", response);
                 throw new RuntimeException("Failed to retrieve sales order list from SD service");
@@ -65,14 +64,14 @@ public class SdOrderServiceAdapter implements SdOrderServicePort {
             String uri = uriBuilder.toString();
             log.debug("호출 URI: {}", uri);
 
-            SdApiResponse<SdOrderListResponseDto> response = restClient.get()
+            SdOrderListResponseDto response = restClient.get()
                     .uri(uri)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<SdApiResponse<SdOrderListResponseDto>>() {});
+                    .body(new ParameterizedTypeReference<SdOrderListResponseDto>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SD 서비스 호출 성공 - 판매 주문 목록 조회 (날짜 필터)");
-                return response.getData();
+                return response;
             } else {
                 log.error("SD 서비스 응답 실패 - response: {}", response);
                 throw new RuntimeException("Failed to retrieve sales order list from SD service");
@@ -88,14 +87,14 @@ public class SdOrderServiceAdapter implements SdOrderServicePort {
         log.info("SD 서비스 호출 - 판매 주문 상세 조회: salesOrderId={}", salesOrderId);
 
         try {
-            SdApiResponse<SdOrderDetailResponseDto> response = restClient.get()
+            SdOrderDetailResponseDto response = restClient.get()
                     .uri(sdServiceUrl + "/business/sd/orders/{salesOrderId}", salesOrderId)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<SdApiResponse<SdOrderDetailResponseDto>>() {});
+                    .body(new ParameterizedTypeReference<SdOrderDetailResponseDto>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SD 서비스 호출 성공 - 판매 주문 상세 조회");
-                return response.getData();
+                return response;
             } else {
                 log.error("SD 서비스 응답 실패 - response: {}", response);
                 throw new RuntimeException("Failed to retrieve sales order detail from SD service");

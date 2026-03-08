@@ -2,7 +2,6 @@ package org.ever._4ever_be_business.fcm.integration.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfoResponseDto;
 import org.ever._4ever_be_business.fcm.integration.dto.ProductOrderInfosResponseDto;
 import org.ever._4ever_be_business.fcm.integration.port.ProductOrderServicePort;
@@ -36,15 +35,15 @@ public class ScmProductOrderServiceAdapter implements ProductOrderServicePort {
         try {
             Map<String, String> requestBody = Map.of("productOrderId", productOrderId);
 
-            ApiResponse<ProductOrderInfoResponseDto> response = restClient.post()
+            ProductOrderInfoResponseDto response = restClient.post()
                     .uri(scmServiceUrl + "/scm/scm-pp/product/orderItem")
                     .body(requestBody)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<ApiResponse<ProductOrderInfoResponseDto>>() {});
+                    .body(new ParameterizedTypeReference<ProductOrderInfoResponseDto>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SCM ProductOrder 아이템 서비스 호출 성공 - productOrderId: {}", productOrderId);
-                return response.getData();
+                return response;
             } else {
                 log.error("SCM ProductOrder 아이템 서비스 응답 실패 - response: {}", response);
                 throw new RuntimeException("Failed to retrieve product order items from SCM service");
@@ -62,15 +61,15 @@ public class ScmProductOrderServiceAdapter implements ProductOrderServicePort {
         try {
             Map<String, List<String>> requestBody = Map.of("productOrderIds", productOrderIds);
 
-            ApiResponse<List<ProductOrderInfosResponseDto.ProductOrderInfoItem>> response = restClient.post()
+            List<ProductOrderInfosResponseDto.ProductOrderInfoItem> response = restClient.post()
                     .uri(scmServiceUrl + "/scm/scm-pp/product/orderInfos")
                     .body(requestBody)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<ApiResponse<List<ProductOrderInfosResponseDto.ProductOrderInfoItem>>>() {});
+                    .body(new ParameterizedTypeReference<List<ProductOrderInfosResponseDto.ProductOrderInfoItem>>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SCM ProductOrder 정보 서비스 호출 성공 (multiple) - count: {}", productOrderIds.size());
-                return response.getData();
+                return response;
             } else {
                 log.error("SCM ProductOrder 정보 서비스 응답 실패 (multiple) - response: {}", response);
                 throw new RuntimeException("Failed to retrieve product order infos from SCM service");

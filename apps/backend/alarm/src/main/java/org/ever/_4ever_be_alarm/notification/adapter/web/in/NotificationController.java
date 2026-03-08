@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_alarm.common.response.ApiResponse;
 import org.ever._4ever_be_alarm.common.response.PageResponseDto;
 import org.ever._4ever_be_alarm.common.validation.AllowedValues;
 import org.ever._4ever_be_alarm.common.validation.ValidUuidV7;
@@ -39,7 +38,7 @@ public class NotificationController {
      * 알림 목록 조회
      */
     @GetMapping("/list/{userId}")
-    public ResponseEntity<ApiResponse<PageResponseDto<NotificationListResponseDto>>> getNotificationList(
+    public ResponseEntity<PageResponseDto<NotificationListResponseDto>> getNotificationList(
         @ValidUuidV7
         @PathVariable("userId")
         String userId,
@@ -83,9 +82,7 @@ public class NotificationController {
 
             log.info("[API] 알림 목록 조회 성공 - userId: {}, totalElements: {}, totalPages: {}",
                 userId, result.getPage().getTotalElements(), result.getPage().getTotalPages());
-            return ResponseEntity.ok(
-                ApiResponse.success(result, "알림 목록을 조회했습니다.", HttpStatus.OK)
-            );
+            return ResponseEntity.ok(result);
 
         } catch (Exception e) {
             log.error("[API] 알림 목록 조회 실패 - userId: {}, Error: {}",
@@ -98,7 +95,7 @@ public class NotificationController {
      * 알림 갯수 조회
      */
     @GetMapping("/count/{userId}")
-    public ResponseEntity<ApiResponse<NotificationCountResponseDto>> getNotificationCount(
+    public ResponseEntity<NotificationCountResponseDto> getNotificationCount(
         @ValidUuidV7
         @PathVariable("userId")
         String userId,
@@ -119,9 +116,7 @@ public class NotificationController {
 
             log.info("[API] 알림 갯수 조회 성공 - userId: {}, status: {}, count: {}",
                 userId, status, response.getCount());
-            return ResponseEntity.ok(
-                ApiResponse.success(response, "알림 개수를 조회했습니다.", HttpStatus.OK)
-            );
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             log.error("[API] 알림 갯수 조회 실패 - userId: {}, status: {}, Error: {}",
@@ -134,7 +129,7 @@ public class NotificationController {
      * 알림 읽음 처리 (목록)
      */
     @PatchMapping("/list/read")
-    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadList(
+    public ResponseEntity<NotificationReadResponseDto> markReadList(
         @Valid
         @RequestBody
         NotificationMarkReadRequestDto request
@@ -151,9 +146,7 @@ public class NotificationController {
             log.info("[API] 알림 읽음 처리 성공 - userId: {}, processedCount: {}, totalRequested: {}",
                 request.getUserId(), response.getProcessedCount(),
                 request.getNotificationIds().size());
-            return ResponseEntity.ok(
-                ApiResponse.success(response, "알림 읽음 처리가 완료되었습니다.", HttpStatus.OK)
-            );
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             log.error("[API] 알림 읽음 처리 실패 - userId: {}, notificationCount: {}, Error: {}",
@@ -166,7 +159,7 @@ public class NotificationController {
      * 알림 읽음 처리 (전체)
      */
     @PatchMapping("/all/read")
-    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadAll(
+    public ResponseEntity<NotificationReadResponseDto> markReadAll(
         @Valid
         @RequestBody
         NotificationMarkReadAllAndOneRequestDto request
@@ -179,9 +172,7 @@ public class NotificationController {
 
             log.info("[API] 전체 알림 읽음 처리 성공 - userId: {}, processedCount: {}",
                 userId, response.getProcessedCount());
-            return ResponseEntity.ok(
-                ApiResponse.success(response, "전체 알림 읽음 처리가 완료되었습니다.", HttpStatus.OK)
-            );
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             log.error("[API] 전체 알림 읽음 처리 실패 - userId: {}, Error: {}",
@@ -194,7 +185,7 @@ public class NotificationController {
      * 알림 읽음 처리 (단일)
      */
     @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<ApiResponse<NotificationReadResponseDto>> markReadOne(
+    public ResponseEntity<NotificationReadResponseDto> markReadOne(
         @ValidUuidV7
         @PathVariable("notificationId")
         String notificationId,
@@ -212,9 +203,7 @@ public class NotificationController {
 
             log.info("[API] 단일 알림 읽음 처리 성공 - userId: {}, notificationId: {}, processedCount: {}",
                 userId, notificationId, response.getProcessedCount());
-            return ResponseEntity.ok(
-                ApiResponse.success(response, "알림 읽음 처리가 완료되었습니다.", HttpStatus.OK)
-            );
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             log.error("[API] 단일 알림 읽음 처리 실패 - userId: {}, notificationId: {}, Error: {}",

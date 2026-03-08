@@ -1,7 +1,6 @@
 package org.ever._4ever_be_business.hr.service;
 
 import jakarta.transaction.Transactional;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.hr.dto.request.EmployeeCreateRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.TrainingRequestDto;
 import org.ever._4ever_be_business.hr.dto.request.UpdateEmployeeRequestDto;
@@ -88,7 +87,7 @@ public interface EmployeeService {
     @Transactional
     void createEmployee(
             EmployeeCreateRequestDto requestDto,
-            DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+            DeferredResult<ResponseEntity<?>> deferredResult
     );
 
     /**

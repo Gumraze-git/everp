@@ -2,7 +2,6 @@ package org.ever._4ever_be_business.fcm.integration.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.fcm.integration.dto.SupplierCompaniesResponseDto;
 import org.ever._4ever_be_business.fcm.integration.dto.SupplierCompanyResponseDto;
 import org.ever._4ever_be_business.fcm.integration.port.SupplierCompanyServicePort;
@@ -36,15 +35,15 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
         try {
             Map<String, String> requestBody = Map.of("supplierCompanyId", supplierCompanyId);
 
-            ApiResponse<SupplierCompanyResponseDto> response = restClient.post()
+            SupplierCompanyResponseDto response = restClient.post()
                     .uri(scmServiceUrl + "/scm/scm-pp/company/supplier/single")
                     .body(requestBody)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<ApiResponse<SupplierCompanyResponseDto>>() {});
+                    .body(new ParameterizedTypeReference<SupplierCompanyResponseDto>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SCM SupplierCompany 서비스 호출 성공 - supplierCompanyId: {}", supplierCompanyId);
-                return response.getData();
+                return response;
             } else {
                 log.error("SCM SupplierCompany 서비스 응답 실패 - response: {}", response);
                 throw new RuntimeException("Failed to retrieve supplier company information from SCM service");
@@ -62,15 +61,15 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
         try {
             Map<String, List<String>> requestBody = Map.of("supplierCompanyIds", supplierCompanyIds);
 
-            ApiResponse<SupplierCompaniesResponseDto> response = restClient.post()
+            SupplierCompaniesResponseDto response = restClient.post()
                     .uri(scmServiceUrl + "/scm/scm-pp/company/supplier/multiple")
                     .body(requestBody)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<ApiResponse<SupplierCompaniesResponseDto>>() {});
+                    .body(new ParameterizedTypeReference<SupplierCompaniesResponseDto>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SCM SupplierCompany 서비스 호출 성공 (multiple) - count: {}", supplierCompanyIds.size());
-                return response.getData();
+                return response;
             } else {
                 log.error("SCM SupplierCompany 서비스 응답 실패 (multiple) - response: {}", response);
                 throw new RuntimeException("Failed to retrieve supplier companies from SCM service");
@@ -88,14 +87,14 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
         try {
             Map<String, String> requestBody = Map.of("supplierUserId", supplierUserId);
 
-            ApiResponse<Map<String, String>> response = restClient.post()
+            Map<String, String> response = restClient.post()
                     .uri(scmServiceUrl + "/scm/scm-pp/company/supplier")
                     .body(requestBody)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<ApiResponse<Map<String, String>>>() {});
+                    .body(new ParameterizedTypeReference<Map<String, String>>() {});
 
-            if (response != null && response.isSuccess() && response.getData() != null) {
-                String supplierCompanyId = response.getData().get("supplierCompanyId");
+            if (response != null) {
+                String supplierCompanyId = response.get("supplierCompanyId");
                 log.info("SCM SupplierCompany 서비스 호출 성공 - supplierUserId: {}, supplierCompanyId: {}",
                         supplierUserId, supplierCompanyId);
                 return supplierCompanyId;

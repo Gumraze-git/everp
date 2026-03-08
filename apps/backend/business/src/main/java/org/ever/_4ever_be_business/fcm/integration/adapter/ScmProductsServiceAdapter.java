@@ -2,7 +2,6 @@ package org.ever._4ever_be_business.fcm.integration.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.fcm.integration.dto.ProductMultipleResponseDto;
 import org.ever._4ever_be_business.fcm.integration.port.ProductsServicePort;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,16 +35,16 @@ public class ScmProductsServiceAdapter implements ProductsServicePort {
         try {
             Map<String, List<String>> requestBody = Map.of("productIds", productIds);
 
-            ApiResponse<ProductMultipleResponseDto> response = restClient.post()
+            ProductMultipleResponseDto response = restClient.post()
                     .uri(scmServiceUrl + "/scm/scm-pp/product/multiple")
                     .body(requestBody)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<ApiResponse<ProductMultipleResponseDto>>() {});
+                    .body(new ParameterizedTypeReference<ProductMultipleResponseDto>() {});
 
-            if (response != null && response.isSuccess()) {
+            if (response != null) {
                 log.info("SCM Product 서비스 호출 성공 - productCount: {}",
-                        response.getData().getProducts().size());
-                return response.getData();
+                        response.getProducts().size());
+                return response;
             } else {
                 log.error("SCM Product 서비스 응답 실패 - response: {}", response);
                 throw new RuntimeException("Failed to retrieve products from SCM service");
