@@ -7,20 +7,21 @@
 - Keep each branch and PR scoped to a single issue or a tightly related delivery unit.
 
 ## Commit Messages
-- All new commit messages must follow `type(scope): subject (#issue)`.
+- All new commit messages must follow `type(scope): Korean subject`.
 - Allowed types: `feat`, `fix`, `refac`, `test`, `chore`, `docs`.
 - `scope` is optional but strongly recommended. Prefer module scopes such as `hrm`, `sd`, `pp`, `dashboard`, `mm`, `iv`, `im`, `gw`, `frontend`, `repo`.
-- `subject` must be concise English in lowercase and must not end with a period.
-- Every new commit must include the related GitHub issue number.
+- `subject` must be a concise Korean summary on a single line.
+- Do not append `(#issue)` to the commit title.
+- Add a blank line after the title, then write `3-5` Korean bullet points in the body.
+- Manage issue links in issues and pull requests, not in commit titles.
 
 ### Examples
-- `refac(sd): align quotation routes (#2)`
-- `docs(repo): add monorepo governance guides (#3)`
-- `fix(gw): relay problem detail from downstream (#12)`
+- `refac(sd): 견적 경로 정리`
+- `docs(repo): 깃허브 운영 규칙 정비`
+- `fix(gw): 하위 서비스 오류 응답 전달 개선`
 
 ## Templates and Tracking
-- Use the epic issue template for retrospective tracking, multi-step programs, or cross-module work.
-- Use the task issue template for a single implementation unit.
+- Use the task issue template for both new work and retrospective tracking.
 - Record commit hashes in issue bodies when you are documenting work that was already published.
 - Link the related issue in every pull request.
 

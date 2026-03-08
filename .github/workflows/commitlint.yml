@@ -16,3 +16,23 @@ jobs:
       - uses: wagoid/commitlint-github-action@v6
         with:
           configFile: commitlint.config.js
+
+      - name: Validate commit bodies
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}" --depth=1
+            COMMITS=$(git rev-list "origin/${{ github.base_ref }}..HEAD")
+          else
+            if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+              COMMITS="${{ github.sha }}"
+            else
+              COMMITS=$(git rev-list "${{ github.event.before }}..${{ github.sha }}")
+            fi
+          fi
+
+          if [ -z "$COMMITS" ]; then
+            echo "No commits to validate."
+            exit 0
+          fi
+
+          node .github/scripts/validate-commit-messages.js $COMMITS
