@@ -2,9 +2,12 @@ package org.ever._4ever_be_gw.scm.im.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
+import org.ever._4ever_be_gw.scm.im.service.ImHttpService;
 import org.ever._4ever_be_gw.scm.im.dto.AddInventoryItemRequest;
 import org.ever._4ever_be_gw.scm.im.dto.StockTransferRequestDto;
 import org.ever._4ever_be_gw.scm.im.dto.WarehouseCreateRequestDto;
@@ -26,6 +29,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 public class ImController {
 
     private final WebClientProvider webClientProvider;
+    private final ImHttpService imHttpService;
 
     // 재고 목록 조회 (외부 서버)
     @GetMapping("/inventory-items")
@@ -201,7 +205,7 @@ public class ImController {
     }
 
     // 부족 재고 간단 정보 조회 (외부 서버)
-    @GetMapping("/shortage/preview")
+    @GetMapping("/shortage-previews")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "부족 재고 간단 조회"
     )
@@ -211,7 +215,7 @@ public class ImController {
         try {
             ResponseEntity<Object> result = scmPpWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/scm-pp/iv/shortage/preview")
+                            .path("/scm-pp/iv/shortage-previews")
                             .queryParam("page", 0)
                             .queryParam("size", 5)
                             .build())
@@ -233,7 +237,7 @@ public class ImController {
     }
 
     // 재고에 존재하지 않는 자재 품목 목록
-    @GetMapping("/items/toggle")
+    @GetMapping("/item-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "자재 추가 시 자재 토글 목록 조회"
     )
@@ -243,7 +247,7 @@ public class ImController {
         try {
             ResponseEntity<Object> result = scmPpWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/scm-pp/iv/items/toggle")
+                            .path("/scm-pp/iv/item-options")
                             .build())
                     .accept(MediaType.APPLICATION_JSON)
                     .exchangeToMono(response -> {
@@ -394,28 +398,9 @@ public class ImController {
     }
 
     // 재고 관리 부서 명단 반환
-    @GetMapping("/warehouses/managers/toggle")
+    @GetMapping("/warehouse-manager-options")
     public ResponseEntity<Object> getInventoryEmployees() {
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
-
-        try {
-            ResponseEntity<Object> result = scmPpWebClient.get()
-                    .uri("/hrm/departments/inventory/employees")
-                    .accept(MediaType.APPLICATION_JSON)
-                    .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+        return imHttpService.getWarehouseManagerOptions();
     }
 
     // 창고 추가 생성 (외부 서버)
@@ -451,34 +436,13 @@ public class ImController {
     }
 
     //재고성 구매요청을 위한 item 정보 get
-    @PostMapping("/items/info")
+    @PostMapping("/items/search")
     @PreAuthorize("hasAnyAuthority('IM_USER', 'IM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "재고성 구매요청을 위한 item 정보 get"
     )
     public ResponseEntity<Object> getItemInfoList(@RequestBody ItemInfoRequest request) {
-
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-        
-        try {
-            ResponseEntity<Object> result = scmPpWebClient.post()
-                    .uri("/scm-pp/iv/items/info")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(request)
-                    .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+        return imHttpService.searchItems(request);
     }
 
     // 창고 정보 수정 수정 (외부 서버)
@@ -515,105 +479,29 @@ public class ImController {
     }
 
     // 창고 드롭다운 목록 조회
-    @GetMapping("/warehouses/dropdown")
+    @GetMapping("/warehouse-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "창고 드롭다운 목록 조회"
     )
     public ResponseEntity<Object> getWarehouseDropdown(@RequestParam(required = false) String warehouseId) {
-        WebClient scmPpWebClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        try {
-            ResponseEntity<Object> result = scmPpWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/scm-pp/iv/warehouses/dropdown")
-                            .queryParam("warehouseId", warehouseId)
-                            .build())
-                    .accept(MediaType.APPLICATION_JSON)
-                    .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+        return imHttpService.getWarehouseOptions(warehouseId);
     }
 
      // 재고 부족 통계 조회
-    @GetMapping("/shortage/count/critical/statistic")
-    public ResponseEntity<Object> getShortageStatistic() {
-        var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        try {
-            ResponseEntity<Object> result = client.get()
-                    .uri("/scm-pp/iv/shortage/count/critical/statistic")
-                    .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    @GetMapping("/shortage-metrics")
+    public ResponseEntity<StatsResponseDto<StatsMetricsDto>> getShortageStatistic() {
+        return imHttpService.getShortageMetrics();
     }
 
     // IM 통계 조회
-    @GetMapping("/statistic")
-    public ResponseEntity<Object> getImStatistic() {
-        var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        try {
-            ResponseEntity<Object> result = client.get()
-                    .uri("/scm-pp/iv/statistic")
-                    .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    @GetMapping("/metrics")
+    public ResponseEntity<StatsResponseDto<StatsMetricsDto>> getImStatistic() {
+        return imHttpService.getMetrics();
     }
 
     // 창고 통계 조회
-    @GetMapping("/warehouses/statistic")
-    public ResponseEntity<Object> getWarehouseStatistic() {
-        var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        try {
-            ResponseEntity<Object> result = client.get()
-                    .uri("/scm-pp/iv/warehouses/statistic")
-                    .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    @GetMapping("/warehouse-metrics")
+    public ResponseEntity<StatsResponseDto<StatsMetricsDto>> getWarehouseStatistic() {
+        return imHttpService.getWarehouseMetrics();
     }
 }

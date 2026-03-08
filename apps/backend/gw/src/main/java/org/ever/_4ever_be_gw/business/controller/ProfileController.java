@@ -1,6 +1,7 @@
 package org.ever._4ever_be_gw.business.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.business.dto.hrm.UpdateProfileRequestDto;
@@ -30,39 +31,24 @@ public class ProfileController {
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
         var scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
 
-        Object result;
+        ResponseEntity<Object> result;
 
         switch (userType.toLowerCase()) {
             case "customer":
-                // 1번: 고객사 조회
-                result = client.get()
-                        .uri("/hrm/customers/profile/{customerUserId}", userId)
-                        .retrieve()
-                        .bodyToMono(Object.class)
-                        .block();
+                result = fetchEntity(client.get().uri("/hrm/customer-users/{customerUserId}/profile", userId));
                 break;
 
             case "supplier":
-                // 2번: 공급사 조회
-                result = scmClient.get()
-                        .uri("/api/scm-pp/mm/users/supplier/{userId}/profile", userId)
-                        .retrieve()
-                        .bodyToMono(Object.class)
-                        .block();
+                result = fetchEntity(scmClient.get().uri("/scm-pp/mm/supplier-users/{userId}/profile", userId));
                 break;
 
             case "internal":
             default:
-                // 3번: 기존 내부 직원 조회
-                result = client.get()
-                        .uri("/hrm/employees/profile/{internelUserId}", userId)
-                        .retrieve()
-                        .bodyToMono(Object.class)
-                        .block();
+                result = fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/profile", userId));
                 break;
         }
 
-        return ResponseEntity.ok(result);
+        return result;
     }
 
     @GetMapping("/attendance-records")
@@ -70,132 +56,92 @@ public class ProfileController {
             @AuthenticationPrincipal EverUserPrincipal user
     ) {
 
-        String internelUserId = user.getUserId();
+        String internalUserId = user.getUserId();
 
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = client.get()
-                .uri("/hrm/employees/attendance-records/{internelUserId}", internelUserId)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/attendance-history-items", internalUserId));
     }
 
     @GetMapping("/today-attendance")
     public ResponseEntity<Object> getTodayAttendance(
             @AuthenticationPrincipal EverUserPrincipal user
     ) {
-        String internelUserId = user.getUserId();
+        String internalUserId = user.getUserId();
 
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = client.get()
-                .uri("/hrm/employees/today-attendance/{internelUserId}", internelUserId)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/today-attendance", internalUserId));
     }
 
-    @GetMapping("/trainings/in-progress")
+    @GetMapping("/training-items/in-progress")
     public ResponseEntity<Object> getInProgressTrainings(
             @AuthenticationPrincipal EverUserPrincipal user
     ) {
-        String internelUserId = user.getUserId();
+        String internalUserId = user.getUserId();
 
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = client.get()
-                .uri("/hrm/employees/trainings/in-progress/{internelUserId}", internelUserId)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/in-progress-training-items", internalUserId));
     }
 
-    @GetMapping("/trainings/available")
+    @GetMapping("/training-items/available")
     public ResponseEntity<Object> getAvailableTrainings(
             @AuthenticationPrincipal EverUserPrincipal user
     ) {
-        String internelUserId = user.getUserId();
+        String internalUserId = user.getUserId();
 
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = client.get()
-                .uri("/hrm/employees/trainings/available/{internelUserId}", internelUserId)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/available-training-items", internalUserId));
     }
 
-    @GetMapping("/trainings/completed")
+    @GetMapping("/training-items/completed")
     public ResponseEntity<Object> getCompletedTrainings(
             @AuthenticationPrincipal EverUserPrincipal user
     ) {
 
-        String internelUserId = user.getUserId();
+        String internalUserId = user.getUserId();
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = client.get()
-                .uri("/hrm/employees/trainings/completed/{internelUserId}", internelUserId)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/completed-training-items", internalUserId));
     }
 
-    @PostMapping("trainings/request")
+    @PostMapping("/training-enrollments")
     public ResponseEntity<Object> requestTraining(
             @AuthenticationPrincipal EverUserPrincipal user,
             @RequestParam String trainingId
     ) {
-        String internelUserId = user.getUserId();
+        String internalUserId = user.getUserId();
 
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        // WebClient 요청에서 쿼리 파라미터를 넘기는 부분
-        Object result = client.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/hrm/internelUser/program")
-                        .queryParam("programId", trainingId)
-                        .queryParam("internelUserId", internelUserId)
-                        .build())
+        return fetchEntity(client.post()
+                .uri("/hrm/internal-users/{internalUserId}/training-enrollments", internalUserId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+                .bodyValue(Map.of("programId", trainingId)));
     }
 
-    @PostMapping("employees/profile/update")
+    @PatchMapping
     public ResponseEntity<Object> updateProfileThroughWebClient(
             @AuthenticationPrincipal EverUserPrincipal user,
             @RequestBody UpdateProfileRequestDto requestDto
     ) {
-        String internelUserId = user.getUserId();
+        String internalUserId = user.getUserId();
 
         var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-        Object result = client.patch()
+        return fetchEntity(client.patch()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/hrm/employees/profile/{internelUserId}")
-                        .build(internelUserId))  // PathVariable의 값을 전달
+                        .path("/hrm/internal-users/{internalUserId}/profile")
+                        .build(internalUserId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-
-        return ResponseEntity.ok(result);
+                .bodyValue(requestDto));
     }
 
+    private ResponseEntity<Object> fetchEntity(org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec<?> requestSpec) {
+        ResponseEntity<Object> response = requestSpec.retrieve().toEntity(Object.class).block();
+        return response != null ? response : ResponseEntity.noContent().build();
+    }
 
 }
