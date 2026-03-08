@@ -5,13 +5,15 @@ import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.scm.im.dto.SalesOrderStatusChangeRequestDto;
 import org.ever._4ever_be_gw.scm.im.service.ImHttpService;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "재고관리(IM)", description = "재고 관리 API")
 @RestController
@@ -19,7 +21,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @RequestMapping("/scm-pp")
 public class OrderController {
 
-    private final WebClientProvider webClientProvider;
     private final ImHttpService imHttpService;
 
     @GetMapping("/purchase-orders")
@@ -45,32 +46,11 @@ public class OrderController {
         return imHttpService.getSalesOrder(salesOrderId);
     }
 
-
-    // 판매제품
     @GetMapping("/product-options")
     public ResponseEntity<Object> getItemCategoryProducts() {
-        var client = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
-
-        try {
-            ResponseEntity<Object> result = client.get()
-                    .uri("/scm-pp/product-options")
-                    .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+        return imHttpService.getProductOptions();
     }
 
-    //출고 배송 상태 변경
     @PostMapping("/sales-orders/{salesOrderId}/shipments")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "출고 배송 상태 변경",

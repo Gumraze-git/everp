@@ -14,10 +14,15 @@ import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
+import org.ever._4ever_be_gw.scm.im.dto.AddInventoryItemRequest;
 import org.ever._4ever_be_gw.scm.im.dto.SalesOrderStatusChangeRequestDto;
+import org.ever._4ever_be_gw.scm.im.dto.StockTransferRequestDto;
+import org.ever._4ever_be_gw.scm.im.dto.WarehouseCreateRequestDto;
+import org.ever._4ever_be_gw.scm.im.dto.WarehouseUpdateRequestDto;
 import org.ever._4ever_be_gw.scm.im.service.ImHttpService;
 import org.ever._4ever_be_gw.scm.mm.dto.ItemInfoRequest;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -63,6 +68,163 @@ public class ImHttpServiceImpl implements ImHttpService {
     }
 
     @Override
+    public ResponseEntity<Object> getInventoryItems(
+        String type,
+        String keyword,
+        String statusCode,
+        Integer page,
+        Integer size
+    ) {
+        int pageNumber = normalizePage(page);
+        int pageSize = normalizePageSize(size);
+        String normalizedStatusCode = normalizeStatusCode(statusCode);
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "재고 목록 조회",
+            uriBuilder -> {
+                UriBuilder builder = uriBuilder
+                    .path("/scm-pp/iv/inventory-items")
+                    .queryParam("statusCode", normalizedStatusCode)
+                    .queryParam("page", pageNumber)
+                    .queryParam("size", pageSize);
+                builder = addQueryParamIfPresent(builder, "type", type);
+                builder = addQueryParamIfPresent(builder, "keyword", keyword);
+                return builder.build();
+            }
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> addInventoryItem(AddInventoryItemRequest request) {
+        return postForObject(
+            ApiClientKey.SCM_PP,
+            "재고 추가",
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/items").build(),
+            request
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> updateSafetyStock(String itemId, Integer safetyStock) {
+        if (itemId == null || itemId.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, "itemId is required");
+        }
+        if (safetyStock == null) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, "safetyStock is required");
+        }
+        return patchForObject(
+            ApiClientKey.SCM_PP,
+            "안전재고 수정",
+            uriBuilder -> uriBuilder
+                .path("/scm-pp/iv/items/{itemId}/safety-stock")
+                .queryParam("safetyStock", safetyStock)
+                .build(itemId)
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getInventoryItemDetail(String itemId) {
+        if (itemId == null || itemId.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, "itemId is required");
+        }
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "재고 상세 조회",
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/items/{itemId}").build(itemId)
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getShortageItems(String statusCode, Integer page, Integer size) {
+        int pageNumber = normalizePage(page);
+        int pageSize = normalizePageSize(size);
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "부족 재고 목록 조회",
+            uriBuilder -> {
+                UriBuilder builder = uriBuilder
+                    .path("/scm-pp/iv/shortage")
+                    .queryParam("page", pageNumber)
+                    .queryParam("size", pageSize);
+                builder = addQueryParamIfPresent(builder, "status", statusCode);
+                return builder.build();
+            }
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getShortageItemsPreview() {
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "부족 재고 간단 조회",
+            uriBuilder -> uriBuilder
+                .path("/scm-pp/iv/shortage/preview")
+                .queryParam("page", 0)
+                .queryParam("size", 5)
+                .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getItemOptions() {
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "품목 옵션 조회",
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/items/toggle").build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getStockTransfers() {
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "재고 이동 목록 조회",
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/stock-transfers").build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> createStockTransfer(StockTransferRequestDto request, String requesterId) {
+        requireUserId(requesterId, "requesterId");
+        return postForObject(
+            ApiClientKey.SCM_PP,
+            "재고 이동 생성",
+            uriBuilder -> uriBuilder
+                .path("/scm-pp/iv/stock-transfers")
+                .queryParam("requesterId", requesterId)
+                .build(),
+            request
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getWarehouses(Integer page, Integer size) {
+        int pageNumber = normalizePage(page);
+        int pageSize = size != null && size > 0 ? size : 20;
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "창고 목록 조회",
+            uriBuilder -> uriBuilder
+                .path("/scm-pp/iv/warehouses")
+                .queryParam("page", pageNumber)
+                .queryParam("size", pageSize)
+                .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getWarehouseDetail(String warehouseId) {
+        if (warehouseId == null || warehouseId.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, "warehouseId is required");
+        }
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "창고 상세 조회",
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/warehouses/{warehouseId}").build(warehouseId)
+        );
+    }
+
+    @Override
     public ResponseEntity<Object> getWarehouseManagerOptions() {
         return fetchObject(
             ApiClientKey.BUSINESS,
@@ -74,8 +236,32 @@ public class ImHttpServiceImpl implements ImHttpService {
     @Override
     public ResponseEntity<Object> searchItems(ItemInfoRequest request) {
         return postForObject(
+            ApiClientKey.SCM_PP,
             "재고성 구매요청 품목 조회",
-            uriBuilder -> uriBuilder.path("/scm-pp/iv/items/search").build(),
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/items/info").build(),
+            request
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> createWarehouse(WarehouseCreateRequestDto request) {
+        return postForObject(
+            ApiClientKey.SCM_PP,
+            "창고 생성",
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/warehouses").build(),
+            request
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> updateWarehouse(String warehouseId, WarehouseUpdateRequestDto request) {
+        if (warehouseId == null || warehouseId.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, "warehouseId is required");
+        }
+        return putForObject(
+            ApiClientKey.SCM_PP,
+            "창고 수정",
+            uriBuilder -> uriBuilder.path("/scm-pp/iv/warehouses/{warehouseId}").build(warehouseId),
             request
         );
     }
@@ -92,6 +278,15 @@ public class ImHttpServiceImpl implements ImHttpService {
                 }
                 return builder.build();
             }
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getProductOptions() {
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "제품 옵션 조회",
+            uriBuilder -> uriBuilder.path("/scm-pp/product-options").build()
         );
     }
 
@@ -265,14 +460,64 @@ public class ImHttpServiceImpl implements ImHttpService {
     }
 
     private ResponseEntity<Object> postForObject(
+        ApiClientKey apiClientKey,
         String operation,
         Function<UriBuilder, URI> uriFunction,
         Object requestBody
     ) {
         try {
-            ResponseEntity<Object> response = scmClient(ApiClientKey.SCM_PP)
+            ResponseEntity<Object> response = scmClient(apiClientKey)
                 .post()
                 .uri(uriFunction)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .toEntity(Object.class)
+                .block();
+            return requireBody(operation, response);
+        } catch (WebClientResponseException ex) {
+            log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        } catch (Exception ex) {
+            log.error("{} 중 오류 발생", operation, ex);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, operation + " 중 오류가 발생했습니다.", ex);
+        }
+    }
+
+    private ResponseEntity<Object> patchForObject(
+        ApiClientKey apiClientKey,
+        String operation,
+        Function<UriBuilder, URI> uriFunction
+    ) {
+        try {
+            ResponseEntity<Object> response = scmClient(apiClientKey)
+                .patch()
+                .uri(uriFunction)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .toEntity(Object.class)
+                .block();
+            return requireBody(operation, response);
+        } catch (WebClientResponseException ex) {
+            log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        } catch (Exception ex) {
+            log.error("{} 중 오류 발생", operation, ex);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, operation + " 중 오류가 발생했습니다.", ex);
+        }
+    }
+
+    private ResponseEntity<Object> putForObject(
+        ApiClientKey apiClientKey,
+        String operation,
+        Function<UriBuilder, URI> uriFunction,
+        Object requestBody
+    ) {
+        try {
+            ResponseEntity<Object> response = scmClient(apiClientKey)
+                .put()
+                .uri(uriFunction)
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .retrieve()
                 .toEntity(Object.class)
@@ -333,6 +578,10 @@ public class ImHttpServiceImpl implements ImHttpService {
         return size != null && size > 0 ? size : 10;
     }
 
+    private String normalizeStatusCode(String statusCode) {
+        return statusCode != null && !statusCode.isBlank() ? statusCode : "ALL";
+    }
+
     private void requireUserId(String userId, String fieldName) {
         if (userId == null || userId.isBlank()) {
             throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, fieldName + " is required");
@@ -343,5 +592,15 @@ public class ImHttpServiceImpl implements ImHttpService {
         if (status == null || status.isBlank()) {
             throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, fieldName + " is required");
         }
+    }
+
+    private UriBuilder addQueryParamIfPresent(UriBuilder builder, String name, Object value) {
+        if (value == null) {
+            return builder;
+        }
+        if (value instanceof String stringValue && stringValue.isBlank()) {
+            return builder;
+        }
+        return builder.queryParam(name, value);
     }
 }
