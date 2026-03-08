@@ -1,6 +1,5 @@
 package org.ever._4ever_be_scm.scm.iv.service;
 
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderDetailDto;
 import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderDto;
 import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderStatusChangeRequestDto;
@@ -29,21 +28,7 @@ public interface SalesOrderService {
      */
     Page<SalesOrderDto> getReadyToShipSalesOrders(Pageable pageable);
 
-    /**
-     * 출고 준비 완료 판매 주문 상세 조회
-     *
-     * @param salesOrderId 판매 주문 ID
-     * @return 출고 준비 완료 판매 주문 상세 정보
-     */
-    SalesOrderDetailDto getReadyToShipOrderDetail(String salesOrderId);
-
-    /**
-     * 생산중 판매 주문 상세 조회
-     *
-     * @param salesOrderId 판매 주문 ID
-     * @return 생산중 판매 주문 상세 정보
-     */
-    SalesOrderDetailDto getProductionDetail(String salesOrderId);
+    SalesOrderDetailDto getSalesOrderDetail(String salesOrderId);
 
     /**
      * 판매 주문 상태 변경 (비동기 - 분산 트랜잭션)
@@ -52,5 +37,5 @@ public interface SalesOrderService {
      * @param requestDto 요청 DTO (itemIds)
      * @return DeferredResult
      */
-    DeferredResult<ResponseEntity<ApiResponse<Void>>> changeSalesOrderStatusAsync(String salesOrderId, SalesOrderStatusChangeRequestDto requestDto,String requesterId);
+    DeferredResult<ResponseEntity<?>> createShipmentAsync(String salesOrderId, SalesOrderStatusChangeRequestDto requestDto, String requesterId);
 }

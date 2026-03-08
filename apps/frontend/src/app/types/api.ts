@@ -83,15 +83,14 @@ export const INVENTORY_ENDPOINTS = {
   INVENTORY_DETAIL: (itemId: string) => `${INVENTORY_BASE_PATH}/iv/items/${itemId}`,
   LOW_STOCK: `${INVENTORY_BASE_PATH}/iv/shortage/preview`,
   RECENT_STOCK_MOVEMENT: `${INVENTORY_BASE_PATH}/iv/stock-transfers`,
-  PRODUCTION_LIST: `${INVENTORY_BASE_PATH}/sales-orders/production`,
-  READY_TO_SHIP_LIST: `${INVENTORY_BASE_PATH}/sales-orders/ready-to-ship`,
-  PENDING_LIST: `${INVENTORY_BASE_PATH}/purchase-orders/receiving`,
-  RECEIVED_LIST: `${INVENTORY_BASE_PATH}/purchase-orders/received`,
-  PRODUCTIONDETAIL: (itemId: string) => `${INVENTORY_BASE_PATH}/sales-orders/production/${itemId}`,
-  READY_TO_SHIP_DETAIL: (itemId: string) =>
-    `${INVENTORY_BASE_PATH}/sales-orders/ready-to-ship/${itemId}`,
+  PRODUCTION_LIST: `${INVENTORY_BASE_PATH}/sales-orders`,
+  READY_TO_SHIP_LIST: `${INVENTORY_BASE_PATH}/sales-orders`,
+  PENDING_LIST: `${INVENTORY_BASE_PATH}/purchase-orders`,
+  RECEIVED_LIST: `${INVENTORY_BASE_PATH}/purchase-orders`,
+  PRODUCTIONDETAIL: (itemId: string) => `${INVENTORY_BASE_PATH}/sales-orders/${itemId}`,
+  READY_TO_SHIP_DETAIL: (itemId: string) => `${INVENTORY_BASE_PATH}/sales-orders/${itemId}`,
   MARKAS_READY_TO_SHIP_DETAIL: (orderId: string) =>
-    `${INVENTORY_BASE_PATH}/sales-orders/${orderId}/status`,
+    `${INVENTORY_BASE_PATH}/sales-orders/${orderId}/shipments`,
   ADD_MATERIALS: `${INVENTORY_BASE_PATH}/iv/items`,
   MATERIALS_LIST: `${INVENTORY_BASE_PATH}/iv/items/info`,
   EDIT_SAFETY_STOCK: (itemId: string, safetyStock: number) =>
@@ -121,7 +120,7 @@ export const WAREHOUSE_ENDPOINTS = {
 export const USER_ENDPOINTS = {
   LOGIN: `${AUTH_BASE_URL}/oauth2/token`,
   LOGOUT: `${AUTH_BASE_URL}/logout`,
-  USER_INFO: `${API_BASE_URL}/user/info`,
+  USER_INFO: `${API_BASE_URL}/user`,
   USER_PROFILE_INFO: `${HRM_BASE_PATH}/employees/by-internel-user`,
 };
 

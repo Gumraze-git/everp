@@ -14,6 +14,7 @@ import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
+import org.ever._4ever_be_gw.scm.im.dto.SalesOrderStatusChangeRequestDto;
 import org.ever._4ever_be_gw.scm.im.service.ImHttpService;
 import org.ever._4ever_be_gw.scm.mm.dto.ItemInfoRequest;
 import org.springframework.core.ParameterizedTypeReference;
@@ -35,14 +36,12 @@ public class ImHttpServiceImpl implements ImHttpService {
 
     @Override
     public ResponseEntity<List<DashboardWorkflowItemDto>> getDashboardInboundList(String userId, Integer size) {
-        requireUserId(userId, "inventory userId");
         int pageSize = normalizeSize(size);
         return fetchEntity(
             ApiClientKey.SCM_PP,
             "대시보드 입고 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/scm-pp/dashboard/inbound")
-                .queryParam("userId", userId)
+                .path("/scm-pp/iv/workflow-items/inbound")
                 .queryParam("size", pageSize)
                 .build(),
             DASHBOARD_WORKFLOW_ITEMS_TYPE
@@ -51,14 +50,12 @@ public class ImHttpServiceImpl implements ImHttpService {
 
     @Override
     public ResponseEntity<List<DashboardWorkflowItemDto>> getDashboardOutboundList(String userId, Integer size) {
-        requireUserId(userId, "inventory userId");
         int pageSize = normalizeSize(size);
         return fetchEntity(
             ApiClientKey.SCM_PP,
             "대시보드 출고 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/scm-pp/dashboard/outbound")
-                .queryParam("userId", userId)
+                .path("/scm-pp/iv/workflow-items/outbound")
                 .queryParam("size", pageSize)
                 .build(),
             DASHBOARD_WORKFLOW_ITEMS_TYPE
@@ -126,6 +123,101 @@ public class ImHttpServiceImpl implements ImHttpService {
                 uriBuilder -> uriBuilder.path("/scm-pp/iv/warehouse-metrics").build()
             )
         );
+    }
+
+    @Override
+    public ResponseEntity<Object> getPurchaseOrders(
+        String status,
+        Integer page,
+        Integer size,
+        String startDate,
+        String endDate
+    ) {
+        requireStatus(status, "purchase-order status");
+        int pageNumber = normalizePage(page);
+        int pageSize = normalizePageSize(size);
+
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "구매 발주 목록 조회",
+            uriBuilder -> {
+                UriBuilder builder = uriBuilder
+                    .path("/scm-pp/purchase-orders")
+                    .queryParam("status", status)
+                    .queryParam("page", pageNumber)
+                    .queryParam("size", pageSize);
+                if (startDate != null && !startDate.isBlank()) {
+                    builder.queryParam("startDate", startDate);
+                }
+                if (endDate != null && !endDate.isBlank()) {
+                    builder.queryParam("endDate", endDate);
+                }
+                return builder.build();
+            }
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getSalesOrders(String status, Integer page, Integer size) {
+        requireStatus(status, "sales-order status");
+        int pageNumber = normalizePage(page);
+        int pageSize = normalizePageSize(size);
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "판매 주문 목록 조회",
+            uriBuilder -> uriBuilder
+                .path("/scm-pp/sales-orders")
+                .queryParam("status", status)
+                .queryParam("page", pageNumber)
+                .queryParam("size", pageSize)
+                .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<Object> getSalesOrder(String salesOrderId) {
+        if (salesOrderId == null || salesOrderId.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, "salesOrderId is required");
+        }
+        return fetchObject(
+            ApiClientKey.SCM_PP,
+            "판매 주문 상세 조회",
+            uriBuilder -> uriBuilder.path("/scm-pp/sales-orders/{salesOrderId}").build(salesOrderId)
+        );
+    }
+
+    @Override
+    public ResponseEntity<Void> createShipment(
+        String salesOrderId,
+        SalesOrderStatusChangeRequestDto requestDto,
+        String requesterId
+    ) {
+        if (salesOrderId == null || salesOrderId.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, "salesOrderId is required");
+        }
+        requireUserId(requesterId, "requesterId");
+        try {
+            ResponseEntity<Void> response = scmClient(ApiClientKey.SCM_PP)
+                .post()
+                .uri(uriBuilder -> uriBuilder
+                    .path("/scm-pp/sales-orders/{salesOrderId}/shipments")
+                    .queryParam("requesterId", requesterId)
+                    .build(salesOrderId))
+                .bodyValue(requestDto)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+            if (response == null) {
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "출고 생성 응답이 비어 있습니다.");
+            }
+            return response;
+        } catch (WebClientResponseException ex) {
+            log.error("출고 생성 실패 - status: {}, body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        } catch (Exception ex) {
+            log.error("출고 생성 중 오류 발생", ex);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "출고 생성 중 오류가 발생했습니다.", ex);
+        }
     }
 
     private ResponseEntity<StatsResponseDto<StatsMetricsDto>> toStatsResponse(ResponseEntity<JsonNode> response) {
@@ -233,8 +325,22 @@ public class ImHttpServiceImpl implements ImHttpService {
         return size != null && size > 0 ? size : 5;
     }
 
+    private int normalizePage(Integer page) {
+        return page != null && page >= 0 ? page : 0;
+    }
+
+    private int normalizePageSize(Integer size) {
+        return size != null && size > 0 ? size : 10;
+    }
+
     private void requireUserId(String userId, String fieldName) {
         if (userId == null || userId.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, fieldName + " is required");
+        }
+    }
+
+    private void requireStatus(String status, String fieldName) {
+        if (status == null || status.isBlank()) {
             throw new BusinessException(ErrorCode.MISSING_INPUT_VALUE, fieldName + " is required");
         }
     }

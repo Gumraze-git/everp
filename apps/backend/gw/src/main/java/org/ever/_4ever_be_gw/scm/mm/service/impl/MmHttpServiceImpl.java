@@ -42,10 +42,9 @@ public class MmHttpServiceImpl implements MmHttpService {
         return fetchEntity(
             "대시보드 구매 발주서 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/scm-pp/dashboard/purchase-orders/supplier")
-                .queryParam("userId", userId)
+                .path("/scm-pp/mm/supplier-users/{userId}/workflow-items/purchase-orders")
                 .queryParam("size", pageSize)
-                .build(),
+                .build(userId),
             DASHBOARD_WORKFLOW_ITEMS_TYPE
         );
     }
@@ -56,7 +55,7 @@ public class MmHttpServiceImpl implements MmHttpService {
         return fetchEntity(
             "대시보드 기업 발주서 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/scm-pp/dashboard/purchase-orders/mm")
+                .path("/scm-pp/mm/workflow-items/purchase-orders")
                 .queryParam("size", pageSize)
                 .build(),
             DASHBOARD_WORKFLOW_ITEMS_TYPE
@@ -70,10 +69,9 @@ public class MmHttpServiceImpl implements MmHttpService {
         return fetchEntity(
             "대시보드 구매 요청 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/scm-pp/dashboard/purchase-requests")
-                .queryParam("userId", userId)
+                .path("/scm-pp/mm/internal-users/{userId}/workflow-items/purchase-requests")
                 .queryParam("size", pageSize)
-                .build(),
+                .build(userId),
             DASHBOARD_WORKFLOW_ITEMS_TYPE
         );
     }
@@ -84,7 +82,7 @@ public class MmHttpServiceImpl implements MmHttpService {
         return fetchEntity(
             "대시보드 전체 발주서 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/scm-pp/dashboard/purchase-orders")
+                .path("/scm-pp/mm/workflow-items/purchase-orders")
                 .queryParam("size", pageSize)
                 .build(),
             DASHBOARD_WORKFLOW_ITEMS_TYPE
@@ -97,7 +95,7 @@ public class MmHttpServiceImpl implements MmHttpService {
         return fetchEntity(
             "대시보드 전체 구매 요청 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/scm-pp/dashboard/purchase-requests/company")
+                .path("/scm-pp/mm/workflow-items/purchase-requests")
                 .queryParam("size", pageSize)
                 .build(),
             DASHBOARD_WORKFLOW_ITEMS_TYPE

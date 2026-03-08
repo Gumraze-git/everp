@@ -12,7 +12,6 @@ import {
 import { ReceivedListResponse } from './types/ReceivingManagementListType';
 import {
   markAsReadyRequest,
-  markAsReadyToShipResponse,
   ShippingDetailResponse,
 } from './types/ShippingDetailModalType';
 import {
@@ -103,14 +102,15 @@ export const getProductionList = async (
   pageData: Page;
 }> => {
   const query = new URLSearchParams({
+    status: 'IN_PRODUCTION',
     ...(params?.page && { page: String(params.page) }),
     ...(params?.size && { size: String(params.size) }),
   }).toString();
-  const res = await axios.get<ApiResponse<{ content: ProductionListResponse[]; page: Page }>>(
+  const res = await axios.get<{ content: ProductionListResponse[]; page: Page }>(
     `${INVENTORY_ENDPOINTS.PRODUCTION_LIST}?${query}`,
   );
 
-  return { data: res.data.data.content, pageData: res.data.data.page };
+  return { data: res.data.content, pageData: res.data.page };
 };
 
 export const getReadyToShipList = async (
@@ -120,39 +120,35 @@ export const getReadyToShipList = async (
   pageData: Page;
 }> => {
   const query = new URLSearchParams({
+    status: 'READY_FOR_SHIPMENT',
     ...(params?.page && { page: String(params.page) }),
     ...(params?.size && { size: String(params.size) }),
   }).toString();
-  const res = await axios.get<ApiResponse<{ content: ReadyToShipListResponse[]; page: Page }>>(
+  const res = await axios.get<{ content: ReadyToShipListResponse[]; page: Page }>(
     `${INVENTORY_ENDPOINTS.READY_TO_SHIP_LIST}?${query}`,
   );
 
-  return { data: res.data.data.content, pageData: res.data.data.page };
+  return { data: res.data.content, pageData: res.data.page };
 };
 
 export const getProductionDetail = async (itemId: string): Promise<ShippingDetailResponse> => {
-  const res = await axios.get<ApiResponse<ShippingDetailResponse>>(
-    INVENTORY_ENDPOINTS.PRODUCTIONDETAIL(itemId),
-  );
-  return res.data.data;
+  const res = await axios.get<ShippingDetailResponse>(INVENTORY_ENDPOINTS.PRODUCTIONDETAIL(itemId));
+  return res.data;
 };
 
 export const getReadyToShipDetail = async (itemId: string): Promise<ShippingDetailResponse> => {
-  const res = await axios.get<ApiResponse<ShippingDetailResponse>>(
-    INVENTORY_ENDPOINTS.READY_TO_SHIP_DETAIL(itemId),
-  );
-  return res.data.data;
+  const res = await axios.get<ShippingDetailResponse>(INVENTORY_ENDPOINTS.READY_TO_SHIP_DETAIL(itemId));
+  return res.data;
 };
 
 export const patchMarkAsReadyToShip = async (
   orderId: string,
   payload: markAsReadyRequest,
-): Promise<markAsReadyToShipResponse> => {
-  const res = await axios.patch<ApiResponse<markAsReadyToShipResponse>>(
+): Promise<void> => {
+  await axios.post(
     INVENTORY_ENDPOINTS.MARKAS_READY_TO_SHIP_DETAIL(orderId),
     payload,
   );
-  return res.data.data;
 };
 
 // ----------------------- 출고 관리 -----------------------
@@ -163,14 +159,15 @@ export const getPendingList = async (
   pageData: Page;
 }> => {
   const query = new URLSearchParams({
+    status: 'DELIVERING',
     ...(params?.page && { page: String(params.page) }),
     ...(params?.size && { size: String(params.size) }),
   }).toString();
-  const res = await axios.get<ApiResponse<{ content: ReceivedListResponse[]; page: Page }>>(
+  const res = await axios.get<{ content: ReceivedListResponse[]; page: Page }>(
     `${INVENTORY_ENDPOINTS.PENDING_LIST}?${query}`,
   );
 
-  return { data: res.data.data.content, pageData: res.data.data.page };
+  return { data: res.data.content, pageData: res.data.page };
 };
 
 export const getReceivedList = async (
@@ -180,16 +177,17 @@ export const getReceivedList = async (
   pageData: Page;
 }> => {
   const query = new URLSearchParams({
+    status: 'DELIVERED',
     ...(params?.page && { page: String(params.page) }),
     ...(params?.size && { size: String(params.size) }),
     ...(params?.startDate && { startDate: String(params.startDate) }),
     ...(params?.endDate && { endDate: String(params.endDate) }),
   }).toString();
-  const res = await axios.get<ApiResponse<{ content: ReceivedListResponse[]; page: Page }>>(
+  const res = await axios.get<{ content: ReceivedListResponse[]; page: Page }>(
     `${INVENTORY_ENDPOINTS.RECEIVED_LIST}?${query}`,
   );
 
-  return { data: res.data.data.content, pageData: res.data.data.page };
+  return { data: res.data.content, pageData: res.data.page };
 };
 
 // ----------------------- 원자재 추가 -----------------------
