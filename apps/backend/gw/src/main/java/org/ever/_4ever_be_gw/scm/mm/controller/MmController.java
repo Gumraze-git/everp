@@ -3,12 +3,14 @@ package org.ever._4ever_be_gw.scm.mm.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.business.dto.hrm.CreateAuthUserResultDto;
-import org.ever._4ever_be_gw.common.exception.RemoteApiException;
-import org.ever._4ever_be_gw.common.response.ApiResponse;
+import org.ever._4ever_be_gw.common.dto.ValueKeyOptionDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
+import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.scm.mm.dto.*;
+import org.ever._4ever_be_gw.scm.mm.service.MmHttpService;
 import org.ever._4ever_be_gw.scm.mm.service.MmService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -32,9 +34,10 @@ public class MmController {
 
     private final WebClientProvider webClientProvider;
     private final MmService mmService;
+    private final MmHttpService mmHttpService;
 
     // 공급업체 목록 조회
-    @GetMapping("/supplier")
+    @GetMapping("/suppliers")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 목록 조회"
     )
@@ -54,7 +57,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                     .get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/scm-pp/mm/supplier")
+                            .path("/scm-pp/mm/suppliers")
                             .queryParam("statusCode", statusCode)
                             .queryParam("category", category)
                             .queryParam("type", type)
@@ -80,7 +83,7 @@ public class MmController {
     }
 
     // 공급업체 상세 조회
-    @GetMapping("/supplier/{supplierId}")
+    @GetMapping("/suppliers/{supplierId}")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 상세 조회"
     )
@@ -88,7 +91,7 @@ public class MmController {
         try {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                     .get()
-                    .uri("/scm-pp/mm/supplier/{supplierId}", supplierId)
+                    .uri("/scm-pp/mm/suppliers/{supplierId}", supplierId)
                     .accept(MediaType.APPLICATION_JSON)
                     .exchangeToMono(response -> {
                         return response.bodyToMono(String.class)
@@ -107,47 +110,19 @@ public class MmController {
     }
 
     // 공급업체 등록 (SAGA)
-    @PostMapping("/supplier")
+    @PostMapping("/suppliers")
     @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 등록(추가)"
     )
-    public Mono<ResponseEntity<ApiResponse<CreateAuthUserResultDto>>> createSupplier(
+    public Mono<ResponseEntity<CreateAuthUserResultDto>> createSupplier(
         @RequestBody SupplierCreateRequestDto requestDto
     ) {
         return mmService.createSupplier(requestDto)
-            .map(remoteResponse -> {
-                var status = org.springframework.http.HttpStatus.resolve(remoteResponse.getStatus());
-                if (status == null) {
-                    status = org.springframework.http.HttpStatus.OK;
-                }
-                String message = remoteResponse.getMessage() != null
-                    ? remoteResponse.getMessage()
-                    : "공급사 등록이 완료되었습니다.";
-
-                return ResponseEntity.status(status)
-                    .body(ApiResponse.success(remoteResponse.getData(), message, status));
-            })
-            .onErrorResume(RemoteApiException.class, ex -> {
-                var status = ex.getStatus() != null ? ex.getStatus() : org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-                ApiResponse<CreateAuthUserResultDto> fail = ApiResponse.fail(
-                    ex.getMessage() != null ? ex.getMessage() : "공급사 등록 중 오류가 발생했습니다.",
-                    status,
-                    ex.getErrors()
-                );
-                return Mono.just(ResponseEntity.status(status).body(fail));
-            })
-            .onErrorResume(error -> {
-                ApiResponse<CreateAuthUserResultDto> fail = ApiResponse.fail(
-                    "공급사 등록 중 오류가 발생했습니다.",
-                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-                    error.getMessage()
-                );
-                return Mono.just(ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).body(fail));
-            });
+            .map(ResponseEntity::ok);
     }
 
-    @PatchMapping("/supplier/{supplierId}")
+    @PatchMapping("/suppliers/{supplierId}")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 수정"
     )
@@ -159,7 +134,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                     .patch()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/scm-pp/mm/supplier/{supplierId}")
+                            .path("/scm-pp/mm/suppliers/{supplierId}")
                             .build(supplierId))
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestDto)
@@ -331,7 +306,7 @@ public class MmController {
     }
 
     // 구매요청서 승인
-    @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/release")
+    @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/approvals")
     @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "구매요청 승인"
@@ -346,7 +321,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                     .post()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/approve")
+                            .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/approvals")
                             .queryParam("requesterId", requesterId)
                             .build(purchaseRequisitionId))
                     .exchangeToMono(response -> {
@@ -367,7 +342,7 @@ public class MmController {
 
 
     // 구매요청서 반려
-    @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/reject")
+    @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/rejections")
     @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "구매요청 반려"
@@ -383,7 +358,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                     .post()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/reject")
+                            .path("/scm-pp/mm/purchase-requisitions/{purchaseRequisitionId}/rejections")
                             .queryParam("requesterId", requesterId)
                             .build(purchaseRequisitionId))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -487,7 +462,7 @@ public class MmController {
     }
 
     // 발주서 승인
-    @PostMapping("/purchase-orders/{purchaseOrderId}/approve")
+    @PostMapping("/purchase-orders/{purchaseOrderId}/approvals")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "발주서 승인"
     )
@@ -501,7 +476,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/approve")
+                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/approvals")
                         .queryParam("requesterId", requesterId)
                         .build(purchaseOrderId))
                 .exchangeToMono(response -> {
@@ -521,7 +496,7 @@ public class MmController {
     }
 
     // 발주서 반려
-    @PostMapping("/purchase-orders/{purchaseOrderId}/reject")
+    @PostMapping("/purchase-orders/{purchaseOrderId}/rejections")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "발주서 반려"
     )
@@ -536,7 +511,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/reject")
+                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/rejections")
                         .queryParam("requesterId", requesterId)
                         .build(purchaseOrderId))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -559,68 +534,26 @@ public class MmController {
 
 
     // MM 통계 조회
-    @GetMapping("/statistics")
+    @GetMapping("/metrics")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "MM 통계 조회"
     )
-    public ResponseEntity<Object> getMMStatistics() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/statistics")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<StatsResponseDto<StatsMetricsDto>> getMMStatistics() {
+        return mmHttpService.getMetrics();
     }
 
-    @GetMapping("/supplier/orders/statistics")
+    @GetMapping("/supplier-users/me/metrics/order-counts")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급사 발주서 통계"
-    )    public ResponseEntity<Object> getSupplierStatistics(
+    )
+    public ResponseEntity<StatsResponseDto<StatsMetricsDto>> getSupplierStatistics(
             @AuthenticationPrincipal EverUserPrincipal principal
     ) {
-
-        String supplierId = principal.getUserId();
-
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/supplier/orders/statistics")
-                        .queryParam("userId",supplierId)
-                        .build()
-                )
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+        return mmHttpService.getSupplierOrderMetrics(principal.getUserId());
     }
 
     // 배송 시작
-    @PostMapping("/{purchaseOrderId}/start-delivery")
+    @PostMapping("/purchase-orders/{purchaseOrderId}/delivery-starts")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "배송 시작"
     )
@@ -632,7 +565,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/start-delivery")
+                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/delivery-starts")
                         .queryParam("requesterId", purchaseOrderId)
                         .build(purchaseOrderId))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -653,7 +586,7 @@ public class MmController {
     }
 
     // 입고 시작
-    @PostMapping("/{purchaseOrderId}/complete-delivery")
+    @PostMapping("/purchase-orders/{purchaseOrderId}/delivery-completions")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "입고 완료"
     )
@@ -665,7 +598,7 @@ public class MmController {
             ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
                 .post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/complete-delivery")
+                        .path("/scm-pp/mm/purchase-orders/{purchaseOrderId}/delivery-completions")
                         .queryParam("requesterId", purchaseOrderId)
                         .build(purchaseOrderId))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -688,192 +621,66 @@ public class MmController {
 
 
     // 구매요청서 상태 토글
-    @GetMapping("/purchase-requisition/status/toggle")
+    @GetMapping("/purchase-requisition-status-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "구매요청서 상태 토글"
     )
-    public ResponseEntity<Object> getPurchaseRequisitionStatusToggle() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/purchase-requisition/status/toggle")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<java.util.List<ValueKeyOptionDto>> getPurchaseRequisitionStatusOptions() {
+        return mmHttpService.getPurchaseRequisitionStatusOptions();
     }
 
-    // 발주서 상태 토글
-    @GetMapping("/purchase-orders/status/toggle")
+    // 발주서 상태 옵션
+    @GetMapping("/purchase-order-status-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "발주서 상태 토글"
     )
-    public ResponseEntity<Object> getPurchaseOrderStatusToggle() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/purchase-orders/status/toggle")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<java.util.List<ValueKeyOptionDto>> getPurchaseOrderStatusOptions() {
+        return mmHttpService.getPurchaseOrderStatusOptions();
     }
 
-    // 공급업체 상태 토글
-    @GetMapping("/supplier/status/toggle")
+    // 공급업체 상태 옵션
+    @GetMapping("/supplier-status-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 상태 토글"
     )
-    public ResponseEntity<Object> getSupplierStatusToggle() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/supplier/status/toggle")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<java.util.List<ValueKeyOptionDto>> getSupplierStatusOptions() {
+        return mmHttpService.getSupplierStatusOptions();
     }
 
-    // 공급업체 카테고리 토글
-    @GetMapping("/supplier/category/toggle")
+    // 공급업체 카테고리 옵션
+    @GetMapping("/supplier-category-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 카테고리 토글"
     )
-    public ResponseEntity<Object> getSupplierCategoryToggle() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/supplier/category/toggle")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<java.util.List<ValueKeyOptionDto>> getSupplierCategoryOptions() {
+        return mmHttpService.getSupplierCategoryOptions();
     }
 
-    // 구매 요청 검색 타입 토글
-    @GetMapping("/purchase-requisition/search-type/toggle")
+    // 구매 요청 검색 타입 옵션
+    @GetMapping("/purchase-requisition-search-type-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "구매 요청 검색 타입 토글"
     )
-    public ResponseEntity<Object> getPurchaseRequisitionSearchTypeToggle() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/purchase-requisition/search-type/toggle")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<java.util.List<ValueKeyOptionDto>> getPurchaseRequisitionSearchTypeOptions() {
+        return mmHttpService.getPurchaseRequisitionSearchTypeOptions();
     }
 
-    // 발주서 검색 타입 토글
-    @GetMapping("/purchase-orders/search-type/toggle")
+    // 발주서 검색 타입 옵션
+    @GetMapping("/purchase-order-search-type-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "발주서 검색 타입 토글"
     )
-    public ResponseEntity<Object> getPurchaseOrderSearchTypeToggle() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/purchase-orders/search-type/toggle")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<java.util.List<ValueKeyOptionDto>> getPurchaseOrderSearchTypeOptions() {
+        return mmHttpService.getPurchaseOrderSearchTypeOptions();
     }
 
-    // 공급업체 검색 타입 토글
-    @GetMapping("/supplier/search-type/toggle")
+    // 공급업체 검색 타입 옵션
+    @GetMapping("/supplier-search-type-options")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "공급업체 검색 타입 토글"
     )
-    public ResponseEntity<Object> getSupplierSearchTypeToggle() {
-        try {
-            ResponseEntity<Object> result = webClientProvider.getWebClient(ApiClientKey.SCM_PP)
-                .get()
-                .uri("/scm-pp/mm/supplier/search-type/toggle")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchangeToMono(response -> {
-                        return response.bodyToMono(String.class)
-                                .map(body -> ResponseEntity.status(response.statusCode())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .body((Object)body));
-                    })
-                    .block();
-
-            return result;
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(ex.getStatusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ex.getResponseBodyAsString());
-        }
+    public ResponseEntity<java.util.List<ValueKeyOptionDto>> getSupplierSearchTypeOptions() {
+        return mmHttpService.getSupplierSearchTypeOptions();
     }
 
 }

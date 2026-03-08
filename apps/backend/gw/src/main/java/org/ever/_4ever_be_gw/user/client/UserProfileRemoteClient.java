@@ -5,13 +5,11 @@ import java.util.Locale;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_gw.common.dto.RemoteApiResponse;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.user.dto.CustomerUserProfileResponse;
 import org.ever._4ever_be_gw.user.dto.InternalUserProfileResponse;
 import org.ever._4ever_be_gw.user.dto.SupplierUserProfileResponse;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,17 +23,11 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @RequiredArgsConstructor
 public class UserProfileRemoteClient {
 
-    private static final String INTERNAL_PROFILE_PATH = "/hrm/users/internal/{userId}";
-    private static final String CUSTOMER_PROFILE_PATH = "/hrm/users/customer/{userId}";
-    private static final String SUPPLIER_PROFILE_PATH = "/api/scm-pp/mm/users/supplier/{userId}";
+    private static final String INTERNAL_PROFILE_PATH = "/hrm/internal-users/{userId}";
+    private static final String CUSTOMER_PROFILE_PATH = "/hrm/customer-users/{userId}";
+    private static final String SUPPLIER_PROFILE_PATH = "/scm-pp/mm/supplier-users/{userId}";
 
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
-    private static final ParameterizedTypeReference<RemoteApiResponse<InternalUserProfileResponse>> INTERNAL_RESPONSE_TYPE =
-        new ParameterizedTypeReference<>() {};
-    private static final ParameterizedTypeReference<RemoteApiResponse<CustomerUserProfileResponse>> CUSTOMER_RESPONSE_TYPE =
-        new ParameterizedTypeReference<>() {};
-    private static final ParameterizedTypeReference<RemoteApiResponse<SupplierUserProfileResponse>> SUPPLIER_RESPONSE_TYPE =
-        new ParameterizedTypeReference<>() {};
 
     private final WebClientProvider webClientProvider;
 
@@ -62,19 +54,19 @@ public class UserProfileRemoteClient {
     private Optional<String> fetchInternalUserName(String userId, String accessToken) {
         WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
         try {
-            RemoteApiResponse<InternalUserProfileResponse> response = businessClient.get()
+            InternalUserProfileResponse response = businessClient.get()
                 .uri(INTERNAL_PROFILE_PATH, userId)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(INTERNAL_RESPONSE_TYPE)
+                .bodyToMono(InternalUserProfileResponse.class)
                 .block(REQUEST_TIMEOUT);
 
-            if (response == null || !response.isSuccess() || response.getData() == null) {
+            if (response == null) {
                 log.warn("[GW][UserProfile] 내부 사용자 이름 조회 실패 - userId: {}, response: {}", userId, response);
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(response.getData().userName());
+            return Optional.ofNullable(response.userName());
         } catch (WebClientResponseException ex) {
             log.error("[GW][UserProfile] 내부 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
@@ -88,19 +80,19 @@ public class UserProfileRemoteClient {
     private Optional<String> fetchCustomerUserName(String userId, String accessToken) {
         WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
         try {
-            RemoteApiResponse<CustomerUserProfileResponse> response = businessClient.get()
+            CustomerUserProfileResponse response = businessClient.get()
                 .uri(CUSTOMER_PROFILE_PATH, userId)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(CUSTOMER_RESPONSE_TYPE)
+                .bodyToMono(CustomerUserProfileResponse.class)
                 .block(REQUEST_TIMEOUT);
 
-            if (response == null || !response.isSuccess() || response.getData() == null) {
+            if (response == null) {
                 log.warn("[GW][UserProfile] 고객 사용자 이름 조회 실패 - userId: {}, response: {}", userId, response);
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(response.getData().userName());
+            return Optional.ofNullable(response.userName());
         } catch (WebClientResponseException ex) {
             log.error("[GW][UserProfile] 고객 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
@@ -114,19 +106,19 @@ public class UserProfileRemoteClient {
     private Optional<String> fetchSupplierUserName(String userId, String accessToken) {
         WebClient scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
         try {
-            RemoteApiResponse<SupplierUserProfileResponse> response = scmClient.get()
+            SupplierUserProfileResponse response = scmClient.get()
                 .uri(SUPPLIER_PROFILE_PATH, userId)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(SUPPLIER_RESPONSE_TYPE)
+                .bodyToMono(SupplierUserProfileResponse.class)
                 .block(REQUEST_TIMEOUT);
 
-            if (response == null || !response.isSuccess() || response.getData() == null) {
+            if (response == null) {
                 log.warn("[GW][UserProfile] 공급사 사용자 이름 조회 실패 - userId: {}, response: {}", userId, response);
                 return Optional.empty();
             }
 
-            return Optional.ofNullable(response.getData().userName());
+            return Optional.ofNullable(response.userName());
         } catch (WebClientResponseException ex) {
             log.error("[GW][UserProfile] 공급사 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
