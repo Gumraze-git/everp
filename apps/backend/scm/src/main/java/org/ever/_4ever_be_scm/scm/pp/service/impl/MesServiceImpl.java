@@ -2,7 +2,6 @@ package org.ever._4ever_be_scm.scm.pp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.infrastructure.kafka.config.KafkaTopicConfig;
 import org.ever._4ever_be_scm.scm.iv.entity.Product;
 import org.ever._4ever_be_scm.scm.iv.entity.ProductStock;
@@ -23,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -266,11 +266,11 @@ public class MesServiceImpl implements MesService {
 
     @Override
     @Transactional
-    public DeferredResult<ResponseEntity<ApiResponse<Void>>> startMesAsync(String mesId, String requesterId) {
+    public DeferredResult<ResponseEntity<?>> startMesAsync(String mesId, String requesterId) {
         log.info("MES 비동기 시작: mesId={}", mesId);
 
         // DeferredResult 생성 (타임아웃 30초)
-        DeferredResult<ResponseEntity<ApiResponse<Void>>> deferredResult =
+        DeferredResult<ResponseEntity<?>> deferredResult =
                 new DeferredResult<>(30000L);
 
         // 타임아웃 처리
@@ -278,7 +278,7 @@ public class MesServiceImpl implements MesService {
             log.warn("MES 시작 처리 타임아웃: mesId={}", mesId);
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.REQUEST_TIMEOUT)
-                    .body(ApiResponse.fail("처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.REQUEST_TIMEOUT, "처리 시간이 초과되었습니다.")));
         });
 
         try {
@@ -326,7 +326,10 @@ public class MesServiceImpl implements MesService {
             log.error("MES 시작 처리 중 오류 발생: mesId={}", mesId, e);
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("MES 시작 처리 실패: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR)));
+                    .body(ProblemDetail.forStatusAndDetail(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "MES 시작 처리 실패: " + e.getMessage()
+                    )));
         }
 
         return deferredResult;
@@ -428,11 +431,11 @@ public class MesServiceImpl implements MesService {
 
     @Override
     @Transactional
-    public DeferredResult<ResponseEntity<ApiResponse<Void>>> completeMesAsync(String mesId, String requesterId) {
+    public DeferredResult<ResponseEntity<?>> completeMesAsync(String mesId, String requesterId) {
         log.info("MES 비동기 완료: mesId={}", mesId);
 
         // DeferredResult 생성 (타임아웃 30초)
-        DeferredResult<ResponseEntity<ApiResponse<Void>>> deferredResult =
+        DeferredResult<ResponseEntity<?>> deferredResult =
                 new DeferredResult<>(30000L);
 
         // 타임아웃 처리
@@ -440,7 +443,7 @@ public class MesServiceImpl implements MesService {
             log.warn("MES 완료 처리 타임아웃: mesId={}", mesId);
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.REQUEST_TIMEOUT)
-                    .body(ApiResponse.fail("처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.REQUEST_TIMEOUT, "처리 시간이 초과되었습니다.")));
         });
 
         try {
@@ -506,16 +509,17 @@ public class MesServiceImpl implements MesService {
                         transactionId, mesId, quotationId);
             } else {
                 // 아직 완료되지 않은 MES가 있으면 즉시 성공 응답
-                deferredResult.setResult(ResponseEntity.ok(
-                        ApiResponse.success(
-                                null, "MES가 완료되었습니다. (다른 아이템의 생산이 진행 중입니다)", HttpStatus.OK)));
+                deferredResult.setResult(ResponseEntity.noContent().build());
             }
 
         } catch (Exception e) {
             log.error("MES 완료 처리 중 오류 발생: mesId={}", mesId, e);
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("MES 완료 처리 실패: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR)));
+                    .body(ProblemDetail.forStatusAndDetail(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "MES 완료 처리 실패: " + e.getMessage()
+                    )));
         }
 
         return deferredResult;
