@@ -1,10 +1,8 @@
 package org.ever._4ever_be_scm.scm.external.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.external.dto.*;
 import org.ever._4ever_be_scm.scm.external.service.ExternalApiService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,121 +18,82 @@ public class ExternalApiController {
     /**
      * 1. ProductOrderId로 ProductOrderItem들 가져오기
      */
-    @PostMapping("/product/orderItem")
-    public ResponseEntity<ApiResponse<ProductOrderItemResponseDto>> getProductOrderItems(
+    @PostMapping("/product-order-items/search")
+    public ResponseEntity<ProductOrderItemResponseDto> getProductOrderItems(
             @RequestBody ProductOrderRequestDto request) {
-        try {
-            ProductOrderItemResponseDto response = externalApiService.getProductOrderItems(request.getProductOrderId());
-            return ResponseEntity.ok(ApiResponse.success(response, "성공 메시지", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("조회 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        ProductOrderItemResponseDto response = externalApiService.getProductOrderItems(request.getProductOrderId());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 2. ProductOrderId들로 ProductOrder 정보 제공
      */
-    @PostMapping("/product/orderInfos")
-    public ResponseEntity<ApiResponse<List<ProductOrderInfoDto>>> getProductOrderInfos(
+    @PostMapping("/product-orders/search")
+    public ResponseEntity<List<ProductOrderInfoDto>> getProductOrderInfos(
             @RequestBody ProductOrderIdsRequestDto request) {
-        try {
-            List<ProductOrderInfoDto> response = externalApiService.getProductOrderInfos(request.getProductOrderIds());
-            return ResponseEntity.ok(ApiResponse.success(response, "성공 메시지", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("조회 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        List<ProductOrderInfoDto> response = externalApiService.getProductOrderInfos(request.getProductOrderIds());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 3. ProductId들로 Product 정보들 제공
      */
-    @PostMapping("/product/multiple")
-    public ResponseEntity<ApiResponse<ProductMultipleResponseDto>> getProductsMultiple(
+    @PostMapping("/products/search")
+    public ResponseEntity<ProductMultipleResponseDto> getProductsMultiple(
             @RequestBody ProductMultipleRequestDto request) {
-        try {
-            ProductMultipleResponseDto response = externalApiService.getProductsMultiple(request.getProductIds());
-            return ResponseEntity.ok(ApiResponse.success(response, "성공 메시지", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("조회 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        ProductMultipleResponseDto response = externalApiService.getProductsMultiple(request.getProductIds());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 4. ItemId를 통해 부족재고 파악
      */
-    @PostMapping("/inventory/stock-check")
-    public ResponseEntity<ApiResponse<StockCheckResponseDto>> checkStock(
+    @PostMapping("/inventory-stock-checks")
+    public ResponseEntity<StockCheckResponseDto> checkStock(
             @RequestBody StockCheckRequestDto request) {
-        try {
-            StockCheckResponseDto response = externalApiService.checkStock(request.getItems());
-            return ResponseEntity.ok(ApiResponse.success(response, "재고 확인을 완료했습니다.", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("재고 확인 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        StockCheckResponseDto response = externalApiService.checkStock(request.getItems());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 5. SupplierCompanyId로 SupplierCompany 정보 가져오기(단건)
      */
-    @PostMapping("/company/supplier/single")
-    public ResponseEntity<ApiResponse<SupplierCompanySingleResponseDto>> getSupplierCompanySingle(
-            @RequestBody SupplierCompanySingleRequestDto request) {
-        try {
-            SupplierCompanySingleResponseDto response = externalApiService.getSupplierCompanySingle(request.getSupplierCompanyId());
-            return ResponseEntity.ok(ApiResponse.success(response, "성공 메시지", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("조회 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+    @GetMapping("/supplier-companies/{supplierCompanyId}")
+    public ResponseEntity<SupplierCompanySingleResponseDto> getSupplierCompanySingle(
+            @PathVariable String supplierCompanyId) {
+        SupplierCompanySingleResponseDto response =
+                externalApiService.getSupplierCompanySingle(supplierCompanyId);
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 6. SupplierCompanyId들로 SupplierCompany 정보 가져오기(다수)
      */
-    @PostMapping("/company/supplier/multiple")
-    public ResponseEntity<ApiResponse<SupplierCompanyMultipleResponseDto>> getSupplierCompaniesMultiple(
+    @PostMapping("/supplier-companies/search")
+    public ResponseEntity<SupplierCompanyMultipleResponseDto> getSupplierCompaniesMultiple(
             @RequestBody SupplierCompanyMultipleRequestDto request) {
-        try {
-            SupplierCompanyMultipleResponseDto response = externalApiService.getSupplierCompaniesMultiple(request.getSupplierCompanyIds());
-            return ResponseEntity.ok(ApiResponse.success(response, "성공 메시지", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("조회 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        SupplierCompanyMultipleResponseDto response = externalApiService.getSupplierCompaniesMultiple(request.getSupplierCompanyIds());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 7. 카테고리가 ITEM인 Product 목록 반환
      */
-    @GetMapping("/product/item/toggle")
-    public ResponseEntity<ApiResponse<ProductMultipleResponseDto>> getItemCategoryProducts() {
-        try {
-            ProductMultipleResponseDto response = externalApiService.getItemCategoryProducts();
-            return ResponseEntity.ok(ApiResponse.success(response, "성공 메시지", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("조회 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+    @GetMapping("/product-options")
+    public ResponseEntity<ProductMultipleResponseDto> getItemCategoryProducts() {
+        ProductMultipleResponseDto response = externalApiService.getItemCategoryProducts();
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 8. supplierUserId로 supplierCompanyId return
      */
 
-    @PostMapping("/company/supplier")
-    public ResponseEntity<ApiResponse<SupplierCompanyIdDto>> getSupplierCompanyId(
+    @PostMapping("/supplier-companies/ids/search")
+    public ResponseEntity<SupplierCompanyIdDto> getSupplierCompanyId(
             @RequestBody SupplierUserIdDto request) {
-        try {
-            SupplierCompanyIdDto response = externalApiService.getSupplierCompanyId(request);
-            return ResponseEntity.ok(ApiResponse.success(response, "성공 메시지", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("조회 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        SupplierCompanyIdDto response = externalApiService.getSupplierCompanyId(request);
+        return ResponseEntity.ok(response);
     }
 
 }

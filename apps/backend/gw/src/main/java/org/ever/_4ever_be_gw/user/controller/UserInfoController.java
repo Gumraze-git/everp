@@ -2,12 +2,11 @@ package org.ever._4ever_be_gw.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverJwtAuthenticationToken;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.user.dto.UserInfoResponse;
 import org.ever._4ever_be_gw.user.service.UserInfoService;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,8 +20,8 @@ public class UserInfoController {
 
     private final UserInfoService userInfoService;
 
-    @GetMapping("/info")
-    public ApiResponse<UserInfoResponse> getUserInfo(
+    @GetMapping
+    public ResponseEntity<UserInfoResponse> getUserInfo(
             @AuthenticationPrincipal EverUserPrincipal principal,
             EverJwtAuthenticationToken authentication
     ) {
@@ -37,7 +36,7 @@ public class UserInfoController {
             UserInfoResponse data = userInfoService.getUserInfo(principal, token);
             log.info("[USER][INFO] 사용자 정보 조회 성공: userId={}, username={}",
                     safeUserId(principal), safeUsername(principal));
-            return ApiResponse.success(data, "사용자 기본 정보를 조회했습니다.", HttpStatus.OK);
+            return ResponseEntity.ok(data);
 
         } catch (IllegalArgumentException e) {
             // 클라이언트 잘못된 요청(파라미터/상태 문제)

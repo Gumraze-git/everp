@@ -51,10 +51,10 @@ public class DashboardServiceImpl implements DashboardService {
             case "SUPPLIER": {
                 log.info("[INFO][DASHBOARD][SUPPLIER] 공급사 워크플로우 데이터 조회");
                 ResponseEntity<List<DashboardWorkflowItemDto>> supplierPurchaseOrderResponse =
-                        fetchWorkflowItemsWithUserIdQuery(
+                        fetchWorkflowItemsWithUserIdPath(
                                 ApiClientKey.SCM_PP,
                                 "공급사 발주서 워크플로우 조회",
-                                "/scm-pp/dashboard/purchase-orders/supplier",
+                                "/scm-pp/mm/supplier-users/{userId}/workflow-items/purchase-orders",
                                 userId,
                                 limit
                         );
@@ -114,14 +114,14 @@ public class DashboardServiceImpl implements DashboardService {
                         fetchWorkflowItemsWithoutUserId(
                                 ApiClientKey.SCM_PP,
                                 "전체 발주서 워크플로우 조회",
-                                "/scm-pp/dashboard/purchase-orders",
+                                "/scm-pp/mm/workflow-items/purchase-orders",
                                 limit
                         );
                 ResponseEntity<List<DashboardWorkflowItemDto>> mmPurchaseRequestResponse =
                         fetchWorkflowItemsWithoutUserId(
                                 ApiClientKey.SCM_PP,
                                 "전체 구매 요청 워크플로우 조회",
-                                "/scm-pp/dashboard/purchase-requests/company",
+                                "/scm-pp/mm/workflow-items/purchase-requests",
                                 limit
                         );
 
@@ -186,19 +186,17 @@ public class DashboardServiceImpl implements DashboardService {
             case "IM": {
                 log.info("[INFO][DASHBOARD][IM] 재고 관리 워크플로우 데이터 조회");
                 ResponseEntity<List<DashboardWorkflowItemDto>> imInboundListResponse =
-                        fetchWorkflowItemsWithUserIdQuery(
+                        fetchWorkflowItemsWithoutUserId(
                                 ApiClientKey.SCM_PP,
                                 "입고 워크플로우 조회",
-                                "/scm-pp/dashboard/inbound",
-                                userId,
+                                "/scm-pp/iv/workflow-items/inbound",
                                 limit
                         );
                 ResponseEntity<List<DashboardWorkflowItemDto>> imOutboundListResponse =
-                        fetchWorkflowItemsWithUserIdQuery(
+                        fetchWorkflowItemsWithoutUserId(
                                 ApiClientKey.SCM_PP,
                                 "출고 워크플로우 조회",
-                                "/scm-pp/dashboard/outbound",
-                                userId,
+                                "/scm-pp/iv/workflow-items/outbound",
                                 limit
                         );
 

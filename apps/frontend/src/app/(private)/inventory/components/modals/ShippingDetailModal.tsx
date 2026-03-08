@@ -3,7 +3,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   markAsReadyRequest,
-  markAsReadyToShipResponse,
   OrderItemsType,
   ShippingDetailModalProps,
   ShippingDetailResponse,
@@ -48,13 +47,12 @@ const ShippingDetailModal = ({
   }, [isError]);
 
   const { mutate: markAsReadyToShip, isPending } = useMutation<
-    markAsReadyToShipResponse,
+    void,
     Error,
     { orderId: string; itemIds: markAsReadyRequest }
   >({
     mutationFn: ({ orderId, itemIds }) => patchMarkAsReadyToShip(orderId, itemIds),
-    onSuccess: (data) => {
-      //   console.log(data);
+    onSuccess: () => {
       alert('출고 준비 완료로 상태가 변경되었습니다.');
       onClose();
     },

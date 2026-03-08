@@ -172,7 +172,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DashboardWorkflowItemDto> getInboundDeliveries(String userId, int size) {
+    public List<DashboardWorkflowItemDto> getInboundDeliveries(int size) {
         int limit = normalizeSize(size);
 
         List<ProductStockLog> inboundLogs = productStockLogRepository
@@ -193,7 +193,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DashboardWorkflowItemDto> getOutboundDeliveries(String userId, int size) {
+    public List<DashboardWorkflowItemDto> getOutboundDeliveries(int size) {
         int limit = normalizeSize(size);
 
         List<ProductStockLog> outboundLogs = productStockLogRepository
