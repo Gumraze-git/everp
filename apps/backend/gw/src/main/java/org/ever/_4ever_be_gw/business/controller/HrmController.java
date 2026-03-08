@@ -24,7 +24,6 @@ import org.ever._4ever_be_gw.business.service.HrmHttpService;
 import org.ever._4ever_be_gw.business.service.HrmService;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.ValidationException;
-import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -53,7 +52,7 @@ public class HrmController {
         summary = "HRM 통계 조회",
         description = "기간별 인적자원 통계 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<HRStatisticsResponseDto>> getEmployeeStatistics(
+    public ResponseEntity<?> getEmployeeStatistics(
         @Parameter(description = "조회 기간 목록(콤마 구분)")
         @RequestParam(name = "periods", required = false) String periods
     ) {
@@ -68,25 +67,11 @@ public class HrmController {
         summary = "직원 신규 등록",
         description = "새로운 내부 직원을 등록합니다."
     )
-    public Mono<ResponseEntity<ApiResponse<CreateAuthUserResultDto>>> signupEmployee(
+    public Mono<ResponseEntity<CreateAuthUserResultDto>> signupEmployee(
         @Valid @RequestBody EmployeeCreateRequestDto requestDto
     ) {
         return hrmService.createInternalUser(requestDto)
-                .map(response -> ResponseEntity.ok(
-                        ApiResponse.success(
-                                response.getData(),
-                                "직원 등록이 완료 되었습니다.",
-                                HttpStatus.OK
-                        )
-                ))
-                .onErrorResume(error -> {
-                    ApiResponse<CreateAuthUserResultDto> failResponse = ApiResponse.fail(
-                            "직원 등록 중 오류가 발생했습니다.",
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                            error.getMessage()
-                    );
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failResponse));
-                });
+                .map(ResponseEntity::ok);
     }
 
     @PatchMapping("/employee/{employeeId}")
@@ -103,7 +88,7 @@ public class HrmController {
             )
         }
     )
-    public ResponseEntity<ApiResponse<Void>> updateEmployee(
+    public ResponseEntity<?> updateEmployee(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("employeeId") String employeeId,
         @Valid @RequestBody EmployeeUpdateRequestDto requestDto
@@ -116,7 +101,7 @@ public class HrmController {
         summary = "직원 목록 조회",
         description = "직원 목록을 페이지네이션으로 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Page<EmployeeListItemDto>>> getEmployees(
+    public ResponseEntity<?> getEmployees(
         @Parameter(description = "부서 ID 필터")
         @RequestParam(name = "departmentId", required = false) String departmentId,
         @Parameter(description = "직급 ID 필터")
@@ -137,7 +122,7 @@ public class HrmController {
         summary = "직원 상세 조회",
         description = "직원 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<EmployeeDetailDto>> getEmployeeDetail(
+    public ResponseEntity<?> getEmployeeDetail(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("employeeId") String employeeId
     ) {
@@ -149,7 +134,7 @@ public class HrmController {
         summary = "InternelUser ID로 직원 정보 및 교육 이력 조회",
         description = "InternelUser ID로 직원 상세 정보 및 교육 이력을 함께 조회합니다."
     )
-    public ResponseEntity<ApiResponse<EmployeeWithTrainingDto>> getEmployeeWithTrainingByInternelUserId(
+    public ResponseEntity<?> getEmployeeWithTrainingByInternelUserId(
         @Parameter(description = "InternelUser ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("internelUserId") String internelUserId
     ) {
@@ -161,7 +146,7 @@ public class HrmController {
         summary = "InternelUser ID로 수강 가능한 교육 프로그램 목록 조회",
         description = "InternelUser ID로 수강하지 않은 교육 프로그램 중 모집 중이 아닌 프로그램(IN_PROGRESS, COMPLETED)만 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<TrainingProgramSimpleDto>>> getAvailableTrainingsByInternelUserId(
+    public ResponseEntity<?> getAvailableTrainingsByInternelUserId(
         @Parameter(description = "InternelUser ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("internelUserId") String internelUserId
     ) {
@@ -173,7 +158,7 @@ public class HrmController {
         summary = "CustomerUser ID로 고객 사용자 상세 정보 조회",
         description = "CustomerUser ID로 고객 사용자의 상세 정보를 조회합니다. (이메일, 사번, 입사일, 연락처, 주소, 가입기간)"
     )
-    public ResponseEntity<ApiResponse<CustomerUserDetailDto>> getCustomerUserDetailByUserId(
+    public ResponseEntity<?> getCustomerUserDetailByUserId(
         @Parameter(description = "CustomerUser ID", example = "customer1")
         @PathVariable("customerUserId") String customerUserId
     ) {
@@ -187,7 +172,7 @@ public class HrmController {
         summary = "부서 목록 조회",
         description = "부서 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<DepartmentListResponseDto>> getDepartments(
+    public ResponseEntity<?> getDepartments(
         @Parameter(description = "상태 필터: ACTIVE, INACTIVE")
         @RequestParam(name = "status", required = false) String status,
         @Parameter(description = "페이지(0-base)", example = "0")
@@ -203,7 +188,7 @@ public class HrmController {
         summary = "전체 부서 목록 조회 (ID, Name만)",
         description = "전체 부서의 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<DepartmentSimpleDto>>> getAllDepartmentsSimple() {
+    public ResponseEntity<?> getAllDepartmentsSimple() {
         return hrmHttpService.getAllDepartmentsSimple();
     }
 
@@ -212,7 +197,7 @@ public class HrmController {
         summary = "부서 구성원 목록 조회 (ID, Name만)",
         description = "특정 부서의 구성원 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<DepartmentMemberDto>>> getDepartmentMembers(
+    public ResponseEntity<?> getDepartmentMembers(
         @Parameter(description = "부서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("departmentId") String departmentId
     ) {
@@ -220,7 +205,7 @@ public class HrmController {
     }
 
     @PatchMapping("/departments/{departmentId}")
-    public ResponseEntity<ApiResponse<Void>> updateDepartment(
+    public ResponseEntity<?> updateDepartment(
             @PathVariable String departmentId,
             @RequestBody UpdateDepartmentRequestDto requestDto
     ) {
@@ -234,7 +219,7 @@ public class HrmController {
         summary = "직급 목록 조회",
         description = "직급 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<PositionListItemDto>>> getPositions() {
+    public ResponseEntity<?> getPositions() {
         return hrmHttpService.getPositionList();
     }
 
@@ -243,7 +228,7 @@ public class HrmController {
         summary = "직급 상세 조회",
         description = "직급 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<PositionDetailDto>> getPositionDetail(
+    public ResponseEntity<?> getPositionDetail(
         @Parameter(description = "직급 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("positionId") String positionId
     ) {
@@ -255,7 +240,7 @@ public class HrmController {
         summary = "부서별 직급 목록 조회",
         description = "특정 부서의 직급의 ID를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<PositionSimpleDto>>> getPositionsByDepartmentId(
+    public ResponseEntity<?> getPositionsByDepartmentId(
         @Parameter(description = "부서 ID")
         @PathVariable("departmentId") String departmentId
     ) {
@@ -269,7 +254,7 @@ public class HrmController {
         summary = "출퇴근 기록 조회",
         description = "출퇴근 기록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Page<AttendanceListItemDto>>> getAttendance(
+    public ResponseEntity<?> getAttendance(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @RequestParam(name = "employeeId", required = false) String employeeId,
         @Parameter(description = "시작일(YYYY-MM-DD)")
@@ -291,7 +276,7 @@ public class HrmController {
         summary = "출근 처리 (InternelUser ID 기반)",
         description = "InternelUser ID를 사용하여 직원의 출근을 처리합니다. (임시: JWT 미구현으로 internelUserId를 서비스에서 주입)"
     )
-    public ResponseEntity<ApiResponse<Void>> checkIn(
+    public ResponseEntity<?> checkIn(
         @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
         @AuthenticationPrincipal EverUserPrincipal principal
     ) {
@@ -305,7 +290,7 @@ public class HrmController {
         summary = "퇴근 처리 (InternelUser ID 기반)",
         description = "InternelUser ID를 사용하여 직원의 퇴근을 처리합니다. (임시: JWT 미구현으로 internelUserId를 서비스에서 주입)"
     )
-    public ResponseEntity<ApiResponse<Void>> checkOut(
+    public ResponseEntity<?> checkOut(
         @Parameter(description = "InternelUser ID (optional, JWT 구현 전까지)", example = "internel1")
         @AuthenticationPrincipal EverUserPrincipal everUser
     ) {
@@ -319,7 +304,7 @@ public class HrmController {
         summary = "InternelUser ID로 출퇴근 기록 목록 조회",
         description = "InternelUser ID를 사용하여 해당 직원의 모든 출퇴근 기록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<AttendanceRecordDto>>> getAttendanceRecordsByInternelUserId(
+    public ResponseEntity<?> getAttendanceRecordsByInternelUserId(
         @Parameter(description = "InternelUser ID", example = "internel1", required = true)
         @PathVariable String internelUserId
     ) {
@@ -331,7 +316,7 @@ public class HrmController {
         summary = "출퇴근 상태 목록 조회 (enum 전체)",
         description = "출퇴근 상태 enum의 모든 값을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<AttendanceStatusDto>>> getAllAttendanceStatuses() {
+    public ResponseEntity<?> getAllAttendanceStatuses() {
         return hrmHttpService.getAllAttendanceStatuses();
     }
 
@@ -341,7 +326,7 @@ public class HrmController {
         summary = "월별 급여 목록 조회",
         description = "월별 사내 급여 명세서 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Page<PayrollListItemDto>>> getMonthlyPayrollList(
+    public ResponseEntity<?> getMonthlyPayrollList(
         @Parameter(description = "연도", example = "2025")
         @RequestParam(name = "year") Integer year,
         @Parameter(description = "월(1~12)", example = "10")
@@ -386,7 +371,7 @@ public class HrmController {
         summary = "급여 지급 완료 처리",
         description = "급여 지급을 완료 처리합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> completePayroll(
+    public ResponseEntity<?> completePayroll(
         @Valid @RequestBody PayrollCompleteRequestDto requestDto
     ) {
         return hrmHttpService.completePayroll(requestDto);
@@ -398,7 +383,7 @@ public class HrmController {
         summary = "모든 직원 당월 급여 생성",
         description = "모든 직원의 당월 급여를 생성합니다. 이미 존재하는 급여는 건너뛰고 없는 직원의 급여만 생성합니다 (idempotent)."
     )
-    public ResponseEntity<ApiResponse<Void>> generateMonthlyPayroll() {
+    public ResponseEntity<?> generateMonthlyPayroll() {
         return hrmHttpService.generateMonthlyPayroll();
     }
 
@@ -416,7 +401,7 @@ public class HrmController {
             )
         }
     )
-    public ResponseEntity<ApiResponse<PaystubDetailDto>> getMonthlyPayrollDetail(
+    public ResponseEntity<?> getMonthlyPayrollDetail(
         @Parameter(description = "급여 명세서 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("payrollId") String payrollId
     ) {
@@ -436,7 +421,7 @@ public class HrmController {
         summary = "급여 상태 목록 조회 (enum 전체)",
         description = "급여 상태 enum의 모든 값을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<PayrollStatusDto>>> getAllPayrollStatuses() {
+    public ResponseEntity<?> getAllPayrollStatuses() {
         return hrmHttpService.getAllPayrollStatuses();
     }
 
@@ -447,7 +432,7 @@ public class HrmController {
         summary = "출퇴근 기록 수정",
         description = "출퇴근 기록을 수정합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> updateTimeRecord(
+    public ResponseEntity<?> updateTimeRecord(
         @Parameter(description = "근태 기록 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("timerecordId") String timerecordId,
         @Valid @RequestBody TimeRecordUpdateRequestDto requestDto
@@ -462,7 +447,7 @@ public class HrmController {
         summary = "휴가 신청",
         description = "새로운 휴가를 신청합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> requestLeave(
+    public ResponseEntity<?> requestLeave(
         @AuthenticationPrincipal EverUserPrincipal principal,
         @Valid @RequestBody LeaveRequestDto requestDto
     ) {
@@ -475,7 +460,7 @@ public class HrmController {
         summary = "휴가 신청 승인",
         description = "휴가 신청을 승인합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> approveLeaveRequest(
+    public ResponseEntity<?> approveLeaveRequest(
         @Parameter(description = "휴가 신청 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("requestId") String requestId
     ) {
@@ -487,7 +472,7 @@ public class HrmController {
         summary = "휴가 신청 반려",
         description = "휴가 신청을 반려합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> rejectLeaveRequest(
+    public ResponseEntity<?> rejectLeaveRequest(
         @Parameter(description = "휴가 신청 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("requestId") String requestId
     ) {
@@ -501,7 +486,7 @@ public class HrmController {
         summary = "출퇴근 기록 목록 조회",
         description = "부서/직책/이름/일자로 출퇴근 기록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Page<TimeRecordListItemDto>>> getTimeRecords(
+    public ResponseEntity<?> getTimeRecords(
         @Parameter(description = "부서 ID")
         @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "상태 (NORMAL, LATE)")
@@ -548,7 +533,7 @@ public class HrmController {
         summary = "출퇴근 기록 상세 조회",
         description = "단일 출퇴근 기록 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<TimeRecordDetailDto>> getTimeRecordDetail(
+    public ResponseEntity<?> getTimeRecordDetail(
         @Parameter(description = "출퇴근 기록 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("timerecordId") String timerecordId
     ) {
@@ -569,7 +554,7 @@ public class HrmController {
         summary = "휴가 신청 목록 조회",
         description = "부서/직책/이름/유형으로 휴가 신청 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Page<LeaveRequestListItemDto>>> getLeaveRequestList(
+    public ResponseEntity<?> getLeaveRequestList(
         @Parameter(description = "부서 ID")
         @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직책 ID")
@@ -618,7 +603,7 @@ public class HrmController {
         summary = "교육 신청",
         description = "직원이 교육 프로그램에 신청합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> requestTraining(
+    public ResponseEntity<?> requestTraining(
         @Valid @RequestBody TrainingRequestDto requestDto
     ) {
         return hrmHttpService.requestTraining(requestDto);
@@ -629,7 +614,7 @@ public class HrmController {
         summary = "직원에게 교육 프로그램 추가",
         description = "특정 직원에게 교육 프로그램을 할당합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> assignProgramToEmployee(
+    public ResponseEntity<?> assignProgramToEmployee(
         @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("employeeId") String employeeId,
         @Valid @RequestBody ProgramAssignRequestDto requestDto
@@ -647,7 +632,7 @@ public class HrmController {
         summary = "교육 프로그램 추가",
         description = "새로운 교육 프로그램을 추가합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> createProgram(
+    public ResponseEntity<?> createProgram(
         @Valid @RequestBody ProgramCreateRequestDto requestDto
     ) {
         return hrmHttpService.createTrainingProgram(requestDto);
@@ -658,7 +643,7 @@ public class HrmController {
         summary = "교육 프로그램 수정",
         description = "기존 교육 프로그램 정보를 수정합니다."
     )
-    public ResponseEntity<ApiResponse<Void>> modifyProgram(
+    public ResponseEntity<?> modifyProgram(
         @Parameter(description = "프로그램 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("programId") String programId,
         @Valid @RequestBody ProgramModifyRequestDto requestDto
@@ -676,7 +661,7 @@ public class HrmController {
         summary = "교육 카테고리 목록 조회 (enum 전체)",
         description = "교육 카테고리 enum의 모든 값을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<TrainingCategoryDto>>> getAllTrainingCategories() {
+    public ResponseEntity<?> getAllTrainingCategories() {
         return hrmHttpService.getAllTrainingCategories();
     }
 
@@ -685,7 +670,7 @@ public class HrmController {
         summary = "전체 교육 프로그램 목록 조회 (ID, Name만)",
         description = "전체 교육 프로그램의 ID와 Name만 간단히 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<TrainingProgramSimpleDto>>> getAllTrainingPrograms() {
+    public ResponseEntity<?> getAllTrainingPrograms() {
         return hrmHttpService.getAllTrainingPrograms();
     }
 
@@ -694,7 +679,7 @@ public class HrmController {
         summary = "교육 완료 상태 목록 조회",
         description = "교육 완료 상태의 모든 값을 조회합니다. (완료: true, 미완료: false)"
     )
-    public ResponseEntity<ApiResponse<List<TrainingCompletionStatusDto>>> getAllTrainingCompletionStatuses() {
+    public ResponseEntity<?> getAllTrainingCompletionStatuses() {
         return hrmHttpService.getAllTrainingCompletionStatuses();
     }
 
@@ -704,7 +689,7 @@ public class HrmController {
         summary = "직원 교육 현황 목록 조회",
         description = "부서/직급/이름으로 직원 교육 현황 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<TrainingStatusResponseDto>> getTrainingStatusList(
+    public ResponseEntity<?> getTrainingStatusList(
         @Parameter(description = "부서 ID")
         @RequestParam(name = "department", required = false) String departmentId,
         @Parameter(description = "직급 ID")
@@ -741,7 +726,7 @@ public class HrmController {
 //        summary = "직원 교육 현황 상세 조회",
 //        description = "특정 직원의 교육 현황 및 이력을 조회합니다."
 //    )
-//    public ResponseEntity<ApiResponse<EmployeeTrainingSummaryDto>> getTrainingStatusDetail(
+//    public ResponseEntity<?> getTrainingStatusDetail(
 //        @Parameter(description = "직원 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
 //        @PathVariable("employeeId") String employeeId
 //    ) {
@@ -758,7 +743,7 @@ public class HrmController {
             summary = "직원 교육 상세 조회",
             description = "해당 직원의 교육 이력(교육명, 완료 여부, 완료일 등)을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<EmployeeTrainingHistoryDto>> getEmployeeTrainingHistory(
+    public ResponseEntity<?> getEmployeeTrainingHistory(
             @PathVariable String employeeId
     ) {
 
@@ -776,7 +761,7 @@ public class HrmController {
         summary = "교육 프로그램 목록 조회",
         description = "프로그램 이름/상태/카테고리로 교육 프로그램 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<Page<TrainingListItemDto>>> getTrainingPrograms(
+    public ResponseEntity<?> getTrainingPrograms(
         @Parameter(description = "프로그램 이름")
         @RequestParam(name = "name", required = false) String programName,
         @Parameter(description = "상태: IN_PROGRESS, COMPLETED, RECRUITING")
@@ -823,7 +808,7 @@ public class HrmController {
         summary = "교육 프로그램 상세 조회",
         description = "단일 교육 프로그램 상세 정보를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<TrainingResponseDto>> getTrainingProgramDetail(
+    public ResponseEntity<?> getTrainingProgramDetail(
         @Parameter(description = "프로그램 ID", example = "0193e7c8-1234-7abc-9def-0123456789ab")
         @PathVariable("programId") String programId
     ) {
