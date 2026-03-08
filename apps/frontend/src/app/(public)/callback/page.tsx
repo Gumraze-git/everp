@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import Cookies from 'js-cookie';
 import { persistAccessToken } from '@/lib/auth/tokenStorage';
 
-// const REDIRECT_URI = 'http://localhost:3000/callback'; // 배포용
+// const REDIRECT_URI = 'http://localhost:13000/callback'; // 로컬 예시
 const REDIRECT_URI = 'https://everp.co.kr/callback'; // 서버용
 
 function cleanupPkce() {

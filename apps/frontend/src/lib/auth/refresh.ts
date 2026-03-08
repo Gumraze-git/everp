@@ -12,26 +12,36 @@ function makeBasicAuthHeader(clientId: string, clientSecret: string): string {
 }
 
 export async function trySilentRefresh() {
+  const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_BASE_URL?.trim() || 'http://localhost:18081';
+  const CLIENT_ID = process.env.NEXT_PUBLIC_OAUTH_CLIENT_ID?.trim() || 'everp-spa';
+
   const { token } = readStoredToken();
   try {
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
-      client_id: 'everp', // Vercel
-      // client_id: 'everp-spa', // local
+      client_id: CLIENT_ID,
     });
 
-    const res = await axios.post('https://auth.everp.co.kr/oauth2/token', body.toString(), {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+
+    if (token) {
+      headers.access_token = token;
+    }
+
+    if (CLIENT_ID === 'everp') {
+      headers.Authorization = makeBasicAuthHeader('everp', 'super-secret');
+    }
+
+    const res = await axios.post(`${AUTH_URL}/oauth2/token`, body.toString(), {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: makeBasicAuthHeader('everp', 'super-secret'),
-        access_token: token,
+        ...headers,
       },
       withCredentials: true,
     });
 
     const { access_token, expires_in } = res.data;
-
-    alert(res.data.accessToken);
 
     persistAccessToken(access_token, expires_in);
   } catch (error) {

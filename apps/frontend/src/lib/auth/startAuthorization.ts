@@ -1,9 +1,10 @@
 import { generateRandomBase64Url, createCodeChallenge } from './pkce';
 
 export async function startAuthorization(returnTo?: string) {
-  const AUTH_URL = 'https://auth.everp.co.kr';
-  // const REDIRECT_URI = 'http://localhost:3000/callback'; // 로컬용
-  const REDIRECT_URI = 'https://everp.co.kr/callback'; // 배포용
+  const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_BASE_URL?.trim() || 'http://localhost:18081';
+  const REDIRECT_URI =
+    process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI?.trim() || 'http://localhost:13000/callback';
+  const CLIENT_ID = process.env.NEXT_PUBLIC_OAUTH_CLIENT_ID?.trim() || 'everp-spa';
 
   const codeVerifier = generateRandomBase64Url(32);
   const codeChallenge = await createCodeChallenge(codeVerifier);
@@ -16,8 +17,7 @@ export async function startAuthorization(returnTo?: string) {
 
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: 'everp', // vercel
-    // client_id: 'everp-spa', // local
+    client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     scope: 'erp.user.profile offline_access',
     state,

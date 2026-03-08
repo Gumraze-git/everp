@@ -1,5 +1,6 @@
 'use client';
 
+import { API_BASE_URL } from '@/app/types/api';
 import { useEffect, useRef, useState } from 'react';
 
 interface Alarm {
@@ -21,8 +22,7 @@ export default function AlarmList() {
 
   useEffect(() => {
     // 백엔드 직접 연결 (CORS 설정 필요)
-    const url =
-      'http://localhost:8080/api/alarm/notifications/subscribe/019a2581-dd40-7cc8-b450-39df10062ec0';
+    const url = `${API_BASE_URL}/alarm/notifications/subscribe/019a2581-dd40-7cc8-b450-39df10062ec0`;
     console.info('[AlarmList] mounting, subscribe url:', url);
 
     const connect = async () => {

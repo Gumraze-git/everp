@@ -1,8 +1,10 @@
 package org.ever._4ever_be_gw.config.security;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.ever._4ever_be_gw.config.security.converter.EverJwtAuthenticationConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,9 +34,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final OAuth2ResourceServerProperties resourceServerProperties;
+    private final String frontendOrigin;
 
-    public SecurityConfig(OAuth2ResourceServerProperties resourceServerProperties) {
+    public SecurityConfig(
+        OAuth2ResourceServerProperties resourceServerProperties,
+        @Value("${EVERP_FRONTEND_ORIGIN:http://localhost:13000}") String frontendOrigin
+    ) {
         this.resourceServerProperties = resourceServerProperties;
+        this.frontendOrigin = frontendOrigin;
     }
 
     @Bean
@@ -60,17 +67,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-            "https://api.everp.co.kr",
-            "http://localhost:8080",
-            "http://127.0.0.1:8080",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "https://4-ever-fe.vercel.app/**",
-            "https://4-ever-fe.vercel.app/",
-            "https://everp.co.kr/**",
-            "https://everp.co.kr/"
-        ));
+        config.setAllowedOriginPatterns(buildAllowedOriginPatterns());
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -79,6 +76,18 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private List<String> buildAllowedOriginPatterns() {
+        List<String> origins = new ArrayList<>();
+        origins.add(frontendOrigin);
+        if (frontendOrigin.contains("://localhost:")) {
+            origins.add(frontendOrigin.replace("://localhost:", "://127.0.0.1:"));
+        }
+        origins.add("https://api.everp.co.kr");
+        origins.add("https://4-ever-fe.vercel.app");
+        origins.add("https://everp.co.kr");
+        return origins;
     }
 
     @Bean
