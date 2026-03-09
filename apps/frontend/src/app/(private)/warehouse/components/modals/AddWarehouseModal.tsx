@@ -36,7 +36,7 @@ const AddWarehouseModal = ({ onClose }: ModalProps) => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const { managerPhone, ...requestData } = formData;
+    const { managerPhone: _managerPhone, ...requestData } = formData;
     addWarehouse(requestData);
   };
 
