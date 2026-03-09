@@ -36,7 +36,13 @@ const AddWarehouseModal = ({ onClose }: ModalProps) => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const { managerPhone: _managerPhone, ...requestData } = formData;
+    const requestData = {
+      warehouseName: formData.warehouseName,
+      warehouseType: formData.warehouseType,
+      location: formData.location,
+      managerId: formData.managerId,
+      note: formData.note,
+    };
     addWarehouse(requestData);
   };
 
