@@ -1,4 +1,4 @@
-import { ApiResponse, PROFILE_ENDPOINTS } from '@/app/types/api';
+import { PROFILE_ENDPOINTS } from '@/app/types/api';
 import {
   CustomerInfoResponse,
   ProfileInfo,
@@ -33,9 +33,8 @@ const normalizeProfileInfo = (data: CustomerInfoResponse | SupplierInfoResponse)
 };
 
 export const getSupOrCusProfile = async (): Promise<ProfileInfo> => {
-  const res = await axios.get<ApiResponse<CustomerInfoResponse | SupplierInfoResponse>>(
+  const res = await axios.get<CustomerInfoResponse | SupplierInfoResponse>(
     PROFILE_ENDPOINTS.PROFILE_INFO,
   );
-
-  return normalizeProfileInfo(res.data.data);
+  return normalizeProfileInfo(res.data);
 };

@@ -17,27 +17,26 @@ export const INVENTORY_BASE_PATH = `${API_BASE_URL}/scm-pp`;
 export const HRM_BASE_PATH = `${API_BASE_URL}/business/hrm`;
 export const PROFILE_BASE_PATH = `${API_BASE_URL}/business/profile`;
 
-// 공통 응답 타입
-export interface ApiResponse<T> {
+export interface ProblemDetail {
+  type: string;
+  title: string;
   status: number;
-  success: boolean;
-  message: string;
-  data: T;
-}
-export interface ApiResponseNoData {
-  status: number;
-  success: boolean;
-  message: string;
+  detail: string;
+  instance: string;
+  code?: number;
+  errors?: unknown;
+  traceId?: string;
+  upstreamService?: string;
 }
 
 // ----------------------- SALES -----------------------
 export const SALES_ENDPOINTS = {
-  STATS: `${SALES_BASE_PATH}/statistics`,
+  STATS: `${SALES_BASE_PATH}/metrics`,
   QUOTES_LIST: `${SALES_BASE_PATH}/quotations`,
   QUOTE_DETAIL: (id: string) => `${SALES_BASE_PATH}/quotations/${id}`,
-  QUOTE_CONFIRM: `${SALES_BASE_PATH}/quotations/confirm`,
-  INVENTORY_CHECK: `${SALES_BASE_PATH}/quotations/inventory/check`,
-  QUOTE_DELIVERY_PROCESS: (id: string) => `${SALES_BASE_PATH}/quotations/${id}/approve-order`,
+  QUOTE_CONFIRM: (id: string) => `${SALES_BASE_PATH}/quotations/${id}/reviews`,
+  INVENTORY_CHECK: `${SALES_BASE_PATH}/inventory-checks`,
+  QUOTE_DELIVERY_PROCESS: (id: string) => `${SALES_BASE_PATH}/quotations/${id}/orders`,
   ORDERS_LIST: `${SALES_BASE_PATH}/orders`,
   ORDER_DETAIL: (id: string) => `${SALES_BASE_PATH}/orders/${id}`,
   CUSTOMERS_LIST: `${SALES_BASE_PATH}/customers`,
@@ -45,8 +44,8 @@ export const SALES_ENDPOINTS = {
   EDIT_CUSTOMER: (id: string) => `${SALES_BASE_PATH}/customers/${id}`,
   ANALYTICS: `${SALES_BASE_PATH}/analytics/sales`,
   NEW_ORDER: `${SALES_BASE_PATH}/quotations`,
-  NEW_QUOTE_ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/product/item/toggle`,
-  CSUTOMER_STATISTICS: `${SALES_BASE_PATH}/quotations/customer/count`,
+  NEW_QUOTE_ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/product-options`,
+  CSUTOMER_STATISTICS: `${SALES_BASE_PATH}/customer-users/me/metrics/quotation-counts`,
 } as const;
 
 // ----------------------- FINANCE -----------------------
@@ -72,16 +71,16 @@ export const FINANCE_ENDPOINTS = {
 
 // ----------------------- DASHBOARD -----------------------
 export const DASHBOARD_ENDPOINTS = {
-  STATS: `${DASHBOARD_BASE_PATH}/statistics`,
+  STATS: `${DASHBOARD_BASE_PATH}/metrics`,
   WORKFLOW_STATUS: `${DASHBOARD_BASE_PATH}/workflows`,
 } as const;
 
 // ----------------------- INVENTORY -----------------------
 export const INVENTORY_ENDPOINTS = {
-  STATS: `${INVENTORY_BASE_PATH}/iv/statistic`,
+  STATS: `${INVENTORY_BASE_PATH}/iv/metrics`,
   INVENTORY_LIST: `${INVENTORY_BASE_PATH}/iv/inventory-items`,
   INVENTORY_DETAIL: (itemId: string) => `${INVENTORY_BASE_PATH}/iv/items/${itemId}`,
-  LOW_STOCK: `${INVENTORY_BASE_PATH}/iv/shortage/preview`,
+  LOW_STOCK: `${INVENTORY_BASE_PATH}/iv/shortage-previews`,
   RECENT_STOCK_MOVEMENT: `${INVENTORY_BASE_PATH}/iv/stock-transfers`,
   PRODUCTION_LIST: `${INVENTORY_BASE_PATH}/sales-orders`,
   READY_TO_SHIP_LIST: `${INVENTORY_BASE_PATH}/sales-orders`,
@@ -92,28 +91,28 @@ export const INVENTORY_ENDPOINTS = {
   MARKAS_READY_TO_SHIP_DETAIL: (orderId: string) =>
     `${INVENTORY_BASE_PATH}/sales-orders/${orderId}/shipments`,
   ADD_MATERIALS: `${INVENTORY_BASE_PATH}/iv/items`,
-  MATERIALS_LIST: `${INVENTORY_BASE_PATH}/iv/items/info`,
+  MATERIALS_LIST: `${INVENTORY_BASE_PATH}/iv/items/search`,
   EDIT_SAFETY_STOCK: (itemId: string, safetyStock: number) =>
     `${INVENTORY_BASE_PATH}/iv/items/${itemId}/safety-stock?safetyStock=${safetyStock}`,
   // ---------- 메뉴 조회 ----------
-  ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/iv/items/toggle`,
-  WAREHOUSE_TOGGLE: `${INVENTORY_BASE_PATH}/iv/warehouses/dropdown`,
+  ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/iv/item-options`,
+  WAREHOUSE_TOGGLE: `${INVENTORY_BASE_PATH}/iv/warehouse-options`,
 } as const;
 
 // ----------------------- LOWSTOCK -----------------------
 export const LOWSTOCK_ENDPOINTS = {
-  STATS: `${INVENTORY_BASE_PATH}/iv/shortage/count/critical/statistic`,
+  STATS: `${INVENTORY_BASE_PATH}/iv/shortage-metrics`,
   LOW_STOCK_LIST: `${INVENTORY_BASE_PATH}/iv/shortage`,
 };
 
 // ----------------------- WAREHOUSE -----------------------
 export const WAREHOUSE_ENDPOINTS = {
-  STATS: `${INVENTORY_BASE_PATH}/iv/warehouses/statistic`,
+  STATS: `${INVENTORY_BASE_PATH}/iv/warehouse-metrics`,
   WAREHOUSE_LIST: `${INVENTORY_BASE_PATH}/iv/warehouses`,
   WAREHOUSE_DETAIL: (warehouseId: string) => `${INVENTORY_BASE_PATH}/iv/warehouses/${warehouseId}`,
   WAREHOUSE_MANAGE: (warehouseId: string) => `${INVENTORY_BASE_PATH}/iv/warehouses/${warehouseId}`,
   ADD_WAREHOUSE: `${INVENTORY_BASE_PATH}/iv/warehouses`,
-  WAREHOUSE_MANAGER_INFO: `${INVENTORY_BASE_PATH}/iv/warehouses/managers/toggle`,
+  WAREHOUSE_MANAGER_INFO: `${INVENTORY_BASE_PATH}/iv/warehouse-manager-options`,
 };
 
 // ----------------------- USER -----------------------
@@ -130,12 +129,12 @@ export const PROFILE_ENDPOINTS = {
   PROFILE_INFO: `${PROFILE_BASE_PATH}`,
   ATTENDANCE_RECORDS: `${PROFILE_BASE_PATH}/attendance-records`,
   TODAY_ATTENDANCE: `${PROFILE_BASE_PATH}/today-attendance`,
-  AVAILABLE_TRAINING: `${PROFILE_BASE_PATH}/trainings/available`,
-  COMPLETED_TRAINING: `${PROFILE_BASE_PATH}/trainings/completed`,
-  PROGRESS_TRAINING: `${PROFILE_BASE_PATH}/trainings/in-progress`,
+  AVAILABLE_TRAINING: `${PROFILE_BASE_PATH}/training-items/available`,
+  COMPLETED_TRAINING: `${PROFILE_BASE_PATH}/training-items/completed`,
+  PROGRESS_TRAINING: `${PROFILE_BASE_PATH}/training-items/in-progress`,
   REGISTER_TRAINING: (trainingId: string) =>
-    `${PROFILE_BASE_PATH}/trainings/request?trainingId=${trainingId}`,
+    `${PROFILE_BASE_PATH}/training-enrollments?trainingId=${trainingId}`,
   CHECK_IN: `${HRM_BASE_PATH}/attendance/check-in`,
   CHECK_OUT: `${HRM_BASE_PATH}/attendance/check-out`,
-  EDIT_PROFILE: `${PROFILE_BASE_PATH}/employees/profile/update`,
+  EDIT_PROFILE: `${PROFILE_BASE_PATH}`,
 };

@@ -50,19 +50,6 @@ const AddWarehouseModal = ({ onClose }: ModalProps) => {
     queryKey: ['getWarehouseManagerInfo'],
     queryFn: getWarehouseManagerInfo,
   });
-  // 낙관적 업데이트x
-  // const { mutate: addWarehouse } = useMutation<ApiResponseNoData, Error, AddWarehouseRequest>({
-  //   mutationFn: postAddWarehouse,
-  //   onSuccess: (data) => {
-  //     alert(`${data.status} : ${data.message}
-  //     `);
-  //     onClose()
-  //   },
-  //   onError: (error) => {
-  //     alert(` 자재 등록 중 오류가 발생했습니다. ${error}`);
-  //   },
-  // });
-
   // 낙관적 업데이트
   const { mutate: addWarehouse } = useMutation({
     mutationFn: postAddWarehouse,
@@ -96,7 +83,7 @@ const AddWarehouseModal = ({ onClose }: ModalProps) => {
       alert(`창고 등록 중 오류가 발생했습니다. ${error}`);
     },
 
-    onSuccess: (data) => {
+    onSuccess: () => {
       alert(`창고 등록이 완료되었습니다.`);
       onClose();
     },

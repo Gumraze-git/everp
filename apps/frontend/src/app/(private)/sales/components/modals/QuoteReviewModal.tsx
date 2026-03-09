@@ -50,7 +50,7 @@ const QuoteReviewModal = ({ onClose, $selectedQuotationId }: QuoteReviewModalPro
 
   const { mutate: quotationConfirmReq } = useMutation({
     mutationFn: (id: string) => postQuotationConfirm(id),
-    onSuccess: (data) => {
+    onSuccess: () => {
       alert('검토 요청이 완료되었습니다.');
     },
     onError: (error) => {
@@ -70,9 +70,8 @@ const QuoteReviewModal = ({ onClose, $selectedQuotationId }: QuoteReviewModalPro
 
   const { mutate: delieveryProcessReq } = useMutation({
     mutationFn: (id: string) => postDeliveryProcess(id),
-    onSuccess: (data) => {
-      alert(`${data.status} : ${quote?.quotationNumber}
-          `);
+    onSuccess: () => {
+      alert(`${quote?.quotationNumber} 견적의 주문 전환이 완료되었습니다.`);
     },
     onError: (error) => {
       alert(`즉시 납품 처리 중 오류가 발생했습니다. ${error}`);

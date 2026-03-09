@@ -1,5 +1,5 @@
 import { InventoryStatResponse } from './types/InventoryStatsType';
-import axios from 'axios';
+import axios from '@/lib/axiosInstance';
 import { InventoryQueryParams, InventoryResponse } from './types/InventoryListType';
 import { InventoryDetailResponse, StockMovementRequest } from './types/InventoryDetailModalType';
 import { LowStockItemResponse } from '../low-stock/types/LowStockAlertType';
@@ -10,23 +10,19 @@ import {
   ReadyToShipListResponse,
 } from './types/ShippingManagementListType';
 import { ReceivedListResponse } from './types/ReceivingManagementListType';
-import {
-  markAsReadyRequest,
-  ShippingDetailResponse,
-} from './types/ShippingDetailModalType';
+import { markAsReadyRequest, ShippingDetailResponse } from './types/ShippingDetailModalType';
 import {
   AddInventoryItemsRequest,
   AddInventoryItemsToggleResponse,
   WarehouseToggleQueryParams,
   WarehouseToggleResponse,
 } from './types/AddInventoryModalType';
-import { ApiResponse, ApiResponseNoData, INVENTORY_ENDPOINTS } from '@/app/types/api';
+import { INVENTORY_ENDPOINTS } from '@/app/types/api';
 import { Page } from '@/app/types/Page';
-import { ItemResponse } from './types/ItemListType';
 // ----------------------- 재고 통계 -----------------------
 export const getInventoryStats = async (): Promise<InventoryStatResponse> => {
-  const res = await axios.get<ApiResponse<InventoryStatResponse>>(INVENTORY_ENDPOINTS.STATS);
-  return res.data.data;
+  const res = await axios.get<InventoryStatResponse>(INVENTORY_ENDPOINTS.STATS);
+  return res.data;
 };
 // ----------------------- 재고 관리 -----------------------
 export const getInventoryList = async (
@@ -40,44 +36,33 @@ export const getInventoryList = async (
     ...(params?.statusCode && { statusCode: params.statusCode }),
   }).toString();
 
-  const res = await axios.get<ApiResponse<{ content: InventoryResponse[]; page: Page }>>(
+  const res = await axios.get<{ content: InventoryResponse[]; page: Page }>(
     `${INVENTORY_ENDPOINTS.INVENTORY_LIST}?${query}`,
   );
-
-  return { data: res.data.data.content, pageData: res.data.data.page };
+  return { data: res.data.content, pageData: res.data.page };
 };
 
 export const getInventoryDetail = async (inventoryId: string): Promise<InventoryDetailResponse> => {
-  const res = await axios.get<ApiResponse<InventoryDetailResponse>>(
+  const res = await axios.get<InventoryDetailResponse>(
     INVENTORY_ENDPOINTS.INVENTORY_DETAIL(inventoryId),
   );
-  return res.data.data;
+  return res.data;
 };
 
 export const getLowStockItems = async (): Promise<LowStockItemResponse[]> => {
-  const res = await axios.get<ApiResponse<{ content: LowStockItemResponse[] }>>(
-    INVENTORY_ENDPOINTS.LOW_STOCK,
-  );
-  return res.data.data.content;
+  const res = await axios.get<{ content: LowStockItemResponse[] }>(INVENTORY_ENDPOINTS.LOW_STOCK);
+  return res.data.content;
 };
 
 export const getCurrentStockMovement = async (): Promise<StockMovementResponse[]> => {
-  const res = await axios.get<ApiResponse<{ content: StockMovementResponse[] }>>(
+  const res = await axios.get<{ content: StockMovementResponse[] }>(
     INVENTORY_ENDPOINTS.RECENT_STOCK_MOVEMENT,
   );
-
-  return res.data.data.content;
+  return res.data.content;
 };
 
-export const postStockMovement = async (
-  payload: StockMovementRequest,
-): Promise<ApiResponseNoData> => {
-  const res = await axios.post<ApiResponseNoData>(
-    INVENTORY_ENDPOINTS.RECENT_STOCK_MOVEMENT,
-    payload,
-  );
-
-  return res.data;
+export const postStockMovement = async (payload: StockMovementRequest): Promise<void> => {
+  await axios.post(INVENTORY_ENDPOINTS.RECENT_STOCK_MOVEMENT, payload);
 };
 
 export const PatchSafetyStock = async ({
@@ -86,12 +71,8 @@ export const PatchSafetyStock = async ({
 }: {
   itemId: string;
   safetyStock: number;
-}): Promise<ApiResponseNoData> => {
-  const res = await axios.patch<ApiResponseNoData>(
-    INVENTORY_ENDPOINTS.EDIT_SAFETY_STOCK(itemId, safetyStock),
-  );
-
-  return res.data;
+}): Promise<void> => {
+  await axios.patch(INVENTORY_ENDPOINTS.EDIT_SAFETY_STOCK(itemId, safetyStock));
 };
 
 // ----------------------- 입고 관리 -----------------------
@@ -137,7 +118,9 @@ export const getProductionDetail = async (itemId: string): Promise<ShippingDetai
 };
 
 export const getReadyToShipDetail = async (itemId: string): Promise<ShippingDetailResponse> => {
-  const res = await axios.get<ShippingDetailResponse>(INVENTORY_ENDPOINTS.READY_TO_SHIP_DETAIL(itemId));
+  const res = await axios.get<ShippingDetailResponse>(
+    INVENTORY_ENDPOINTS.READY_TO_SHIP_DETAIL(itemId),
+  );
   return res.data;
 };
 
@@ -145,10 +128,7 @@ export const patchMarkAsReadyToShip = async (
   orderId: string,
   payload: markAsReadyRequest,
 ): Promise<void> => {
-  await axios.post(
-    INVENTORY_ENDPOINTS.MARKAS_READY_TO_SHIP_DETAIL(orderId),
-    payload,
-  );
+  await axios.post(INVENTORY_ENDPOINTS.MARKAS_READY_TO_SHIP_DETAIL(orderId), payload);
 };
 
 // ----------------------- 출고 관리 -----------------------
@@ -192,10 +172,8 @@ export const getReceivedList = async (
 
 // ----------------------- 원자재 추가 -----------------------
 export const getItemInfo = async (): Promise<AddInventoryItemsToggleResponse[]> => {
-  const res = await axios.get<ApiResponse<AddInventoryItemsToggleResponse[]>>(
-    INVENTORY_ENDPOINTS.ITEM_TOGGLE,
-  );
-  return res.data.data;
+  const res = await axios.get<AddInventoryItemsToggleResponse[]>(INVENTORY_ENDPOINTS.ITEM_TOGGLE);
+  return res.data;
 };
 
 export const getWarehouseInfo = async (
@@ -204,27 +182,14 @@ export const getWarehouseInfo = async (
   const query = new URLSearchParams({
     ...(params?.warehouseId && { warehouseId: String(params.warehouseId) }),
   }).toString();
-  const res = await axios.get<ApiResponse<{ warehouses: WarehouseToggleResponse[] }>>(
+  const res = await axios.get<{ warehouses: WarehouseToggleResponse[] }>(
     `${INVENTORY_ENDPOINTS.WAREHOUSE_TOGGLE}?${query}`,
   );
-  return res.data.data.warehouses;
+  return res.data.warehouses;
 };
 
-export const postAddMaterial = async (
-  payload: AddInventoryItemsRequest,
-): Promise<ApiResponseNoData> => {
-  const res = await axios.post<ApiResponseNoData>(INVENTORY_ENDPOINTS.ADD_MATERIALS, payload);
-
-  return res.data;
+export const postAddMaterial = async (payload: AddInventoryItemsRequest): Promise<void> => {
+  await axios.post(INVENTORY_ENDPOINTS.ADD_MATERIALS, payload);
 };
 
 // 자재 상세 조회
-// export const postItemsInfo = async (body: string[]): Promise<ItemResponse[]> => {
-//   const res = await axios.post<ApiResponse<ItemResponse[]>>(
-//     `${INVENTORY_ENDPOINTS.MATERIALS_LIST}`,
-//     {
-//       itemIds: body,
-//     },
-//   );
-//   return res.data.data;
-// };

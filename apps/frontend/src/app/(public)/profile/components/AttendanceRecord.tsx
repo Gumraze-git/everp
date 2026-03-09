@@ -38,9 +38,7 @@ export default function AttendanceRecord() {
 
   const { mutate: sendVacation } = useMutation({
     mutationFn: postVacation,
-    onSuccess: (data) => {
-      alert(`${data.status} : ${data.message}
-        `);
+    onSuccess: () => {
       alert('휴가 신청이 접수되었습니다.');
     },
     onError: (error) => {
@@ -50,7 +48,7 @@ export default function AttendanceRecord() {
 
   const { mutate: checkIn } = useMutation({
     mutationFn: patchCheckIn,
-    onSuccess: (data) => {
+    onSuccess: () => {
       setCurrentStatus('출근');
       alert('출근 처리가 완료되었습니다.');
     },
@@ -64,7 +62,7 @@ export default function AttendanceRecord() {
 
   const { mutate: checkOut } = useMutation({
     mutationFn: patchCheckout,
-    onSuccess: (data) => {
+    onSuccess: () => {
       setCurrentStatus('퇴근');
       alert('퇴근 처리가 완료되었습니다.');
     },
@@ -94,7 +92,6 @@ export default function AttendanceRecord() {
 
   useEffect(() => {
     setCurrentStatus(todayAttendanceRes?.status as string);
-    console.log(todayAttendanceRes?.status);
   }, [todayAttendanceRes]);
 
   const { data: AttendanceRecordsRes } = useQuery<AttendanceRecordsResponse[]>({
