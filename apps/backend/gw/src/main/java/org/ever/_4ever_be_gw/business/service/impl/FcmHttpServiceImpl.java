@@ -12,12 +12,12 @@ import org.ever._4ever_be_gw.business.service.FcmHttpService;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.handler.ProblemDetailFactory;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
 
 @Service
@@ -25,7 +25,7 @@ import org.springframework.web.util.UriBuilder;
 @Slf4j
 public class FcmHttpServiceImpl implements FcmHttpService {
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     @Override
     public ResponseEntity<?> getFcmStatistics(String periods) {
@@ -311,37 +311,36 @@ public class FcmHttpServiceImpl implements FcmHttpService {
     }
 
     private ResponseEntity<?> get(String operation, String path, Object... uriVariables) {
-        return execute(operation, () -> businessClient().get().uri(path, uriVariables).retrieve().toEntity(Object.class).block());
+        return execute(operation, () -> businessClient().get().uri(path, uriVariables).retrieve().toEntity(Object.class));
     }
 
     private ResponseEntity<?> get(String operation, Function<UriBuilder, URI> uriFunction) {
-        return execute(operation, () -> businessClient().get().uri(uriFunction).retrieve().toEntity(Object.class).block());
+        return execute(operation, () -> businessClient().get().uri(uriFunction).retrieve().toEntity(Object.class));
     }
 
     private ResponseEntity<?> post(String operation, String path, Object body, Object... uriVariables) {
         return execute(operation, () -> {
-            WebClient.RequestBodySpec request = businessClient().post().uri(path, uriVariables);
+            RestClient.RequestBodySpec request = businessClient().post().uri(path, uriVariables);
             if (body != null) {
-                return request.bodyValue(body).retrieve().toEntity(Object.class).block();
+                return request.body(body).retrieve().toEntity(Object.class);
             }
-            return request.retrieve().toEntity(Object.class).block();
+            return request.retrieve().toEntity(Object.class);
         });
     }
 
     private ResponseEntity<?> patch(String operation, String path, Object body, Object... uriVariables) {
         return execute(operation, () -> businessClient().patch()
             .uri(path, uriVariables)
-            .bodyValue(body)
+            .body(body)
             .retrieve()
-            .toEntity(Object.class)
-            .block());
+            .toEntity(Object.class));
     }
 
     private ResponseEntity<?> execute(String operation, RequestExecutor executor) {
         try {
             ResponseEntity<Object> response = executor.execute();
             return response != null ? response : ResponseEntity.noContent().build();
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError(operation, ex);
         } catch (Exception e) {
             log.error("{} 중 예기치 않은 오류 발생", operation, e);
@@ -358,10 +357,10 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         }
     }
 
-    private ResponseEntity<?> handleWebClientError(String operation, WebClientResponseException ex) {
+    private ResponseEntity<?> handleWebClientError(String operation, RestClientResponseException ex) {
         log.error("{} 실패 - Status: {}, Body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
         return ResponseEntity.status(HttpStatus.valueOf(ex.getStatusCode().value()))
-            .body(ProblemDetailFactory.fromWebClientResponseException(ex, "business"));
+            .body(ProblemDetailFactory.fromRestClientResponseException(ex, "business"));
     }
 
     private ResponseEntity<?> badRequest(String detail) {
@@ -380,8 +379,8 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return size != null && size > 0 ? size : 5;
     }
 
-    private WebClient businessClient() {
-        return webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+    private RestClient businessClient() {
+        return restClientProvider.getRestClient(ApiClientKey.BUSINESS);
     }
 
     @FunctionalInterface

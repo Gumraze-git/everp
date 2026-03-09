@@ -21,6 +21,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ServerWebExchange;
@@ -112,7 +113,7 @@ public class GlobalExceptionHandler {
         WebClientResponseException e,
         ServerWebExchange exchange
     ) {
-        log.error("WebClient 응답 예외 발생: {}", e.getMessage(), e);
+        log.error("리액티브 HTTP 클라이언트 응답 예외 발생: {}", e.getMessage(), e);
         ProblemDetail problemDetail = ProblemDetailFactory.fromWebClientResponseException(e, "downstream");
         problemDetail.setInstance(URI.create(exchange.getRequest().getURI().getPath()));
         return Mono.just(
@@ -120,6 +121,17 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.valueOf(e.getStatusCode().value()))
                 .body(problemDetail)
         );
+    }
+
+    @ExceptionHandler(RestClientResponseException.class)
+    protected ResponseEntity<ProblemDetail> handleRestClientResponseException(
+        RestClientResponseException e,
+        HttpServletRequest request
+    ) {
+        log.error("RestClient 응답 예외 발생: {}", e.getMessage(), e);
+        return ResponseEntity
+            .status(HttpStatus.valueOf(e.getStatusCode().value()))
+            .body(ProblemDetailFactory.fromRestClientResponseException(e, request, "downstream"));
     }
 
     @ExceptionHandler(BindException.class)

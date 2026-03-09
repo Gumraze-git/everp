@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.business.dto.hrm.UpdateProfileRequestDto;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class ProfileController {
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     @GetMapping
     public ResponseEntity<Object> getEmployeeProfile(
@@ -28,8 +28,8 @@ public class ProfileController {
     ) {
         String userId = user.getUserId();
         String userType = user.getUserType();
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
-        var scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
+        var scmClient = restClientProvider.getRestClient(ApiClientKey.SCM_PP);
 
         ResponseEntity<Object> result;
 
@@ -58,7 +58,7 @@ public class ProfileController {
 
         String internalUserId = user.getUserId();
 
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/attendance-history-items", internalUserId));
     }
@@ -69,7 +69,7 @@ public class ProfileController {
     ) {
         String internalUserId = user.getUserId();
 
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/today-attendance", internalUserId));
     }
@@ -80,7 +80,7 @@ public class ProfileController {
     ) {
         String internalUserId = user.getUserId();
 
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/in-progress-training-items", internalUserId));
     }
@@ -91,7 +91,7 @@ public class ProfileController {
     ) {
         String internalUserId = user.getUserId();
 
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/available-training-items", internalUserId));
     }
@@ -102,7 +102,7 @@ public class ProfileController {
     ) {
 
         String internalUserId = user.getUserId();
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/completed-training-items", internalUserId));
     }
@@ -114,12 +114,12 @@ public class ProfileController {
     ) {
         String internalUserId = user.getUserId();
 
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.post()
                 .uri("/hrm/internal-users/{internalUserId}/training-enrollments", internalUserId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(Map.of("programId", trainingId)));
+                .body(Map.of("programId", trainingId)));
     }
 
     @PatchMapping
@@ -129,18 +129,18 @@ public class ProfileController {
     ) {
         String internalUserId = user.getUserId();
 
-        var client = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.patch()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hrm/internal-users/{internalUserId}/profile")
                         .build(internalUserId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto));
+                .body(requestDto));
     }
 
-    private ResponseEntity<Object> fetchEntity(org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec<?> requestSpec) {
-        ResponseEntity<Object> response = requestSpec.retrieve().toEntity(Object.class).block();
+    private ResponseEntity<Object> fetchEntity(org.springframework.web.client.RestClient.RequestHeadersSpec<?> requestSpec) {
+        ResponseEntity<Object> response = requestSpec.retrieve().toEntity(Object.class);
         return response != null ? response : ResponseEntity.noContent().build();
     }
 

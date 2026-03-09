@@ -13,19 +13,19 @@ import org.ever._4ever_be_gw.alarm.util.AlarmDtoConverter;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.handler.ProblemDetailFactory;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AlarmHttpServiceImpl implements AlarmHttpService {
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     @Override
     public ResponseEntity<Object> getNotificationList(
@@ -55,7 +55,6 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
                     .build(userId))
                 .retrieve()
                 .toEntity(Object.class)
-                .block()
         );
     }
 
@@ -75,7 +74,6 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
                     .build(request.getUserId()))
                 .retrieve()
                 .toEntity(Object.class)
-                .block()
         );
     }
 
@@ -96,10 +94,9 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
             "알림 읽음 처리",
             () -> alarmClient().patch()
                 .uri("/notifications/list/read")
-                .bodyValue(request)
+                .body(request)
                 .retrieve()
                 .toEntity(Object.class)
-                .block()
         );
     }
 
@@ -116,10 +113,9 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
             "전체 알림 읽음 처리",
             () -> alarmClient().patch()
                 .uri("/notifications/all/read")
-                .bodyValue(request)
+                .body(request)
                 .retrieve()
                 .toEntity(Object.class)
-                .block()
         );
     }
 
@@ -135,10 +131,9 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
             "단일 알림 읽음 처리",
             () -> alarmClient().patch()
                 .uri("/notifications/{notificationId}/read", notificationId)
-                .bodyValue(request)
+                .body(request)
                 .retrieve()
                 .toEntity(Object.class)
-                .block()
         );
     }
 
@@ -160,10 +155,9 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
             "FCM 토큰 등록",
             () -> alarmClient().post()
                 .uri("/device-tokens/register")
-                .bodyValue(request)
+                .body(request)
                 .retrieve()
                 .toEntity(Object.class)
-                .block()
         );
     }
 
@@ -171,10 +165,10 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         try {
             ResponseEntity<Object> response = executor.execute();
             return response != null ? response : ResponseEntity.noContent().build();
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             logWebClientError(operation, ex);
             return ResponseEntity.status(HttpStatus.valueOf(ex.getStatusCode().value()))
-                .body(ProblemDetailFactory.fromWebClientResponseException(ex, "alarm"));
+                .body(ProblemDetailFactory.fromRestClientResponseException(ex, "alarm"));
         } catch (Exception e) {
             log.error("{} 중 예기치 않은 오류 발생", operation, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -189,7 +183,7 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         }
     }
 
-    private void logWebClientError(String operation, WebClientResponseException ex) {
+    private void logWebClientError(String operation, RestClientResponseException ex) {
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         String errorBody = ex.getResponseBodyAsString();
 
@@ -210,8 +204,8 @@ public class AlarmHttpServiceImpl implements AlarmHttpService {
         }
     }
 
-    private WebClient alarmClient() {
-        return webClientProvider.getWebClient(ApiClientKey.ALARM);
+    private RestClient alarmClient() {
+        return restClientProvider.getRestClient(ApiClientKey.ALARM);
     }
 
     @FunctionalInterface

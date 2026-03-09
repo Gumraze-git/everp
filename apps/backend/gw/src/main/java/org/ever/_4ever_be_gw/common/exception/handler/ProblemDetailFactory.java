@@ -10,6 +10,7 @@ import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 public final class ProblemDetailFactory {
@@ -55,6 +56,33 @@ public final class ProblemDetailFactory {
         String upstreamService
     ) {
         return fromWebClientResponseException(exception, null, null, upstreamService);
+    }
+
+    public static ProblemDetail fromRestClientResponseException(
+        RestClientResponseException exception,
+        HttpServletRequest request,
+        String upstreamService
+    ) {
+        return fromResponseException(
+            HttpStatus.valueOf(exception.getStatusCode().value()),
+            exception.getResponseBodyAsString(),
+            request != null ? URI.create(request.getRequestURI()) : null,
+            request,
+            upstreamService
+        );
+    }
+
+    public static ProblemDetail fromRestClientResponseException(
+        RestClientResponseException exception,
+        String upstreamService
+    ) {
+        return fromResponseException(
+            HttpStatus.valueOf(exception.getStatusCode().value()),
+            exception.getResponseBodyAsString(),
+            null,
+            null,
+            upstreamService
+        );
     }
 
     public static ProblemDetail badRequest(
@@ -105,9 +133,22 @@ public final class ProblemDetailFactory {
         HttpServletRequest request,
         String upstreamService
     ) {
-        HttpStatus status = HttpStatus.valueOf(exception.getStatusCode().value());
-        String responseBody = exception.getResponseBodyAsString();
+        return fromResponseException(
+            HttpStatus.valueOf(exception.getStatusCode().value()),
+            exception.getResponseBodyAsString(),
+            instance,
+            request,
+            upstreamService
+        );
+    }
 
+    private static ProblemDetail fromResponseException(
+        HttpStatus status,
+        String responseBody,
+        URI instance,
+        HttpServletRequest request,
+        String upstreamService
+    ) {
         ProblemDetail problemDetail = parseDownstreamProblem(status, responseBody, instance, request);
         if (problemDetail == null) {
             String detail = responseBody != null && !responseBody.isBlank()

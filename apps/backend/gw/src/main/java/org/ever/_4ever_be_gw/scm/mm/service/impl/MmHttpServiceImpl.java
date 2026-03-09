@@ -13,7 +13,7 @@ import org.ever._4ever_be_gw.common.dto.stats.StatsResponseMapper;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseOrderRejectRequestDto;
 import org.ever._4ever_be_gw.scm.mm.dto.PurchaseRequisitionCreateRequestDto;
@@ -25,8 +25,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
 
 import java.time.LocalDate;
@@ -40,7 +40,7 @@ public class MmHttpServiceImpl implements MmHttpService {
     private static final ParameterizedTypeReference<List<ValueKeyOptionDto>> VALUE_KEY_OPTIONS_TYPE =
         new ParameterizedTypeReference<>() {};
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     @Override
     public ResponseEntity<Object> getSupplierList(
@@ -86,7 +86,7 @@ public class MmHttpServiceImpl implements MmHttpService {
             client -> client.patch()
                 .uri("/scm-pp/mm/supplier/{supplierId}", supplierId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
+                .body(requestDto)
         );
     }
 
@@ -103,7 +103,7 @@ public class MmHttpServiceImpl implements MmHttpService {
                     .queryParam("requesterId", requesterId)
                     .build())
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
+                .body(requestDto)
         );
     }
 
@@ -159,7 +159,7 @@ public class MmHttpServiceImpl implements MmHttpService {
                     .queryParam("requesterId", requesterId)
                     .build())
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
+                .body(requestDto)
         );
     }
 
@@ -190,7 +190,7 @@ public class MmHttpServiceImpl implements MmHttpService {
                     .queryParam("requesterId", requesterId)
                     .build(purchaseRequisitionId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
+                .body(requestDto)
         );
     }
 
@@ -265,7 +265,7 @@ public class MmHttpServiceImpl implements MmHttpService {
                     .queryParam("requesterId", requesterId)
                     .build(purchaseOrderId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestDto)
+                .body(requestDto)
         );
     }
 
@@ -424,15 +424,14 @@ public class MmHttpServiceImpl implements MmHttpService {
 
     private ResponseEntity<Object> executeObject(
         String operation,
-        Function<WebClient, WebClient.RequestHeadersSpec<?>> requestFunction
+        Function<RestClient, RestClient.RequestHeadersSpec<?>> requestFunction
     ) {
         try {
             ResponseEntity<Object> response = requestFunction.apply(scmClient())
                 .retrieve()
-                .toEntity(Object.class)
-                .block();
+                .toEntity(Object.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -451,10 +450,9 @@ public class MmHttpServiceImpl implements MmHttpService {
                 .get()
                 .uri(uriFunction)
                 .retrieve()
-                .toEntity(JsonNode.class)
-                .block();
+                .toEntity(JsonNode.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -473,10 +471,9 @@ public class MmHttpServiceImpl implements MmHttpService {
                 .get()
                 .uri(uriFunction)
                 .retrieve()
-                .toEntity(typeReference)
-                .block();
+                .toEntity(typeReference);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -492,8 +489,8 @@ public class MmHttpServiceImpl implements MmHttpService {
         return response;
     }
 
-    private WebClient scmClient() {
-        return webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+    private RestClient scmClient() {
+        return restClientProvider.getRestClient(ApiClientKey.SCM_PP);
     }
 
     private int normalizeSize(int size) {

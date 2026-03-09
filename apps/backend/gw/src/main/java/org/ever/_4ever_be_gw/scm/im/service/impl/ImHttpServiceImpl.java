@@ -12,7 +12,7 @@ import org.ever._4ever_be_gw.common.dto.stats.StatsResponseMapper;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.ever._4ever_be_gw.scm.im.dto.AddInventoryItemRequest;
 import org.ever._4ever_be_gw.scm.im.dto.SalesOrderStatusChangeRequestDto;
@@ -25,8 +25,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
 
 @Service("imHttpService")
@@ -37,7 +37,7 @@ public class ImHttpServiceImpl implements ImHttpService {
     private static final ParameterizedTypeReference<List<DashboardWorkflowItemDto>> DASHBOARD_WORKFLOW_ITEMS_TYPE =
         new ParameterizedTypeReference<>() {};
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     @Override
     public ResponseEntity<List<DashboardWorkflowItemDto>> getDashboardInboundList(String userId, Integer size) {
@@ -398,15 +398,14 @@ public class ImHttpServiceImpl implements ImHttpService {
                     .path("/scm-pp/sales-orders/{salesOrderId}/shipments")
                     .queryParam("requesterId", requesterId)
                     .build(salesOrderId))
-                .bodyValue(requestDto)
+                .body(requestDto)
                 .retrieve()
-                .toBodilessEntity()
-                .block();
+                .toBodilessEntity();
             if (response == null) {
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "출고 생성 응답이 비어 있습니다.");
             }
             return response;
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("출고 생성 실패 - status: {}, body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -425,10 +424,9 @@ public class ImHttpServiceImpl implements ImHttpService {
                 .get()
                 .uri(uriFunction)
                 .retrieve()
-                .toEntity(JsonNode.class)
-                .block();
+                .toEntity(JsonNode.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -447,10 +445,9 @@ public class ImHttpServiceImpl implements ImHttpService {
                 .get()
                 .uri(uriFunction)
                 .retrieve()
-                .toEntity(Object.class)
-                .block();
+                .toEntity(Object.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -470,12 +467,11 @@ public class ImHttpServiceImpl implements ImHttpService {
                 .post()
                 .uri(uriFunction)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestBody)
+                .body(requestBody)
                 .retrieve()
-                .toEntity(Object.class)
-                .block();
+                .toEntity(Object.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -495,10 +491,9 @@ public class ImHttpServiceImpl implements ImHttpService {
                 .uri(uriFunction)
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .toEntity(Object.class)
-                .block();
+                .toEntity(Object.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -518,12 +513,11 @@ public class ImHttpServiceImpl implements ImHttpService {
                 .put()
                 .uri(uriFunction)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestBody)
+                .body(requestBody)
                 .retrieve()
-                .toEntity(Object.class)
-                .block();
+                .toEntity(Object.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -543,10 +537,9 @@ public class ImHttpServiceImpl implements ImHttpService {
                 .get()
                 .uri(uriFunction)
                 .retrieve()
-                .toEntity(typeReference)
-                .block();
+                .toEntity(typeReference);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - status: {}, body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -562,8 +555,8 @@ public class ImHttpServiceImpl implements ImHttpService {
         return response;
     }
 
-    private WebClient scmClient(ApiClientKey apiClientKey) {
-        return webClientProvider.getWebClient(apiClientKey);
+    private RestClient scmClient(ApiClientKey apiClientKey) {
+        return restClientProvider.getRestClient(apiClientKey);
     }
 
     private int normalizeSize(Integer size) {

@@ -17,15 +17,15 @@ import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.common.exception.handler.ProblemDetailFactory;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,7 @@ import java.util.Map;
 @Slf4j
 public class HrmHttpServiceImpl implements HrmHttpService {
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     // ==================== Statistics ====================
 
@@ -44,13 +44,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("HR 통계 조회 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/statistics")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             // ongoingProgramCount와 completedProgramCount 제거
             if (response instanceof java.util.Map<?, ?>) {
@@ -63,7 +62,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             log.info("HR 통계 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("HR 통계 조회", ex);
         } catch (Exception e) {
             log.error("HR 통계 조회 중 예기치 않은 오류 발생", e);
@@ -80,7 +79,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("부서 목록 조회 요청 - status: {}, page: {}, size: {}", status, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -91,13 +90,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("부서 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("부서 목록 조회", ex);
         } catch (Exception e) {
             log.error("부서 목록 조회 중 예기치 않은 오류 발생", e);
@@ -112,21 +110,20 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("부서 정보 수정 요청 - departmentId: {}, body: {}", departmentId, requestDto);
 
         try {
-            WebClient businessWebClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessWebClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessWebClient.patch()
                     .uri("/hrm/departments/{departmentId}", departmentId)
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("부서 정보 수정 완료 - departmentId: {}", departmentId);
 
             return ResponseEntity.ok(response);
 
-        } catch (org.springframework.web.reactive.function.client.WebClientResponseException ex) {
+        } catch (org.springframework.web.client.RestClientResponseException ex) {
             return handleWebClientError("부서 정보 수정", ex);
         } catch (Exception e) {
             log.error("부서 정보 수정 중 예기치 않은 오류 발생", e);
@@ -141,18 +138,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("부서 상세 조회 요청 - departmentId: {}", departmentId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/organization/department/{departmentId}", departmentId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("부서 상세 조회 성공 - departmentId: {}", departmentId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("부서 상세 조회", ex);
         } catch (Exception e) {
             log.error("부서 상세 조회 중 예기치 않은 오류 발생", e);
@@ -167,18 +163,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("전체 부서 목록 조회 요청 (ID, Name만)");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/departments/simple")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("전체 부서 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("전체 부서 목록 조회", ex);
         } catch (Exception e) {
             log.error("전체 부서 목록 조회 중 예기치 않은 오류 발생", e);
@@ -193,18 +188,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("부서 구성원 목록 조회 요청 - departmentId: {}", departmentId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/departments/{departmentId}/members", departmentId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("부서 구성원 목록 조회 성공 - departmentId: {}", departmentId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("부서 구성원 목록 조회", ex);
         } catch (Exception e) {
             log.error("부서 구성원 목록 조회 중 예기치 않은 오류 발생", e);
@@ -221,18 +215,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("직급 목록 조회 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/positions")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직급 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직급 목록 조회", ex);
         } catch (Exception e) {
             log.error("직급 목록 조회 중 예기치 않은 오류 발생", e);
@@ -247,18 +240,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("부서별 직급 목록 조회 요청 - departmentId: {}", departmentId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/" + departmentId + "/positions/all")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("부서별 직급 목록 조회 성공 - departmentId: {}", departmentId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("부서별 직급 목록 조회", ex);
         } catch (Exception e) {
             log.error("부서별 직급 목록 조회 중 예기치 않은 오류 발생", e);
@@ -273,18 +265,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("직급 상세 조회 요청 - positionId: {}", positionId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/organization/position/{positionId}", positionId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직급 상세 조회 성공 - positionId: {}", positionId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직급 상세 조회", ex);
         } catch (Exception e) {
             log.error("직급 상세 조회 중 예기치 않은 오류 발생", e);
@@ -303,7 +294,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 departmentId, positionId, name, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -316,13 +307,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원 목록 조회", ex);
         } catch (Exception e) {
             log.error("직원 목록 조회 중 예기치 않은 오류 발생", e);
@@ -337,18 +327,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("직원 상세 조회 요청 - employeeId: {}", employeeId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/employee/{employeeId}", employeeId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원 상세 조회 성공 - employeeId: {}", employeeId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원 상세 조회", ex);
         } catch (Exception e) {
             log.error("직원 상세 조회 중 예기치 않은 오류 발생", e);
@@ -363,18 +352,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("InternelUser ID로 직원 정보 및 교육 이력 조회 요청 - internelUserId: {}", internelUserId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/employees/{internelUserId}", internelUserId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("InternelUser ID로 직원 정보 및 교육 이력 조회 성공 - internelUserId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("InternelUser ID로 직원 정보 및 교육 이력 조회", ex);
         } catch (Exception e) {
             log.error("InternelUser ID로 직원 정보 및 교육 이력 조회 중 예기치 않은 오류 발생", e);
@@ -389,18 +377,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 요청 - internelUserId: {}", internelUserId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/employees/{internelUserId}/available-trainings", internelUserId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 성공 - internelUserId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회", ex);
         } catch (Exception e) {
             log.error("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 중 예기치 않은 오류 발생", e);
@@ -415,18 +402,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("CustomerUser ID로 고객 사용자 상세 정보 조회 요청 - customerUserId: {}", customerUserId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/customers/by-customer-user/{customerUserId}", customerUserId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("CustomerUser ID로 고객 사용자 상세 정보 조회 성공 - customerUserId: {}", customerUserId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("CustomerUser ID로 고객 사용자 상세 정보 조회", ex);
         } catch (Exception e) {
             log.error("CustomerUser ID로 고객 사용자 상세 정보 조회 중 예기치 않은 오류 발생", e);
@@ -441,19 +427,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("직원 정보 수정 요청 - employeeId: {}, body: {}", employeeId, requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
                     .uri("/hrm/employee/{employeeId}", employeeId)
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원 정보 수정 성공 - employeeId: {}", employeeId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원 정보 수정", ex);
         } catch (Exception e) {
             log.error("직원 정보 수정 중 예기치 않은 오류 발생", e);
@@ -468,19 +453,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("교육 프로그램 신청 요청 - body: {}", requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
                     .uri("/hrm/employee/request")
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 프로그램 신청 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 프로그램 신청", ex);
         } catch (Exception e) {
             log.error("교육 프로그램 신청 중 예기치 않은 오류 발생", e);
@@ -495,19 +479,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("교육 프로그램 등록 요청 - employeeId: {}, body: {}", employeeId, requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
                     .uri("/hrm/program/{employeeId}", employeeId)
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 프로그램 등록 성공 - employeeId: {}", employeeId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 프로그램 등록", ex);
         } catch (Exception e) {
             log.error("교육 프로그램 등록 중 예기치 않은 오류 발생", e);
@@ -526,7 +509,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 department, position, name, type, sortOrder, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -541,13 +524,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("휴가 신청 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("휴가 신청 목록 조회", ex);
         } catch (Exception e) {
             log.error("휴가 신청 목록 조회 중 예기치 않은 오류 발생", e);
@@ -562,19 +544,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("휴가 신청 요청 - body: {}", requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
                     .uri("/hrm/leave/request")
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("휴가 신청 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("휴가 신청", ex);
         } catch (Exception e) {
             log.error("휴가 신청 중 예기치 않은 오류 발생", e);
@@ -589,18 +570,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("휴가 신청 승인 요청 - requestId: {}", requestId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
                     .uri("/hrm/leave/request/{requestId}/release", requestId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("휴가 신청 승인 성공 - requestId: {}", requestId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("휴가 신청 승인", ex);
         } catch (Exception e) {
             log.error("휴가 신청 승인 중 예기치 않은 오류 발생", e);
@@ -615,18 +595,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("휴가 신청 반려 요청 - requestId: {}", requestId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
                     .uri("/hrm/leave/request/{requestId}/reject", requestId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("휴가 신청 반려 성공 - requestId: {}", requestId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("휴가 신청 반려", ex);
         } catch (Exception e) {
             log.error("휴가 신청 반려 중 예기치 않은 오류 발생", e);
@@ -643,18 +622,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("급여 명세서 상세 조회 요청 - payrollId: {}", payrollId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/payroll/{payrollId}", payrollId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("급여 명세서 상세 조회 성공 - payrollId: {}", payrollId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("급여 명세서 상세 조회", ex);
         } catch (Exception e) {
             log.error("급여 명세서 상세 조회 중 예기치 않은 오류 발생", e);
@@ -671,7 +649,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 year, month, name, department, position, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -687,13 +665,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("급여 명세서 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("급여 명세서 목록 조회", ex);
         } catch (Exception e) {
             log.error("급여 명세서 목록 조회 중 예기치 않은 오류 발생", e);
@@ -708,19 +685,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("급여 지급 완료 처리 요청 - body: {}", requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
                     .uri("/hrm/payroll/complete")
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("급여 지급 완료 처리 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("급여 지급 완료 처리", ex);
         } catch (Exception e) {
             log.error("급여 지급 완료 처리 중 예기치 않은 오류 발생", e);
@@ -735,18 +711,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("모든 직원 당월 급여 생성 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/payroll/generate")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("모든 직원 당월 급여 생성 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("모든 직원 당월 급여 생성", ex);
         } catch (Exception e) {
             log.error("모든 직원 당월 급여 생성 중 예기치 않은 오류 발생", e);
@@ -761,18 +736,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("급여 상태 목록 조회 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/payroll/statuses")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("급여 상태 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("급여 상태 목록 조회", ex);
         } catch (Exception e) {
             log.error("급여 상태 목록 조회 중 예기치 않은 오류 발생", e);
@@ -789,18 +763,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("출퇴근 상태 목록 조회 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/attendance/statuses")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("출퇴근 상태 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("출퇴근 상태 목록 조회", ex);
         } catch (Exception e) {
             log.error("출퇴근 상태 목록 조회 중 예기치 않은 오류 발생", e);
@@ -817,18 +790,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("교육 프로그램 상세 정보 조회 요청 - programId: {}", programId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/trainings/program/{programId}", programId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 프로그램 상세 정보 조회 성공 - programId: {}", programId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 프로그램 상세 정보 조회", ex);
         } catch (Exception e) {
             log.error("교육 프로그램 상세 정보 조회 중 예기치 않은 오류 발생", e);
@@ -845,7 +817,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 name, status, category, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -858,13 +830,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 프로그램 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 프로그램 목록 조회", ex);
         } catch (Exception e) {
             log.error("교육 프로그램 목록 조회 중 예기치 않은 오류 발생", e);
@@ -879,19 +850,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("교육 프로그램 생성 요청 - body: {}", requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
                     .uri("/hrm/trainings/program")
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 프로그램 생성 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 프로그램 생성", ex);
         } catch (Exception e) {
             log.error("교육 프로그램 생성 중 예기치 않은 오류 발생", e);
@@ -906,19 +876,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("교육 프로그램 수정 요청 - programId: {}, body: {}", programId, requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
                     .uri("/hrm/program/{programId}", programId)
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 프로그램 수정 성공 - programId: {}", programId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 프로그램 수정", ex);
         } catch (Exception e) {
             log.error("교육 프로그램 수정 중 예기치 않은 오류 발생", e);
@@ -933,18 +902,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("교육 카테고리 목록 조회 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/trainings/categories")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 카테고리 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 카테고리 목록 조회", ex);
         } catch (Exception e) {
             log.error("교육 카테고리 목록 조회 중 예기치 않은 오류 발생", e);
@@ -967,7 +935,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         final int pageSize = (size != null && size > 0) ? size : 5;
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -976,8 +944,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                             .queryParam("size", pageSize)
                             .build())
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             if (body == null) {
                 log.error("[ERROR][DASHBOARD][HRM] 비즈니스 서버 응답이 null");
@@ -991,7 +958,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             log.info("[INFO][DASHBOARD][HRM] 근태 목록 조회 성공");
             return ResponseEntity.ok(body);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("대시보드 근태 목록 조회", ex);
         } catch (Exception e) {
             log.error("[ERROR][DASHBOARD][HRM] 근태 목록 조회 중 에러 발생", e);
@@ -1014,7 +981,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         final int pageSize = (size != null && size > 0) ? size : 5;
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object body = businessClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -1023,8 +990,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                             .queryParam("size", pageSize)
                             .build())
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             if (body == null) {
                 log.error("[ERROR][DASHBOARD][HRM] 비즈니스 서버 응답이 null");
@@ -1038,7 +1004,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             log.info("[INFO][DASHBOARD][HRM] 휴가 신청 목록 조회 성공");
             return ResponseEntity.ok(body);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("대시보드 휴가 신청 목록 조회", ex);
         } catch (Exception e) {
             log.error("[ERROR][DASHBOARD][HRM] 휴가 신청 목록 조회 중 에러 발생", e);
@@ -1053,18 +1019,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("전체 교육 프로그램 목록 조회 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/trainings/programs")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("전체 교육 프로그램 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("전체 교육 프로그램 목록 조회", ex);
         } catch (Exception e) {
             log.error("전체 교육 프로그램 목록 조회 중 예기치 않은 오류 발생", e);
@@ -1079,18 +1044,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("교육 완료 상태 목록 조회 요청");
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/trainings/completion-statuses")
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 완료 상태 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 완료 상태 목록 조회", ex);
         } catch (Exception e) {
             log.error("교육 완료 상태 목록 조회 중 예기치 않은 오류 발생", e);
@@ -1105,18 +1069,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("직원 교육 이력 조회 요청 - employeeId: {}", employeeId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/trainings/employee/{employeeId}/training-history", employeeId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원 교육 이력 조회 성공 - employeeId: {}", employeeId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원 교육 이력 조회", ex);
         } catch (Exception e) {
             log.error("직원 교육 이력 조회 중 예기치 않은 오류 발생", e);
@@ -1133,7 +1096,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 department, position, name, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -1146,13 +1109,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원 교육 현황 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원 교육 현황 목록 조회", ex);
         } catch (Exception e) {
             log.error("직원 교육 현황 목록 조회 중 예기치 않은 오류 발생", e);
@@ -1169,7 +1131,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 department, position, name, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -1182,13 +1144,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원 교육 현황 통계 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원 교육 현황 통계 조회", ex);
         } catch (Exception e) {
             log.error("직원 교육 현황 통계 조회 중 예기치 않은 오류 발생", e);
@@ -1203,18 +1164,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("직원별 교육 요약 정보 조회 요청 - employeeId: {}", employeeId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/trainings/training/employee/{employeeId}", employeeId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원별 교육 요약 정보 조회 성공 - employeeId: {}", employeeId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원별 교육 요약 정보 조회", ex);
         } catch (Exception e) {
             log.error("직원별 교육 요약 정보 조회 중 예기치 않은 오류 발생", e);
@@ -1231,18 +1191,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("근태 기록 상세 정보 조회 요청 - timerecordId: {}", timerecordId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/time-records/time-record/{timerecordId}", timerecordId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("근태 기록 상세 정보 조회 성공 - timerecordId: {}", timerecordId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("근태 기록 상세 정보 조회", ex);
         } catch (Exception e) {
             log.error("근태 기록 상세 정보 조회 중 예기치 않은 오류 발생", e);
@@ -1257,19 +1216,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("근태 기록 수정 요청 - timerecordId: {}, body: {}", timerecordId, requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
                     .uri("/hrm/time-records/time-record/{timerecordId}", timerecordId)
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("근태 기록 수정 성공 - timerecordId: {}", timerecordId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("근태 기록 수정", ex);
         } catch (Exception e) {
             log.error("근태 기록 수정 중 예기치 않은 오류 발생", e);
@@ -1286,7 +1244,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 department, position, name, date, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -1301,13 +1259,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("근태 기록 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("근태 기록 목록 조회", ex);
         } catch (Exception e) {
             log.error("근태 기록 목록 조회 중 예기치 않은 오류 발생", e);
@@ -1326,7 +1283,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 employeeId, startDate, endDate, status, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -1340,13 +1297,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("출퇴근 기록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("출퇴근 기록 조회", ex);
         } catch (Exception e) {
             log.error("출퇴근 기록 조회 중 예기치 않은 오류 발생", e);
@@ -1361,21 +1317,20 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("출근 처리 요청 - internelUserId: {}", internelUserId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
 
             Object response = businessClient.patch()
                     .uri("/hrm/attendance/check-in")
-                    .bodyValue(requestBody)
+                    .body(requestBody)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("출근 처리 성공 - internelUserId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("출근 처리", ex);
         } catch (Exception e) {
             log.error("출근 처리 중 예기치 않은 오류 발생", e);
@@ -1390,21 +1345,20 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("퇴근 처리 요청 - internelUserId: {}", internelUserId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
 
             Object response = businessClient.patch()
                     .uri("/hrm/attendance/check-out")
-                    .bodyValue(requestBody)
+                    .body(requestBody)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("퇴근 처리 성공 - internelUserId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("퇴근 처리", ex);
         } catch (Exception e) {
             log.error("퇴근 처리 중 예기치 않은 오류 발생", e);
@@ -1419,18 +1373,17 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("InternelUser ID로 출퇴근 기록 목록 조회 요청 - internelUserId: {}", internelUserId);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri("/hrm/employees/{internelUserId}/attendance-records", internelUserId)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("InternelUser ID로 출퇴근 기록 목록 조회 성공 - internelUserId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("InternelUser ID로 출퇴근 기록 목록 조회", ex);
         } catch (Exception e) {
             log.error("InternelUser ID로 출퇴근 기록 목록 조회 중 예기치 않은 오류 발생", e);
@@ -1445,23 +1398,22 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("휴가 신청 요청 - requestBody: {}", requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/hrm/leave/request")  // URL 경로 설정
                             .queryParam("InternelUserId", internelUserId)
                             .build())  // queryParam 오타 수정
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();  // 동기식 호출
+                    .body(Object.class);  // 동기식 호출
 
 
             log.info("휴가 신청 성공 - employeeId: {}", internelUserId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("휴가 신청", ex);
         } catch (Exception e) {
             log.error("휴가 신청 중 예기치 않은 오류 발생", e);
@@ -1478,7 +1430,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                 programName, status, category, page, size);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
@@ -1491,13 +1443,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
                         return builder.build();
                     })
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("교육 프로그램 목록 조회 성공");
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("교육 프로그램 목록 조회", ex);
         } catch (Exception e) {
             log.error("교육 프로그램 목록 조회 중 예기치 않은 오류 발생", e);
@@ -1512,19 +1463,18 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         log.debug("직원에게 교육 프로그램 할당 요청 - employeeId: {}, body: {}", employeeId, requestDto);
 
         try {
-            WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+            RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
                     .uri("/hrm/program/{employeeId}", employeeId)
-                    .bodyValue(requestDto)
+                    .body(requestDto)
                     .retrieve()
-                    .bodyToMono(Object.class)
-                    .block();
+                    .body(Object.class);
 
             log.info("직원에게 교육 프로그램 할당 성공 - employeeId: {}", employeeId);
             return ResponseEntity.ok(response);
 
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             return handleWebClientError("직원 교육 프로그램 할당", ex);
         } catch (Exception e) {
             log.error("직원 교육 프로그램 할당 중 예기치 않은 오류 발생", e);
@@ -1535,12 +1485,12 @@ public class HrmHttpServiceImpl implements HrmHttpService {
     }
 
     /**
-     * WebClient 오류를 처리하고 로깅하는 공통 메서드
+     * RestClient 오류를 처리하고 로깅하는 공통 메서드
      */
-    private ResponseEntity<?> handleWebClientError(String operation, WebClientResponseException ex) {
+    private ResponseEntity<?> handleWebClientError(String operation, RestClientResponseException ex) {
         log.error("{} 실패 - Status: {}, Body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         return ResponseEntity.status(status)
-            .body(ProblemDetailFactory.fromWebClientResponseException(ex, "business"));
+            .body(ProblemDetailFactory.fromRestClientResponseException(ex, "business"));
     }
 }

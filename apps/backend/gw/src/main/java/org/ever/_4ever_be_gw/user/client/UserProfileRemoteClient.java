@@ -6,14 +6,14 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.ever._4ever_be_gw.user.dto.CustomerUserProfileResponse;
 import org.ever._4ever_be_gw.user.dto.InternalUserProfileResponse;
 import org.ever._4ever_be_gw.user.dto.SupplierUserProfileResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 /**
  * 사용자 유형별 프로필 정보를 원격 서비스에서 조회하는 클라이언트.
@@ -29,7 +29,7 @@ public class UserProfileRemoteClient {
 
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     public Optional<String> fetchUserName(String userType, String userId, String accessToken) {
         if (!StringUtils.hasText(userType) || !StringUtils.hasText(userId)) {
@@ -52,14 +52,13 @@ public class UserProfileRemoteClient {
     }
 
     private Optional<String> fetchInternalUserName(String userId, String accessToken) {
-        WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
         try {
             InternalUserProfileResponse response = businessClient.get()
                 .uri(INTERNAL_PROFILE_PATH, userId)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(InternalUserProfileResponse.class)
-                .block(REQUEST_TIMEOUT);
+                .body(InternalUserProfileResponse.class);
 
             if (response == null) {
                 log.warn("[GW][UserProfile] 내부 사용자 이름 조회 실패 - userId: {}, response: {}", userId, response);
@@ -67,7 +66,7 @@ public class UserProfileRemoteClient {
             }
 
             return Optional.ofNullable(response.userName());
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("[GW][UserProfile] 내부 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
             return Optional.empty();
@@ -78,14 +77,13 @@ public class UserProfileRemoteClient {
     }
 
     private Optional<String> fetchCustomerUserName(String userId, String accessToken) {
-        WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+        RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
         try {
             CustomerUserProfileResponse response = businessClient.get()
                 .uri(CUSTOMER_PROFILE_PATH, userId)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(CustomerUserProfileResponse.class)
-                .block(REQUEST_TIMEOUT);
+                .body(CustomerUserProfileResponse.class);
 
             if (response == null) {
                 log.warn("[GW][UserProfile] 고객 사용자 이름 조회 실패 - userId: {}, response: {}", userId, response);
@@ -93,7 +91,7 @@ public class UserProfileRemoteClient {
             }
 
             return Optional.ofNullable(response.userName());
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("[GW][UserProfile] 고객 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
             return Optional.empty();
@@ -104,14 +102,13 @@ public class UserProfileRemoteClient {
     }
 
     private Optional<String> fetchSupplierUserName(String userId, String accessToken) {
-        WebClient scmClient = webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+        RestClient scmClient = restClientProvider.getRestClient(ApiClientKey.SCM_PP);
         try {
             SupplierUserProfileResponse response = scmClient.get()
                 .uri(SUPPLIER_PROFILE_PATH, userId)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(SupplierUserProfileResponse.class)
-                .block(REQUEST_TIMEOUT);
+                .body(SupplierUserProfileResponse.class);
 
             if (response == null) {
                 log.warn("[GW][UserProfile] 공급사 사용자 이름 조회 실패 - userId: {}, response: {}", userId, response);
@@ -119,7 +116,7 @@ public class UserProfileRemoteClient {
             }
 
             return Optional.ofNullable(response.userName());
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("[GW][UserProfile] 공급사 사용자 이름 조회 중 원격 응답 예외 - userId: {}, status: {}, body: {}",
                 userId, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
             return Optional.empty();

@@ -6,15 +6,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.ever._4ever_be_gw.scm.pp.PpHttpService;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
 
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.function.Function;
 @Slf4j
 public class PpHttpServiceImpl implements PpHttpService {
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     @Override
     public ResponseEntity<List<DashboardWorkflowItemDto>> getDashboardQuotationsToProduction(
@@ -49,12 +49,11 @@ public class PpHttpServiceImpl implements PpHttpService {
                     .queryParam("size", pageSize)
                     .build())
                 .retrieve()
-                .toEntity(new ParameterizedTypeReference<List<DashboardWorkflowItemDto>>() {})
-                .block();
+                .toEntity(new ParameterizedTypeReference<List<DashboardWorkflowItemDto>>() {});
             ResponseEntity<List<DashboardWorkflowItemDto>> result = requireBody("생산 전환 견적 목록 조회", response);
             log.info("[INFO][DASHBOARD][PP] 생산 전환 견적 목록 조회 성공");
             return result;
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("대시보드 생산 전환 견적 목록 조회 실패 - Status: {}, Body: {}",
                 ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
@@ -83,12 +82,11 @@ public class PpHttpServiceImpl implements PpHttpService {
                     .queryParam("size", pageSize)
                     .build())
                 .retrieve()
-                .toEntity(new ParameterizedTypeReference<List<DashboardWorkflowItemDto>>() {})
-                .block();
+                .toEntity(new ParameterizedTypeReference<List<DashboardWorkflowItemDto>>() {});
             ResponseEntity<List<DashboardWorkflowItemDto>> result = requireBody("생산 진행 목록 조회", response);
             log.info("[INFO][DASHBOARD][PP] 생산 진행 목록 조회 성공");
             return result;
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("대시보드 생산 진행 목록 조회 실패 - Status: {}, Body: {}",
                 ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
@@ -125,7 +123,7 @@ public class PpHttpServiceImpl implements PpHttpService {
             client -> client.post()
                 .uri(path, uriVariables)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(body)
+                .body(body)
         );
     }
 
@@ -136,7 +134,7 @@ public class PpHttpServiceImpl implements PpHttpService {
             client -> client.post()
                 .uri(uriFunction)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(body)
+                .body(body)
         );
     }
 
@@ -147,21 +145,20 @@ public class PpHttpServiceImpl implements PpHttpService {
             client -> client.patch()
                 .uri(path, uriVariables)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(body)
+                .body(body)
         );
     }
 
     private ResponseEntity<Object> executeObject(
         String operation,
-        Function<WebClient, WebClient.RequestHeadersSpec<?>> requestFunction
+        Function<RestClient, RestClient.RequestHeadersSpec<?>> requestFunction
     ) {
         try {
             ResponseEntity<Object> response = requestFunction.apply(ppClient())
                 .retrieve()
-                .toEntity(Object.class)
-                .block();
+                .toEntity(Object.class);
             return requireBody(operation, response);
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - Status: {}, Body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
@@ -170,8 +167,8 @@ public class PpHttpServiceImpl implements PpHttpService {
         }
     }
 
-    private WebClient ppClient() {
-        return webClientProvider.getWebClient(ApiClientKey.SCM_PP);
+    private RestClient ppClient() {
+        return restClientProvider.getRestClient(ApiClientKey.SCM_PP);
     }
 
     private <T> ResponseEntity<T> requireBody(String operation, ResponseEntity<T> response) {

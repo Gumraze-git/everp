@@ -6,7 +6,7 @@ import org.ever._4ever_be_gw.business.service.SdHttpService;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.dashboard.service.DashboardService;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
@@ -15,7 +15,7 @@ import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowTabDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +26,7 @@ import java.util.Optional;
 public class DashboardServiceImpl implements DashboardService {
 
     private final SdHttpService sdHttpService;          // 영업관리
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     private static final int DEFAULT_SIZE = 5;
     private static final ParameterizedTypeReference<List<DashboardWorkflowItemDto>> WORKFLOW_ITEM_LIST_TYPE =
@@ -394,12 +394,11 @@ public class DashboardServiceImpl implements DashboardService {
     ) {
         try {
             ResponseEntity<List<DashboardWorkflowItemDto>> response =
-                    webClientProvider.getWebClient(apiClientKey)
+                    restClientProvider.getRestClient(apiClientKey)
                             .get()
                             .uri(uriBuilderFunction)
                             .retrieve()
-                            .toEntity(WORKFLOW_ITEM_LIST_TYPE)
-                            .block();
+                            .toEntity(WORKFLOW_ITEM_LIST_TYPE);
 
             if (response == null || response.getBody() == null) {
                 log.error("[ERROR][DASHBOARD] {} 응답이 비어 있음 - path: {}", operation, path);
@@ -407,7 +406,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             return response;
-        } catch (WebClientResponseException ex) {
+        } catch (RestClientResponseException ex) {
             log.error("[ERROR][DASHBOARD] {} 실패 - path: {}, status: {}, body: {}", operation, path, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception e) {
