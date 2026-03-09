@@ -1,10 +1,13 @@
 package org.ever._4ever_be_business.common.exception.handler;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -17,9 +20,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -28,31 +28,21 @@ public class GlobalExceptionHandler {
      * BusinessException 처리
      */
     @ExceptionHandler(BusinessException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleBusinessException(BusinessException e) {
+    protected ResponseEntity<ProblemDetail> handleBusinessException(BusinessException e, HttpServletRequest request) {
         log.error("비즈니스 예외 발생: code={}, message={}, detail={}",
             e.getErrorCode().getCode(), e.getMessage(), e.getDetail(), e);
-
-        ErrorCode errorCode = e.getErrorCode();
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", errorCode.getCode());
-        if (e.getDetail() != null) {
-            errorDetails.put("detail", e.getDetail());
-        }
-
-        ApiResponse<Object> response = ApiResponse.fail(
-            errorCode.getMessage(),
-            errorCode.getHttpStatus(),
-            errorDetails
-        );
-
-        return new ResponseEntity<>(response, errorCode.getHttpStatus());
+        ProblemDetail problemDetail = ProblemDetailFactory.fromBusinessException(e, request);
+        return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(problemDetail);
     }
 
     /**
      * @Valid 검증 실패 (MethodArgumentNotValidException)
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    protected ResponseEntity<ProblemDetail> handleMethodArgumentNotValidException(
+        MethodArgumentNotValidException e,
+        HttpServletRequest request
+    ) {
         log.error("메서드 인자 검증 실패: {}", e.getMessage(), e);
 
         Map<String, String> errors = new HashMap<>();
@@ -62,24 +52,21 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INVALID_INPUT_VALUE.getCode());
-        errorDetails.put("errors", errors);
-
-        ApiResponse<Object> response = ApiResponse.fail(
+        ProblemDetail problemDetail = ProblemDetailFactory.badRequest(
             ErrorCode.INVALID_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+            "요청 본문 형식이 올바르지 않습니다.",
+            errors,
+            request,
+            ErrorCode.INVALID_INPUT_VALUE.getCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(problemDetail);
     }
 
     /**
      * @ModelAttribute 검증 실패 (BindException)
      */
     @ExceptionHandler(BindException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleBindException(BindException e) {
+    protected ResponseEntity<ProblemDetail> handleBindException(BindException e, HttpServletRequest request) {
         log.error("바인딩 예외 발생: {}", e.getMessage(), e);
 
         Map<String, String> errors = new HashMap<>();
@@ -89,24 +76,24 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INVALID_INPUT_VALUE.getCode());
-        errorDetails.put("errors", errors);
-
-        ApiResponse<Object> response = ApiResponse.fail(
+        ProblemDetail problemDetail = ProblemDetailFactory.badRequest(
             ErrorCode.INVALID_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+            ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+            errors,
+            request,
+            ErrorCode.INVALID_INPUT_VALUE.getCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(problemDetail);
     }
 
     /**
      * 타입 불일치 (MethodArgumentTypeMismatchException)
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+    protected ResponseEntity<ProblemDetail> handleMethodArgumentTypeMismatchException(
+        MethodArgumentTypeMismatchException e,
+        HttpServletRequest request
+    ) {
         log.error("메서드 인자 타입 불일치: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -115,20 +102,24 @@ public class GlobalExceptionHandler {
         errorDetails.put("rejectedValue", e.getValue());
         errorDetails.put("requiredType", e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown");
 
-        ApiResponse<Object> response = ApiResponse.fail(
+        ProblemDetail problemDetail = ProblemDetailFactory.badRequest(
             ErrorCode.INVALID_TYPE_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+            ErrorCode.INVALID_TYPE_VALUE.getMessage(),
+            errorDetails,
+            request,
+            ErrorCode.INVALID_TYPE_VALUE.getCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(problemDetail);
     }
 
     /**
      * 필수 파라미터 누락 (MissingServletRequestParameterException)
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+    protected ResponseEntity<ProblemDetail> handleMissingServletRequestParameterException(
+        MissingServletRequestParameterException e,
+        HttpServletRequest request
+    ) {
         log.error("필수 요청 파라미터 누락: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -136,40 +127,48 @@ public class GlobalExceptionHandler {
         errorDetails.put("parameter", e.getParameterName());
         errorDetails.put("type", e.getParameterType());
 
-        ApiResponse<Object> response = ApiResponse.fail(
+        ProblemDetail problemDetail = ProblemDetailFactory.badRequest(
             ErrorCode.MISSING_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+            ErrorCode.MISSING_INPUT_VALUE.getMessage(),
+            errorDetails,
+            request,
+            ErrorCode.MISSING_INPUT_VALUE.getCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(problemDetail);
     }
 
     /**
      * JSON 파싱 오류 (HttpMessageNotReadableException)
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+    protected ResponseEntity<ProblemDetail> handleHttpMessageNotReadableException(
+        HttpMessageNotReadableException e,
+        HttpServletRequest request
+    ) {
         log.error("HTTP 메시지 읽기 실패: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
         errorDetails.put("code", ErrorCode.INVALID_INPUT_VALUE.getCode());
         errorDetails.put("detail", "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요.");
 
-        ApiResponse<Object> response = ApiResponse.fail(
+        ProblemDetail problemDetail = ProblemDetailFactory.badRequest(
             ErrorCode.INVALID_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+            "요청 본문 형식이 올바르지 않습니다.",
+            errorDetails,
+            request,
+            ErrorCode.INVALID_INPUT_VALUE.getCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(problemDetail);
     }
 
     /**
      * 지원하지 않는 HTTP 메서드 (HttpRequestMethodNotSupportedException)
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+    protected ResponseEntity<ProblemDetail> handleHttpRequestMethodNotSupportedException(
+        HttpRequestMethodNotSupportedException e,
+        HttpServletRequest request
+    ) {
         log.error("지원하지 않는 HTTP 메서드: {}", e.getMessage(), e);
 
         Map<String, Object> errorDetails = new HashMap<>();
@@ -177,53 +176,48 @@ public class GlobalExceptionHandler {
         errorDetails.put("method", e.getMethod());
         errorDetails.put("supportedMethods", e.getSupportedHttpMethods());
 
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.METHOD_NOT_ALLOWED.getMessage(),
+        ProblemDetail problemDetail = ProblemDetailFactory.of(
             HttpStatus.METHOD_NOT_ALLOWED,
-            errorDetails
+            ErrorCode.METHOD_NOT_ALLOWED.getMessage(),
+            ErrorCode.METHOD_NOT_ALLOWED.getMessage(),
+            errorDetails,
+            request,
+            ErrorCode.METHOD_NOT_ALLOWED.getCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(problemDetail);
     }
 
     /**
      * 404 Not Found
      */
     @ExceptionHandler(NoHandlerFoundException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(NoHandlerFoundException e) {
+    protected ResponseEntity<ProblemDetail> handleNoHandlerFoundException(
+        NoHandlerFoundException e,
+        HttpServletRequest request
+    ) {
         log.error("핸들러를 찾을 수 없음: {}", e.getMessage(), e);
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", 404);
-        errorDetails.put("url", e.getRequestURL());
-        errorDetails.put("method", e.getHttpMethod());
-
-        ApiResponse<Object> response = ApiResponse.fail(
-            "요청한 리소스를 찾을 수 없습니다.",
-            HttpStatus.NOT_FOUND,
-            errorDetails
+        Map<String, Object> errors = new HashMap<>();
+        errors.put("url", e.getRequestURL());
+        errors.put("method", e.getHttpMethod());
+        ProblemDetail problemDetail = ProblemDetailFactory.notFound(
+            String.format("%s %s", e.getHttpMethod(), e.getRequestURL()),
+            errors,
+            request
         );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
 
     /**
      * 모든 예외 처리 (Exception)
      */
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ApiResponse<Object>> handleException(Exception e) {
+    protected ResponseEntity<ProblemDetail> handleException(Exception e, HttpServletRequest request) {
         log.error("예상치 못한 예외 발생: {}", e.getMessage(), e);
-
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INTERNAL_SERVER_ERROR.getCode());
-        errorDetails.put("detail", e.getMessage());
-
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            errorDetails
+        ProblemDetail problemDetail = ProblemDetailFactory.serverError(
+            request,
+            ErrorCode.INTERNAL_SERVER_ERROR.getCode()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
 }

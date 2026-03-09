@@ -4,14 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_scm.common.exception.BusinessException;
 import org.ever._4ever_be_scm.common.exception.ErrorCode;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.iv.entity.SupplierCompany;
 import org.ever._4ever_be_scm.scm.iv.entity.SupplierUser;
 import org.ever._4ever_be_scm.scm.iv.repository.SupplierCompanyRepository;
 import org.ever._4ever_be_scm.scm.iv.repository.SupplierUserRepository;
 import org.ever._4ever_be_scm.scm.mm.dto.SupplierProfileResponseDto;
 import org.ever._4ever_be_scm.scm.mm.dto.UserNameResponseDto;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,15 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/scm-pp/mm/users")
+@RequestMapping("/scm-pp/mm/supplier-users")
 @RequiredArgsConstructor
 public class SupplierUserController {
 
     private final SupplierUserRepository supplierUserRepository;
     private final SupplierCompanyRepository supplierCompanyRepository;
 
-    @GetMapping("/supplier/{userId}")
-    public ApiResponse<UserNameResponseDto> getSupplierUserName(@PathVariable String userId) {
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserNameResponseDto> getSupplierUserName(@PathVariable String userId) {
         log.info("공급사 담당자 이름 조회 요청 - userId: {}", userId);
 
         SupplierUser supplierUser = supplierUserRepository.findByUserId(userId)
@@ -36,11 +35,11 @@ public class SupplierUserController {
         UserNameResponseDto response = new UserNameResponseDto(supplierUser.getUserId(), supplierUser.getSupplierUserName());
         log.info("공급사 담당자 이름 조회 성공 - userId: {}, userName: {}", response.getUserId(), response.getUserName());
 
-        return ApiResponse.success(response, "공급사 담당자 이름을 조회했습니다.", HttpStatus.OK);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/supplier/{userId}/profile")
-    public ApiResponse<SupplierProfileResponseDto> getSupplierProfile(@PathVariable String userId) {
+    @GetMapping("/{userId}/profile")
+    public ResponseEntity<SupplierProfileResponseDto> getSupplierProfile(@PathVariable String userId) {
         log.info("공급사 프로필 조회 요청 - userId: {}", userId);
 
         // SupplierUser 조회
@@ -65,6 +64,6 @@ public class SupplierUserController {
 
         log.info("공급사 프로필 조회 성공 - userId: {}, companyName: {}", userId, supplierCompany.getCompanyName());
 
-        return ApiResponse.success(response, "공급사 프로필을 조회했습니다.", HttpStatus.OK);
+        return ResponseEntity.ok(response);
     }
 }

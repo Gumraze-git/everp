@@ -2,7 +2,8 @@ package org.ever._4ever_be_scm.scm.iv.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
+import org.ever._4ever_be_scm.common.exception.BusinessException;
+import org.ever._4ever_be_scm.common.exception.ErrorCode;
 import org.ever._4ever_be_scm.scm.iv.dto.PagedResponseDto;
 import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderDetailDto;
 import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderDto;
@@ -10,7 +11,6 @@ import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderStatusChangeRequestDto;
 import org.ever._4ever_be_scm.scm.iv.service.SalesOrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -33,91 +33,49 @@ public class SalesOrderController {
      * @param size 페이지 크기
      * @return 생산중 목록
      */
-    @GetMapping("/sales-orders/production")
+    @GetMapping("/sales-orders")
     @io.swagger.v3.oas.annotations.Operation(
-            summary = "생산중 목록 조회"
+            summary = "판매 주문 목록 조회"
     )
-    public ResponseEntity<ApiResponse<PagedResponseDto<SalesOrderDto>>> getProductionSalesOrders(
+    public ResponseEntity<PagedResponseDto<SalesOrderDto>> getSalesOrders(
+            @RequestParam String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
-        // 서비스 호출 - IN_PRODUCTION 상태만 조회
-        Page<SalesOrderDto> salesOrdersPage = salesOrderService.getProductionSalesOrders(PageRequest.of(page, size));
+
+        Page<SalesOrderDto> salesOrdersPage = switch (status) {
+            case "IN_PRODUCTION" -> salesOrderService.getProductionSalesOrders(PageRequest.of(page, size));
+            case "READY_FOR_SHIPMENT" -> salesOrderService.getReadyToShipSalesOrders(PageRequest.of(page, size));
+            default -> throw new BusinessException(
+                    ErrorCode.INVALID_STATUS,
+                    "지원하지 않는 sales-order status 입니다: " + status
+            );
+        };
         PagedResponseDto<SalesOrderDto> response = PagedResponseDto.from(salesOrdersPage);
-        
-        return ResponseEntity.ok(ApiResponse.success(response, "생산중 주문 목록을 조회했습니다.", HttpStatus.OK));
-    }
-    
-    /**
-     * 출고 준비완료 목록 조회 API
-     * 
-     * @param page 페이지 번호 (0부터 시작)
-     * @param size 페이지 크기
-     * @return 출고 준비완료 목록
-     */
-    @GetMapping("/sales-orders/ready-to-ship")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "출고 준비완료 목록 조회"
-    )
-    public ResponseEntity<ApiResponse<PagedResponseDto<SalesOrderDto>>> getReadyToShipSalesOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        
-        // 서비스 호출 - READY_FOR_SHIPMENT 상태만 조회
-        Page<SalesOrderDto> salesOrdersPage = salesOrderService.getReadyToShipSalesOrders(PageRequest.of(page, size));
-        PagedResponseDto<SalesOrderDto> response = PagedResponseDto.from(salesOrdersPage);
-        
-        return ResponseEntity.ok(ApiResponse.success(response, "출고 준비완료 주문 목록을 조회했습니다.", HttpStatus.OK));
-    }
-    
-    /**
-     * 출고 준비 완료 상세 조회 API
-     * 
-     * @param salesOrderId 판매 주문 ID
-     * @return 출고 준비 완료 상세 정보
-     */
-    @GetMapping("/sales-orders/ready-to-ship/{salesOrderId}")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "출고 준비완료 상세 조회"
-    )
-    public ResponseEntity<ApiResponse<SalesOrderDetailDto>> getReadyToShipOrder(@PathVariable String salesOrderId) {
-        // 서비스 호출
-        SalesOrderDetailDto salesOrderDetail = salesOrderService.getReadyToShipOrderDetail(salesOrderId);
-        
-        return ResponseEntity.ok(ApiResponse.success(salesOrderDetail, "출고 준비 완료 주문 상세를 조회했습니다.", HttpStatus.OK));
+
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * 생산중 상세 조회 API
-     *
-     * @param salesOrderId 판매 주문 ID
-     * @return 생산중 상세 정보
-     */
-    @GetMapping("/sales-orders/production/{salesOrderId}")
+    @GetMapping("/sales-orders/{salesOrderId}")
     @io.swagger.v3.oas.annotations.Operation(
-            summary = "생산중 상세 조회"
+            summary = "판매 주문 상세 조회"
     )
-    public ResponseEntity<ApiResponse<SalesOrderDetailDto>> getProductionOrder(@PathVariable String salesOrderId) {
-        // 서비스 호출
-        SalesOrderDetailDto salesOrderDetail = salesOrderService.getProductionDetail(salesOrderId);
-
-        return ResponseEntity.ok(ApiResponse.success(salesOrderDetail, "출고 준비 완료 주문 상세를 조회했습니다.", HttpStatus.OK));
+    public ResponseEntity<SalesOrderDetailDto> getSalesOrder(@PathVariable String salesOrderId) {
+        return ResponseEntity.ok(salesOrderService.getSalesOrderDetail(salesOrderId));
     }
 
     /**
      * 출고 준비 완료를 배송중 상태로 변경
      */
-    @PutMapping("/sales-orders/{salesOrderId}/status")
+    @PostMapping("/sales-orders/{salesOrderId}/shipments")
     @io.swagger.v3.oas.annotations.Operation(
             summary = "출고 배송 상태 변경",
             description = "출고 준비 완료 상태를 배송중 상태로 변경합니다."
     )
-    public DeferredResult<ResponseEntity<ApiResponse<Void>>> changeSalesOrderStatus(
+    public DeferredResult<ResponseEntity<?>> createShipment(
             @PathVariable String salesOrderId,
             @RequestBody SalesOrderStatusChangeRequestDto requestDto,
             @RequestParam String requesterId
     ) {
-
-        return salesOrderService.changeSalesOrderStatusAsync(salesOrderId, requestDto,requesterId);
+        return salesOrderService.createShipmentAsync(salesOrderId, requestDto, requesterId);
     }
 }

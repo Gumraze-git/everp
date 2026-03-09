@@ -1,14 +1,16 @@
 package org.ever._4ever_be_auth.common.exception.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_auth.common.exception.BusinessException;
 import org.ever._4ever_be_auth.common.exception.ErrorCode;
 import org.ever._4ever_be_auth.common.exception.view.ErrorMessageResolver;
 import org.ever._4ever_be_auth.common.exception.view.ErrorViewModel;
-import org.ever._4ever_be_auth.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -23,9 +25,6 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -33,42 +32,28 @@ public class GlobalExceptionHandler {
 
     private final ErrorMessageResolver errorMessageResolver;
 
-    /**
-     * BusinessException 처리
-     */
     @ExceptionHandler(BusinessException.class)
     protected Object handleBusinessException(BusinessException e, HttpServletRequest request) {
         log.error("비즈니스 예외 발생: code={}, message={}, detail={}",
             e.getErrorCode().getCode(), e.getMessage(), e.getDetail(), e);
 
-        ErrorCode errorCode = e.getErrorCode();
-
         if (isHtmlRequest(request)) {
-            return buildErrorView(errorCode, e.getDetail());
+            return buildErrorView(e.getErrorCode(), e.getDetail());
         }
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", errorCode.getCode());
-        if (e.getDetail() != null) {
-            errorDetails.put("detail", e.getDetail());
-        }
-
-        ApiResponse<Object> response = ApiResponse.fail(
-            errorCode.getMessage(),
-            errorCode.getHttpStatus(),
-            errorDetails
-        );
-
-        return new ResponseEntity<>(response, errorCode.getHttpStatus());
+        return ResponseEntity
+            .status(e.getErrorCode().getHttpStatus())
+            .body(ProblemDetailFactory.fromBusinessException(e, request));
     }
 
-    /**
-     * @Valid 검증 실패 (MethodArgumentNotValidException)
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    protected Object handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {
         log.error("메서드 인자 검증 실패: {}", e.getMessage(), e);
 
+        if (isHtmlRequest(request)) {
+            return buildErrorView(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+        }
+
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -76,26 +61,25 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INVALID_INPUT_VALUE.getCode());
-        errorDetails.put("errors", errors);
-
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INVALID_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+        return ResponseEntity.badRequest().body(
+            ProblemDetailFactory.badRequest(
+                ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+                ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+                errors,
+                request,
+                ErrorCode.INVALID_INPUT_VALUE.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * @ModelAttribute 검증 실패 (BindException)
-     */
     @ExceptionHandler(BindException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleBindException(BindException e) {
+    protected Object handleBindException(BindException e, HttpServletRequest request) {
         log.error("바인딩 예외 발생: {}", e.getMessage(), e);
 
+        if (isHtmlRequest(request)) {
+            return buildErrorView(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+        }
+
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -103,127 +87,136 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INVALID_INPUT_VALUE.getCode());
-        errorDetails.put("errors", errors);
-
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INVALID_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+        return ResponseEntity.badRequest().body(
+            ProblemDetailFactory.badRequest(
+                ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+                ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+                errors,
+                request,
+                ErrorCode.INVALID_INPUT_VALUE.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * 타입 불일치 (MethodArgumentTypeMismatchException)
-     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+    protected Object handleMethodArgumentTypeMismatchException(
+        MethodArgumentTypeMismatchException e,
+        HttpServletRequest request
+    ) {
         log.error("메서드 인자 타입 불일치: {}", e.getMessage(), e);
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INVALID_TYPE_VALUE.getCode());
-        errorDetails.put("field", e.getName());
-        errorDetails.put("rejectedValue", e.getValue());
-        errorDetails.put("requiredType", e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown");
+        if (isHtmlRequest(request)) {
+            return buildErrorView(ErrorCode.INVALID_TYPE_VALUE, e.getMessage());
+        }
 
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INVALID_TYPE_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+        Map<String, Object> errors = new HashMap<>();
+        errors.put("field", e.getName());
+        errors.put("rejectedValue", e.getValue());
+        errors.put("requiredType", e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown");
+
+        return ResponseEntity.badRequest().body(
+            ProblemDetailFactory.badRequest(
+                ErrorCode.INVALID_TYPE_VALUE.getMessage(),
+                ErrorCode.INVALID_TYPE_VALUE.getMessage(),
+                errors,
+                request,
+                ErrorCode.INVALID_TYPE_VALUE.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * 필수 파라미터 누락 (MissingServletRequestParameterException)
-     */
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+    protected Object handleMissingServletRequestParameterException(
+        MissingServletRequestParameterException e,
+        HttpServletRequest request
+    ) {
         log.error("필수 요청 파라미터 누락: {}", e.getMessage(), e);
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.MISSING_INPUT_VALUE.getCode());
-        errorDetails.put("parameter", e.getParameterName());
-        errorDetails.put("type", e.getParameterType());
+        if (isHtmlRequest(request)) {
+            return buildErrorView(ErrorCode.MISSING_INPUT_VALUE, e.getMessage());
+        }
 
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.MISSING_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+        Map<String, Object> errors = new HashMap<>();
+        errors.put("parameter", e.getParameterName());
+        errors.put("type", e.getParameterType());
+
+        return ResponseEntity.badRequest().body(
+            ProblemDetailFactory.badRequest(
+                ErrorCode.MISSING_INPUT_VALUE.getMessage(),
+                ErrorCode.MISSING_INPUT_VALUE.getMessage(),
+                errors,
+                request,
+                ErrorCode.MISSING_INPUT_VALUE.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * JSON 파싱 오류 (HttpMessageNotReadableException)
-     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+    protected Object handleHttpMessageNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
         log.error("HTTP 메시지 읽기 실패: {}", e.getMessage(), e);
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INVALID_INPUT_VALUE.getCode());
-        errorDetails.put("detail", "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요.");
+        if (isHtmlRequest(request)) {
+            return buildErrorView(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+        }
 
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INVALID_INPUT_VALUE.getMessage(),
-            HttpStatus.BAD_REQUEST,
-            errorDetails
+        return ResponseEntity.badRequest().body(
+            ProblemDetailFactory.badRequest(
+                ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+                "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요.",
+                null,
+                request,
+                ErrorCode.INVALID_INPUT_VALUE.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * 지원하지 않는 HTTP 메서드 (HttpRequestMethodNotSupportedException)
-     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    protected ResponseEntity<ApiResponse<Object>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+    protected Object handleHttpRequestMethodNotSupportedException(
+        HttpRequestMethodNotSupportedException e,
+        HttpServletRequest request
+    ) {
         log.error("지원하지 않는 HTTP 메서드: {}", e.getMessage(), e);
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.METHOD_NOT_ALLOWED.getCode());
-        errorDetails.put("method", e.getMethod());
-        errorDetails.put("supportedMethods", e.getSupportedHttpMethods());
+        if (isHtmlRequest(request)) {
+            return buildErrorView(ErrorCode.METHOD_NOT_ALLOWED, e.getMessage());
+        }
 
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.METHOD_NOT_ALLOWED.getMessage(),
-            HttpStatus.METHOD_NOT_ALLOWED,
-            errorDetails
+        Map<String, Object> errors = new HashMap<>();
+        errors.put("method", e.getMethod());
+        errors.put("supportedMethods", e.getSupportedHttpMethods());
+
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(
+            ProblemDetailFactory.of(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                ErrorCode.METHOD_NOT_ALLOWED.getMessage(),
+                ErrorCode.METHOD_NOT_ALLOWED.getMessage(),
+                errors,
+                request,
+                ErrorCode.METHOD_NOT_ALLOWED.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
     }
 
-    /**
-     * 404 Not Found
-     */
     @ExceptionHandler(NoHandlerFoundException.class)
     protected Object handleNoHandlerFoundException(NoHandlerFoundException e, HttpServletRequest request) {
         log.error("핸들러를 찾을 수 없음: {}", e.getMessage(), e);
 
         if (isHtmlRequest(request)) {
-            String detail = String.format("%s %s", e.getHttpMethod(), e.getRequestURL());
-            return buildErrorView(ErrorCode.RESOURCE_NOT_FOUND, detail);
+            return buildErrorView(ErrorCode.RESOURCE_NOT_FOUND, String.format("%s %s", e.getHttpMethod(), e.getRequestURL()));
         }
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", 404);
-        errorDetails.put("url", e.getRequestURL());
-        errorDetails.put("method", e.getHttpMethod());
+        Map<String, Object> errors = new HashMap<>();
+        errors.put("url", e.getRequestURL());
+        errors.put("method", e.getHttpMethod());
 
-        ApiResponse<Object> response = ApiResponse.fail(
-            "요청한 리소스를 찾을 수 없습니다.",
-            HttpStatus.NOT_FOUND,
-            errorDetails
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ProblemDetailFactory.notFound(
+                "요청한 리소스를 찾을 수 없습니다.",
+                errors,
+                request,
+                ErrorCode.RESOURCE_NOT_FOUND.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
@@ -234,22 +227,16 @@ public class GlobalExceptionHandler {
             return buildErrorView(ErrorCode.RESOURCE_NOT_FOUND, e.getResourcePath());
         }
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.RESOURCE_NOT_FOUND.getCode());
-        errorDetails.put("resource", e.getResourcePath());
-
-        ApiResponse<Object> response = ApiResponse.fail(
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ProblemDetailFactory.notFound(
                 "요청한 리소스를 찾을 수 없습니다.",
-                HttpStatus.NOT_FOUND,
-                errorDetails
+                Map.of("resource", e.getResourcePath()),
+                request,
+                ErrorCode.RESOURCE_NOT_FOUND.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
-    /**
-     * 모든 예외 처리 (Exception)
-     */
     @ExceptionHandler(Exception.class)
     protected Object handleException(Exception e, HttpServletRequest request) {
         log.error("예상치 못한 예외 발생: {}", e.getMessage(), e);
@@ -258,17 +245,13 @@ public class GlobalExceptionHandler {
             return buildErrorView(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("code", ErrorCode.INTERNAL_SERVER_ERROR.getCode());
-        errorDetails.put("detail", e.getMessage());
-
-        ApiResponse<Object> response = ApiResponse.fail(
-            ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            errorDetails
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            ProblemDetailFactory.serverError(
+                "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+                request,
+                ErrorCode.INTERNAL_SERVER_ERROR.getCode()
+            )
         );
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private boolean isHtmlRequest(HttpServletRequest request) {
@@ -285,7 +268,7 @@ public class GlobalExceptionHandler {
             }
         }
         String requestedWith = request.getHeader("X-Requested-With");
-        return accept == null && (!"XMLHttpRequest".equals(requestedWith));
+        return accept == null && !"XMLHttpRequest".equals(requestedWith);
     }
 
     private ModelAndView buildErrorView(ErrorCode errorCode, String detail) {

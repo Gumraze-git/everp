@@ -2,7 +2,6 @@ package org.ever._4ever_be_scm.scm.pp.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.iv.dto.PagedResponseDto;
 import org.ever._4ever_be_scm.scm.pp.dto.BomDetailResponseDto;
 import org.ever._4ever_be_scm.scm.pp.dto.BomListResponseDto;
@@ -26,32 +25,32 @@ public class BomController {
     private final BomService bomService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createBom(@RequestBody BomCreateRequestDto requestDto) {
+    public ResponseEntity<Void> createBom(@RequestBody BomCreateRequestDto requestDto) {
         bomService.createBom(requestDto);
-        return ResponseEntity.ok(ApiResponse.success(null, "BOM 생성 성공", HttpStatus.OK));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PagedResponseDto<BomListResponseDto>>> getBomList(
+    public ResponseEntity<PagedResponseDto<BomListResponseDto>> getBomList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Page<BomListResponseDto> bomList = bomService.getBomList(PageRequest.of(page, size));
         PagedResponseDto<BomListResponseDto> response = PagedResponseDto.from(bomList);
 
-        return ResponseEntity.ok(ApiResponse.success(response, "BOM 목록 조회 성공", HttpStatus.OK));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{bomId}")
-    public ResponseEntity<ApiResponse<BomDetailResponseDto>> getBomDetail(@PathVariable String bomId) {
+    public ResponseEntity<BomDetailResponseDto> getBomDetail(@PathVariable String bomId) {
         BomDetailResponseDto detail = bomService.getBomDetail(bomId);
-        return ResponseEntity.ok(ApiResponse.success(detail, "BOM 상세 조회 성공", HttpStatus.OK));
+        return ResponseEntity.ok(detail);
     }
 
     @PatchMapping("/{bomId}")
-    public ResponseEntity<ApiResponse<Void>> updateBom(@PathVariable String bomId, @RequestBody BomCreateRequestDto requestDto) {
+    public ResponseEntity<Void> updateBom(@PathVariable String bomId, @RequestBody BomCreateRequestDto requestDto) {
         bomService.updateBom(bomId, requestDto);
-        return ResponseEntity.ok(ApiResponse.success(null, "BOM 수정 성공", HttpStatus.OK));
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -62,11 +61,11 @@ public class BomController {
             summary = "Product ID-이름 맵 조회",
             description = "Product의 ID를 key, productName을 value로 하는 맵 형태로 전체 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<ProductMapResponseDto>>> getProductMap() {
+    public ResponseEntity<List<ProductMapResponseDto>> getProductMap() {
 
         List<ProductMapResponseDto> productMapList = bomService.getProductMap();
 
-        return ResponseEntity.ok(ApiResponse.success(productMapList, "Product 맵 조회 성공", HttpStatus.OK));
+        return ResponseEntity.ok(productMapList);
     }
 
     /**
@@ -77,13 +76,13 @@ public class BomController {
             summary = "Product 상세 정보 조회",
             description = "Product의 상세 정보(id, 이름, 타입, 제품코드, 단위, 단가, 공급업체명)를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<ProductDetailResponseDto>> getProductDetail(
+    public ResponseEntity<ProductDetailResponseDto> getProductDetail(
             @io.swagger.v3.oas.annotations.Parameter(description = "Product ID")
             @PathVariable String productId) {
 
         ProductDetailResponseDto detail = bomService.getProductDetail(productId);
 
-        return ResponseEntity.ok(ApiResponse.success(detail, "Product 상세 조회 성공", HttpStatus.OK));
+        return ResponseEntity.ok(detail);
     }
 
     /**
@@ -94,11 +93,11 @@ public class BomController {
             summary = "Operation ID-이름 맵 조회",
             description = "Operation의 ID를 key, opName을 value로 하는 맵 형태로 전체 목록을 조회합니다."
     )
-    public ResponseEntity<ApiResponse<List<ProductMapResponseDto>>> getOperationMap() {
+    public ResponseEntity<List<ProductMapResponseDto>> getOperationMap() {
 
         List<ProductMapResponseDto> operationMapList = bomService.getOperationMap();
 
-        return ResponseEntity.ok(ApiResponse.success(operationMapList, "Operation 맵 조회 성공", HttpStatus.OK));
+        return ResponseEntity.ok(operationMapList);
     }
 
 }

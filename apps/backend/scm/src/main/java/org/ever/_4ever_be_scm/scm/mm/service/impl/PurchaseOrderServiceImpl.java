@@ -9,7 +9,8 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
+import org.ever._4ever_be_scm.common.exception.ErrorCode;
+import org.ever._4ever_be_scm.common.exception.handler.ProblemDetailFactory;
 import org.ever._4ever_be_scm.infrastructure.kafka.config.KafkaTopicConfig;
 import org.ever._4ever_be_scm.scm.iv.entity.Product;
 import org.ever._4ever_be_scm.scm.iv.entity.ProductStock;
@@ -355,17 +356,24 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     @Transactional
-    public DeferredResult<ResponseEntity<ApiResponse<Void>>> approvePurchaseOrderAsync(String purchaseOrderId, String requesterId) {
+    public DeferredResult<ResponseEntity<?>> approvePurchaseOrderAsync(String purchaseOrderId, String requesterId) {
         log.info("구매주문 승인 시작 - purchaseOrderId: {}, requesterId: {}", purchaseOrderId, requesterId);
 
         // DeferredResult 생성 (타임아웃 30초)
-        DeferredResult<ResponseEntity<ApiResponse<Void>>> deferredResult = new DeferredResult<>(30000L);
+        DeferredResult<ResponseEntity<?>> deferredResult = new DeferredResult<>(30000L);
 
         // 타임아웃 처리
         deferredResult.onTimeout(() -> {
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.REQUEST_TIMEOUT)
-                    .body(ApiResponse.fail("처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
+                    .body(ProblemDetailFactory.of(
+                        HttpStatus.REQUEST_TIMEOUT,
+                        "처리 시간이 초과되었습니다.",
+                        "처리 시간이 초과되었습니다.",
+                        null,
+                        null,
+                        ErrorCode.INTERNAL_SERVER_ERROR.getCode()
+                    )));
         });
 
         try {
@@ -478,7 +486,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             log.error("구매주문 승인 실패 - purchaseOrderId: {}, error: {}", purchaseOrderId, e.getMessage(), e);
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("구매주문 승인 실패: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR)));
+                    .body(ProblemDetailFactory.of(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "구매주문 승인 실패",
+                        "구매주문 승인 실패: " + e.getMessage(),
+                        null,
+                        null,
+                        ErrorCode.INTERNAL_SERVER_ERROR.getCode()
+                    )));
         }
 
         return deferredResult;

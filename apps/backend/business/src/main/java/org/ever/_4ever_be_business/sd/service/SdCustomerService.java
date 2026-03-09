@@ -6,7 +6,6 @@ import org.ever._4ever_be_business.sd.dto.response.CustomerDetailDto;
 import org.ever._4ever_be_business.sd.dto.response.CustomerListResponseDto;
 import org.ever._4ever_be_business.sd.vo.CustomerDetailVo;
 import org.ever._4ever_be_business.sd.vo.CustomerSearchConditionVo;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever.event.CreateAuthUserResultEvent;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +36,7 @@ public interface SdCustomerService {
      */
     void createCustomer(
         CreateCustomerRequestDto dto,
-        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+        DeferredResult<ResponseEntity<?>> deferredResult
     );
 
     /**

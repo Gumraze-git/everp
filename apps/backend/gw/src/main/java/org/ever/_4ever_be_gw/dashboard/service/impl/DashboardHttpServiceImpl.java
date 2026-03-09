@@ -2,16 +2,15 @@ package org.ever._4ever_be_gw.dashboard.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_gw.common.response.ApiResponse;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
 import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.common.exception.BusinessException;
+import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.dashboard.dto.response.DashboardStatisticsResponseDto;
 import org.ever._4ever_be_gw.dashboard.service.DashboardHttpService;
 import org.ever._4ever_be_gw.dashboard.service.DashboardService;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowResponseDto;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,28 +25,33 @@ public class DashboardHttpServiceImpl implements DashboardHttpService {
     private final DashboardService dashboardService;
 
     @Override
-    public ResponseEntity<ApiResponse<DashboardStatisticsResponseDto>> getDashboardStatistics() {
+    public ResponseEntity<DashboardStatisticsResponseDto> getDashboardStatistics() {
         try {
             WebClient businessClient = webClientProvider.getWebClient(ApiClientKey.BUSINESS);
 
-            ApiResponse<?> response = businessClient.get()
-                    .uri("/dashboard/statistics")
+            ResponseEntity<DashboardStatisticsResponseDto> response = businessClient.get()
+                    .uri("/dashboard/metrics")
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<?>>() {})
+                    .toEntity(DashboardStatisticsResponseDto.class)
                     .block();
 
+            if (response == null || response.getBody() == null) {
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "종합 대시보드 통계 응답이 비어 있습니다.");
+            }
             log.info("종합 대시보드 통계 조회 성공");
-            @SuppressWarnings("unchecked")
-            ApiResponse<DashboardStatisticsResponseDto> result = (ApiResponse<DashboardStatisticsResponseDto>) response;
-            return ResponseEntity.ok(result);
+            return response;
 
         } catch (WebClientResponseException ex) {
-            return handleWebClientError("종합 대시보드 통계 조회", ex);
+            log.error("종합 대시보드 통계 조회 실패 - Status: {}, Body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        } catch (Exception e) {
+            log.error("종합 대시보드 통계 조회 중 예기치 않은 오류 발생", e);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "종합 대시보드 통계 조회 중 오류가 발생했습니다.", e);
         }
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getWorkflows(
+    public ResponseEntity<DashboardWorkflowResponseDto> getWorkflows(
             EverUserPrincipal principal,
             String userType,
             String userRole
@@ -56,21 +60,6 @@ public class DashboardHttpServiceImpl implements DashboardHttpService {
 
         DashboardWorkflowResponseDto workflowResponse = dashboardService.getDashboardWorkflow(principal, null);
 
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        workflowResponse,
-                        "대시보드 워크플로우 조회에 성공했습니다.",
-                        HttpStatus.OK
-                )
-        );
-    }
-
-    private <T> ResponseEntity<ApiResponse<T>> handleWebClientError(String operation, WebClientResponseException ex) {
-        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
-        String errorBody = ex.getResponseBodyAsString();
-        log.error("{} 실패 - Status: {}, Body: {}", operation, ex.getStatusCode(), errorBody);
-        return ResponseEntity.status(status).body(
-                ApiResponse.fail(operation + " 중 오류가 발생했습니다.", status, null)
-        );
+        return ResponseEntity.ok(workflowResponse);
     }
 }

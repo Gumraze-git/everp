@@ -1,6 +1,5 @@
 package org.ever._4ever_be_scm.scm.mm.service;
 
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.mm.dto.SupplierDetailResponseDto;
 import org.ever._4ever_be_scm.scm.mm.dto.SupplierListResponseDto;
 import org.ever._4ever_be_scm.scm.mm.dto.supplier.SupplierCreateRequestDto;
@@ -16,7 +15,7 @@ public interface SupplierService {
     SupplierDetailResponseDto getSupplierDetail(String supplierId);
     void createSupplier(
         SupplierCreateRequestDto dto,
-        DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+        DeferredResult<ResponseEntity<?>> deferredResult
     );
     void updateSupplier(String supplierId, SupplierUpdateRequestDto dto);
 }

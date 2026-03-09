@@ -2,7 +2,6 @@ package org.ever._4ever_be_scm.scm.iv.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.infrastructure.kafka.config.KafkaTopicConfig;
 import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderDetailDto;
 import org.ever._4ever_be_scm.scm.iv.dto.SalesOrderDto;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,31 +96,9 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         return new PageImpl<>(salesOrders, pageable, totalElements);
     }
 
-    /**
-     * 출고 준비완료 주문 상세 조회
-     * 
-     * @param salesOrderId 판매 주문 ID
-     * @return 출고 준비완료 주문 상세 정보
-     */
     @Override
-    public SalesOrderDetailDto getReadyToShipOrderDetail(String salesOrderId) {
-        // SD 서비스에서 주문 상세 정보 조회
+    public SalesOrderDetailDto getSalesOrderDetail(String salesOrderId) {
         SdOrderDetailResponseDto sdDetail = sdOrderServicePort.getSalesOrderDetail(salesOrderId);
-        
-        return convertToSalesOrderDetailDto(sdDetail);
-    }
-
-    /**
-     * 생산중 주문 상세 조회
-     * 
-     * @param salesOrderId 판매 주문 ID
-     * @return 생산중 주문 상세 정보
-     */
-    @Override
-    public SalesOrderDetailDto getProductionDetail(String salesOrderId) {
-        // SD 서비스에서 주문 상세 정보 조회
-        SdOrderDetailResponseDto sdDetail = sdOrderServicePort.getSalesOrderDetail(salesOrderId);
-        
         return convertToSalesOrderDetailDto(sdDetail);
     }
     
@@ -180,18 +158,18 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
     @Override
     @Transactional
-    public DeferredResult<ResponseEntity<ApiResponse<Void>>> changeSalesOrderStatusAsync(
-            String salesOrderId, SalesOrderStatusChangeRequestDto requestDto,String requesterId) {
+    public DeferredResult<ResponseEntity<?>> createShipmentAsync(
+            String salesOrderId, SalesOrderStatusChangeRequestDto requestDto, String requesterId) {
 
         // DeferredResult 생성 (타임아웃 30초)
-        DeferredResult<ResponseEntity<ApiResponse<Void>>> deferredResult =
+        DeferredResult<ResponseEntity<?>> deferredResult =
                 new DeferredResult<>(30000L);
 
         // 타임아웃 처리
         deferredResult.onTimeout(() -> {
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.REQUEST_TIMEOUT)
-                    .body(ApiResponse.fail("처리 시간이 초과되었습니다.", HttpStatus.REQUEST_TIMEOUT)));
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.REQUEST_TIMEOUT, "처리 시간이 초과되었습니다.")));
         });
 
         try {
@@ -292,8 +270,10 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             log.error("판매 주문 상태 변경 실패 - salesOrderId={}, error={}", salesOrderId, e.getMessage(), e);
             deferredResult.setResult(ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("판매 주문 상태 변경 실패: " + e.getMessage(),
-                            HttpStatus.INTERNAL_SERVER_ERROR)));
+                    .body(ProblemDetail.forStatusAndDetail(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "판매 주문 상태 변경 실패: " + e.getMessage()
+                    )));
         }
 
         return deferredResult;

@@ -1,6 +1,5 @@
 package org.ever._4ever_be_business.common.async;
 
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -17,7 +16,7 @@ public interface AsyncResultManager<T> {
      * @param result 비동기 결과 객체
      */
     void registerResult(String transactionId, 
-            DeferredResult<ResponseEntity<ApiResponse<T>>> result);
+            DeferredResult<ResponseEntity<?>> result);
     
     /**
      * 성공 결과 설정

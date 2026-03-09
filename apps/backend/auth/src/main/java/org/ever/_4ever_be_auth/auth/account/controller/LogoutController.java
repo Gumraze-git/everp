@@ -7,9 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_auth.auth.oauth.service.LogoutService;
-import org.ever._4ever_be_auth.common.response.ApiResponse;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -27,6 +25,7 @@ import java.util.Optional;
 public class LogoutController {
 
     private static final String REFRESH_COOKIE_NAME = "refresh_token";
+    private static final Map<String, Object> LOGOUT_RESPONSE = Map.of("success", true);
 
     private final LogoutService logoutService;
 
@@ -52,7 +51,7 @@ public class LogoutController {
     private boolean sessionCookieHttpOnly;
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> logout(
+    public ResponseEntity<Map<String, Object>> logout(
             HttpServletRequest request,
             HttpServletResponse response,
             Authentication authentication
@@ -75,12 +74,7 @@ public class LogoutController {
         // JSESSIONID 세션 무효화
         expireSessionCookie(response);
 
-        ApiResponse<Map<String, Object>> body = ApiResponse.success(
-                Map.of("success", true),
-                "logged out",
-                HttpStatus.OK
-        );
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok(LOGOUT_RESPONSE);
     }
 
     private String extractBearerToken(String authorizationHeader) {
@@ -126,4 +120,3 @@ public class LogoutController {
         response.addHeader(HttpHeaders.SET_COOKIE, b.build().toString());
     }
 }
-

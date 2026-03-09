@@ -1,7 +1,4 @@
 package org.ever._4ever_be_auth.user.application.service;
-
-
-import org.ever._4ever_be_auth.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -15,12 +12,12 @@ public interface AsyncResultManager<T> {
 
     /**
      * 비동기 결과 객체 등록
-     *
+    *
      * @param transactionId 트랜잭션 ID
      * @param result        비동기 결과 객체
      */
     void registerResult(String transactionId,
-                        DeferredResult<ResponseEntity<ApiResponse<T>>> result);
+                        DeferredResult<ResponseEntity<?>> result);
 
     /**
      * 성공 결과 설정

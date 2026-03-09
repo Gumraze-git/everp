@@ -1,6 +1,5 @@
 package org.ever._4ever_be_scm.scm.mm.service;
 
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.mm.dto.PurchaseOrderDetailResponseDto;
 import org.ever._4ever_be_scm.scm.mm.dto.PurchaseOrderListResponseDto;
 import org.ever._4ever_be_scm.scm.mm.vo.PurchaseOrderSearchVo;
@@ -18,7 +17,7 @@ public interface PurchaseOrderService {
     /**
      * 발주서 승인 (비동기 - 분산 트랜잭션)
      */
-    DeferredResult<ResponseEntity<ApiResponse<Void>>> approvePurchaseOrderAsync(String purchaseOrderId, String requesterId);
+    DeferredResult<ResponseEntity<?>> approvePurchaseOrderAsync(String purchaseOrderId, String requesterId);
     
     /**
      * 발주서 반려

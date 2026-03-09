@@ -1,8 +1,10 @@
 package org.ever._4ever_be_scm.scm.mm.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import org.ever._4ever_be_scm.common.exception.ErrorCode;
+import org.ever._4ever_be_scm.common.exception.handler.ProblemDetailFactory;
 import lombok.RequiredArgsConstructor;
-import org.ever._4ever_be_scm.common.response.ApiResponse;
 import org.ever._4ever_be_scm.scm.iv.dto.PagedResponseDto;
 import org.ever._4ever_be_scm.scm.mm.dto.PurchaseOrderDetailResponseDto;
 import org.ever._4ever_be_scm.scm.mm.dto.PurchaseOrderListResponseDto;
@@ -16,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import java.time.LocalDate;
-
 
 @Tag(name = "구매관리", description = "구매 관리 API")
 @RestController
@@ -28,7 +28,7 @@ public class PurchaseOrderController {
     private final PurchaseOrderService purchaseOrderService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PagedResponseDto<PurchaseOrderListResponseDto>>> getPurchaseOrderList(
+    public ResponseEntity<PagedResponseDto<PurchaseOrderListResponseDto>> getPurchaseOrderList(
             @RequestParam(defaultValue = "ALL") String statusCode,
             @io.swagger.v3.oas.annotations.Parameter(description = "검색 타입 (SupplierCompanyName, PurchaseOrderNumber)")
             @RequestParam(required = false) String type,
@@ -51,11 +51,11 @@ public class PurchaseOrderController {
         Page<PurchaseOrderListResponseDto> purchaseOrders = purchaseOrderService.getPurchaseOrderList(searchVo);
         PagedResponseDto<PurchaseOrderListResponseDto> response = PagedResponseDto.from(purchaseOrders);
         
-        return ResponseEntity.ok(ApiResponse.success(response, "발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/supplier/{userId}")
-    public ResponseEntity<ApiResponse<PagedResponseDto<PurchaseOrderListResponseDto>>> getPurchaseOrderListBySupplier(
+    public ResponseEntity<PagedResponseDto<PurchaseOrderListResponseDto>> getPurchaseOrderListBySupplier(
             @PathVariable String userId,
             @RequestParam(defaultValue = "ALL") String statusCode,
             @RequestParam(required = false) String keyword,
@@ -76,23 +76,23 @@ public class PurchaseOrderController {
         Page<PurchaseOrderListResponseDto> purchaseOrders = purchaseOrderService.getPurchaseOrderListBySupplier(userId, searchVo);
         PagedResponseDto<PurchaseOrderListResponseDto> response = PagedResponseDto.from(purchaseOrders);
 
-        return ResponseEntity.ok(ApiResponse.success(response, "공급업체 발주서 목록 조회에 성공했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{purchaseOrderId}")
-    public ResponseEntity<ApiResponse<PurchaseOrderDetailResponseDto>> getPurchaseOrderDetail(
+    public ResponseEntity<PurchaseOrderDetailResponseDto> getPurchaseOrderDetail(
             @PathVariable String purchaseOrderId) {
         
         PurchaseOrderDetailResponseDto detail = purchaseOrderService.getPurchaseOrderDetail(purchaseOrderId);
         
-        return ResponseEntity.ok(ApiResponse.success(detail, "발주서 상세 정보 조회에 성공했습니다.", HttpStatus.OK));
+        return ResponseEntity.ok(detail);
     }
 
     /**
      * 발주서 승인 (비동기 - 분산 트랜잭션)
      */
     @PostMapping("/{purchaseOrderId}/approve")
-    public DeferredResult<ResponseEntity<ApiResponse<Void>>> approvePurchaseOrder(
+    public DeferredResult<ResponseEntity<?>> approvePurchaseOrder(
             @PathVariable String purchaseOrderId,
             @RequestParam String requesterId) {
 
@@ -103,46 +103,31 @@ public class PurchaseOrderController {
      * 발주서 반려
      */
     @PostMapping("/{purchaseOrderId}/reject")
-    public ResponseEntity<ApiResponse<Void>> rejectPurchaseOrder(
+    public ResponseEntity<Void> rejectPurchaseOrder(
             @PathVariable String purchaseOrderId,
             @RequestParam String requesterId,
             @RequestBody PurchaseOrderRejectRequestDto requestDto) {
-        try {
-            purchaseOrderService.rejectPurchaseOrder(purchaseOrderId, requesterId ,requestDto.getReason());
-            return ResponseEntity.ok(ApiResponse.success(null, "발주서 반려가 완료되었습니다.", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("발주서 반려 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        purchaseOrderService.rejectPurchaseOrder(purchaseOrderId, requesterId ,requestDto.getReason());
+        return ResponseEntity.noContent().build();
     }
 
     /**
      * 배송 시작
      */
     @PostMapping("/{purchaseOrderId}/start-delivery")
-    public ResponseEntity<ApiResponse<Void>> startDelivery(
+    public ResponseEntity<Void> startDelivery(
             @PathVariable String purchaseOrderId) {
-        try {
-            purchaseOrderService.startDelivery(purchaseOrderId);
-            return ResponseEntity.ok(ApiResponse.success(null, "배송이 시작되었습니다.", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("배송 시작 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        purchaseOrderService.startDelivery(purchaseOrderId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
      * 입고 완료
      */
     @PostMapping("/{purchaseOrderId}/complete-delivery")
-    public ResponseEntity<ApiResponse<Void>> completeDelivery(
+    public ResponseEntity<Void> completeDelivery(
             @PathVariable String purchaseOrderId) {
-        try {
-            purchaseOrderService.completeDelivery(purchaseOrderId);
-            return ResponseEntity.ok(ApiResponse.success(null, "입고가 완료되었습니다.", HttpStatus.OK));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("입고 완료 실패: " + e.getMessage(), HttpStatus.BAD_REQUEST));
-        }
+        purchaseOrderService.completeDelivery(purchaseOrderId);
+        return ResponseEntity.noContent().build();
     }
 }

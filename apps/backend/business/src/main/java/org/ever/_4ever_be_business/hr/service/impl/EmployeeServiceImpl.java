@@ -4,7 +4,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.common.async.AsyncResultManager;
-import org.ever._4ever_be_business.common.dto.response.ApiResponse;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.common.saga.CompensationHandler;
@@ -340,7 +339,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public void createEmployee(
             EmployeeCreateRequestDto requestDto,
-            DeferredResult<ResponseEntity<ApiResponse<CreateAuthUserResultEvent>>> deferredResult
+            DeferredResult<ResponseEntity<?>> deferredResult
     ) {
         // 트랜잭션 id 생성
         String transactionId = UuidV7Generator.generate();
