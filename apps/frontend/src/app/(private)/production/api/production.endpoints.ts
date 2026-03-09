@@ -11,45 +11,45 @@ export const PRODUCTION_ENDPOINTS = {
   // MES 작업 목록
   MES_LIST: `${PRODUCTION_BASE_PATH}/mes`, // MES 목록 조회
   MES_WORK_ORDER_DETAIL: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}`, // MES 상세 조회
-  MES_START: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}/start`, // MES 시작
-  MES_COMPLETE: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}/complete`, // MES 완료
+  MES_START: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}/starts`, // MES 시작
+  MES_COMPLETE: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}/completions`, // MES 완료
   MES_OPERATION_START: (mesId: string, operationId: string) =>
-    `${PRODUCTION_BASE_PATH}/mes/${mesId}/operations/${operationId}/start`, // 공정 시작
+    `${PRODUCTION_BASE_PATH}/mes/${mesId}/operations/${operationId}/starts`, // 공정 시작
   MES_OPERATION_COMPLETE: (mesId: string, operationId: string) =>
-    `${PRODUCTION_BASE_PATH}/mes/${mesId}/operations/${operationId}/complete`, // 공정 완료
+    `${PRODUCTION_BASE_PATH}/mes/${mesId}/operations/${operationId}/completions`, // 공정 완료
 
   // MRP 순소요 목록
   MRP_ORDERS: `${PRODUCTION_BASE_PATH}/quotations/mrp`, // MRP 순소요 목록 조회
   MRP_PLANNED_ORDER_DETAIL: (mrpId: string) =>
     `${PRODUCTION_BASE_PATH}/mrp/planned-orders/detail/${mrpId}`, // MRP 계획 주문 상세 조회
-  MRP_PLANNED_ORDERS_LIST: `${PRODUCTION_BASE_PATH}/mrp/runs`, // MRP 계획 주문 목록 조회
+  MRP_PLANNED_ORDERS_LIST: `${PRODUCTION_BASE_PATH}/mrp-runs`, // MRP 계획 주문 목록 조회
   MRP_REQUEST_SUMMARY: `${PRODUCTION_BASE_PATH}/mrp/request-summary`, // MRP 자재 구매 요청 리스트
-  MRP_CONVERT: `${PRODUCTION_BASE_PATH}/mrp/convert`, // MRP 순소요 목록 조회
+  MRP_CONVERT: `${PRODUCTION_BASE_PATH}/mrp-runs`, // MRP 순소요 목록 조회
 
   // MPS 계획
   MPS_PLANS: `${PRODUCTION_BASE_PATH}/quotations/mps`, // 제품별 MPS 조회
 
   // 견적
   QUOTATIONS: `${PRODUCTION_BASE_PATH}/quotations`, // 견적 목록 조회
-  QUOTATION_PREVIEW: `${PRODUCTION_BASE_PATH}/quotations/preview`, // 제안납기 확정 프리뷰
-  QUOTATION_SIMULATE: `${PRODUCTION_BASE_PATH}/quotations/simulate`, // 견적에 대한 ATP + MPS + MRP 시뮬레이션 실행
-  QUOTATION_CONFIRM: `${PRODUCTION_BASE_PATH}/quotations/confirm`, // 제안 납기 확정
+  QUOTATION_PREVIEW: `${PRODUCTION_BASE_PATH}/quotations/mps-previews`, // 제안납기 확정 프리뷰
+  QUOTATION_SIMULATE: `${PRODUCTION_BASE_PATH}/quotations/simulations/search`, // 견적에 대한 ATP + MPS + MRP 시뮬레이션 실행
+  QUOTATION_CONFIRM: `${PRODUCTION_BASE_PATH}/quotations/reviews`, // 제안 납기 확정
 
   // PP 통계
-  STATISTICS: `${PRODUCTION_BASE_PATH}/statistic`, // PP 통계 조회
+  STATISTICS: `${PRODUCTION_BASE_PATH}/metrics`, // PP 통계 조회
 
   // 드롭다운 관련
-  MPS_TOGGLE_PRODUCTS: `${PRODUCTION_BASE_PATH}/mps/boms/toggle`,
+  MPS_TOGGLE_PRODUCTS: `${PRODUCTION_BASE_PATH}/quotations/bom-options`,
   OPERATIONS_DROPDOWN: `${PRODUCTION_BASE_PATH}/operations`,
 
   PRODUCTS: `${PRODUCTION_BASE_PATH}/products`, // 자재 드롭다운
-  AVAILABLE_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/available/status/toggle`, // 가용재고 상태 드롭다운
-  QUOTATION_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/status/toggle`, // 견적 상태 드롭다운
+  AVAILABLE_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/quotations/available-status-options`, // 가용재고 상태 드롭다운
+  QUOTATION_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/quotations/status-options`, // 견적 상태 드롭다운
 
-  MRP_QUOTATION_DROPDOWN: `${PRODUCTION_BASE_PATH}/mrp/quotations/toggle`, // 견적 드롭다운
-  MRP_AVAILABLE_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/mrp/available/status/toggle`, // 견적 드롭다운
+  MRP_QUOTATION_DROPDOWN: `${PRODUCTION_BASE_PATH}/quotations/mrp/quotation-options`, // 견적 드롭다운
+  MRP_AVAILABLE_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/quotations/mrp/available-status-options`, // 견적 드롭다운
 
-  MRP_RUNS_QUOTATIONS_DROPDOWN: `${PRODUCTION_BASE_PATH}/mrp/runs/quotations/toggle`, // MRP 계획주문 견적 드롭다운
-  MRP_RUNS_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/mrp/runs/status/toggle`, // MRP 계획주문 상태 드롭다운
-  MES_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/mes/status/toggle`, // MES 상태 드롭다운
+  MRP_RUNS_QUOTATIONS_DROPDOWN: `${PRODUCTION_BASE_PATH}/mrp-runs/quotation-options`, // MRP 계획주문 견적 드롭다운
+  MRP_RUNS_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/mrp-runs/status-options`, // MRP 계획주문 상태 드롭다운
+  MES_STATUS_DROPDOWN: `${PRODUCTION_BASE_PATH}/mes/status-options`, // MES 상태 드롭다운
 };

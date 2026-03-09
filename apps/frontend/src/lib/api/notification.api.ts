@@ -1,6 +1,5 @@
 import { NOTIFICATION_ENDPOINTS } from '@/lib/api/notification.endpoints';
 import { NotificationListResponse } from '@/app/components/header/types/NotificatioApiType';
-import { ApiResponse } from '@/app/types/api';
 import axios from '../axiosInstance';
 
 // 알림 목록 조회
@@ -8,10 +7,10 @@ export const fetchNotifications = async (
   page: number,
   size: number,
 ): Promise<NotificationListResponse> => {
-  const res = await axios.get<ApiResponse<NotificationListResponse>>(
+  const res = await axios.get<NotificationListResponse>(
     `${NOTIFICATION_ENDPOINTS.LIST}?page=${page}&size=${size}`,
   );
-  return res.data.data;
+  return res.data;
 };
 
 // 알림 개수 조회

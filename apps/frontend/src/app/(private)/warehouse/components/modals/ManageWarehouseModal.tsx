@@ -5,7 +5,6 @@ import {
   EditWarehouseRequest,
   ManageWarehouseModalProps,
 } from '../../types/ManageWarehouseModalType';
-import { InventoryDetailResponse } from '@/app/(private)/inventory/types/InventoryDetailModalType';
 import { WarehouseDetailResponse } from '../../types/WarehouseDetailModalType';
 import {
   getWarehouseDetail,
@@ -13,10 +12,8 @@ import {
   patchManageWarehouse,
 } from '../../warehouse.api';
 import { useEffect, useState } from 'react';
-import { getStatusText } from '@/lib/status.constants';
 import ModalStatusBox from '@/app/components/common/ModalStatusBox';
 import { WarehouseManagerInfoResponse } from '../../types/AddWarehouseModalType';
-import { ApiResponseNoData } from '@/app/types/api';
 import { WarehouseListResponse } from '../../types/WarehouseListType';
 import { Page } from '@/app/types/Page';
 
@@ -92,22 +89,8 @@ const ManageWarehouseModal = ({ onClose, $selectedWarehouseId }: ManageWarehouse
     queryFn: getWarehouseManagerInfo,
   });
 
-  // const { mutate: editWarehouse } = useMutation<
-  //   ApiResponseNoData,
-  //   Error,
-  //   { warehouseId: string; payload: EditWarehouseRequest }
-  // >({
-  //   mutationFn: patchManageWarehouse,
-  //   onSuccess: (data) => {
-  //     alert(`${data.status} : ${data.message}`);
-  //   },
-  //   onError: (error) => {
-  //     alert(`창고 수정 중 오류가 발생했습니다. ${error}`);
-  //   },
-  // });
-
   const { mutate: editWarehouse } = useMutation<
-    ApiResponseNoData,
+    void,
     Error,
     {
       warehouseId: string;
@@ -144,7 +127,7 @@ const ManageWarehouseModal = ({ onClose, $selectedWarehouseId }: ManageWarehouse
       alert(`창고 수정 중 오류가 발생했습니다. ${error}`);
     },
 
-    onSuccess: (data) => {
+    onSuccess: () => {
       alert(`창고 수정이 완료되었습니다.`);
       onClose();
     },

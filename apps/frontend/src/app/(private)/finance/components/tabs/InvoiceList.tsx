@@ -20,7 +20,6 @@ import TableStatusBox from '@/app/components/common/TableStatusBox';
 import InvoiceDetailModal from '@/app/(private)/finance/components/modals/InvoiceDetailModal';
 import StatusLabel from '@/app/components/common/StatusLabel';
 import { useRole } from '@/app/hooks/useRole';
-import IconButton from '@/app/components/common/IconButton';
 import Button from '@/app/components/common/Button';
 import Dropdown from '@/app/components/common/Dropdown';
 import { useModal } from '@/app/components/common/modal/useModal';
@@ -34,7 +33,6 @@ const InvoiceList = () => {
   const defaultTab =
     role === 'SUPPLIER_ADMIN' ? 'sales' : role === 'CUSTOMER_ADMIN' ? 'purchase' : 'sales';
   const currentTab = searchParams.get('tab') || defaultTab;
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('');
 
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus>('ALL');
@@ -92,8 +90,8 @@ const InvoiceList = () => {
 
   const { mutate: sendReq } = useMutation({
     mutationFn: mutationFn,
-    onSuccess: (data) => {
-      alert(`${data.message}`);
+    onSuccess: () => {
+      alert('요청이 처리되었습니다.');
     },
     onError: (error) => {
       alert(` 등록 중 오류가 발생했습니다. ${error}`);

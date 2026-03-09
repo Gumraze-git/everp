@@ -1,4 +1,4 @@
-import { SALES_ENDPOINTS, ApiResponse, ApiResponseNoData } from '@/app/types/api';
+import { SALES_ENDPOINTS } from '@/app/types/api';
 import {
   CustomerSalesStatResponse,
   SalesStatResponse,
@@ -22,15 +22,13 @@ import axios from '@/lib/axiosInstance';
 
 // ----------------------- 통계 지표 -----------------------
 export const getSalesStats = async (): Promise<SalesStatResponse> => {
-  const res = await axios.get<ApiResponse<SalesStatResponse>>(SALES_ENDPOINTS.STATS);
-  return res.data.data;
+  const res = await axios.get<SalesStatResponse>(SALES_ENDPOINTS.STATS);
+  return res.data;
 };
 
 export const getCustomerSalesStats = async (): Promise<CustomerSalesStatResponse> => {
-  const res = await axios.get<ApiResponse<CustomerSalesStatResponse>>(
-    SALES_ENDPOINTS.CSUTOMER_STATISTICS,
-  );
-  return res.data.data;
+  const res = await axios.get<CustomerSalesStatResponse>(SALES_ENDPOINTS.CSUTOMER_STATISTICS);
+  return res.data;
 };
 
 // ----------------------- 견적 관리 -----------------------
@@ -48,24 +46,20 @@ export const getQuoteList = async (
     ...(params?.size && { size: String(params.size) }),
   }).toString();
 
-  const res = await axios.get<ApiResponse<{ content: Quote[]; page: Page }>>(
+  const res = await axios.get<{ content: Quote[]; page: Page }>(
     `${SALES_ENDPOINTS.QUOTES_LIST}?${query}`,
   );
-
-  return { data: res.data.data.content, pageData: res.data.data.page };
+  return { data: res.data.content, pageData: res.data.page };
 };
 
 export const getQuoteDetail = async (quotationId: string): Promise<QuoteDetail> => {
-  const res = await axios.get<ApiResponse<QuoteDetail>>(SALES_ENDPOINTS.QUOTE_DETAIL(quotationId));
-  return res.data.data;
+  const res = await axios.get<QuoteDetail>(SALES_ENDPOINTS.QUOTE_DETAIL(quotationId));
+  return res.data;
 };
 
-export const postNewQuote = async (items: NewOrderRequest): Promise<NewOrderRequest> => {
-  const res = await axios.post<ApiResponse<{ items: NewOrderRequest }>>(
-    SALES_ENDPOINTS.NEW_ORDER,
-    items,
-  );
-  return res.data.data.items;
+export const postNewQuote = async (items: NewOrderRequest): Promise<unknown> => {
+  const res = await axios.post(SALES_ENDPOINTS.NEW_ORDER, items);
+  return res.data;
 };
 
 // ----------------------- 주문 관리 -----------------------
@@ -82,40 +76,30 @@ export const getOrderList = async (
     ...(params?.size && { size: String(params.size) }),
   }).toString();
 
-  const res = await axios.get<ApiResponse<{ content: Order[]; page: Page }>>(
+  const res = await axios.get<{ content: Order[]; page: Page }>(
     `${SALES_ENDPOINTS.ORDERS_LIST}?${query}`,
   );
-
-  return { data: res.data.data.content, pageData: res.data.data.page };
+  return { data: res.data.content, pageData: res.data.page };
 };
 
 export const getOrderDetail = async (salesOrderId: string): Promise<OrderDetail> => {
-  const res = await axios.get<ApiResponse<OrderDetail>>(SALES_ENDPOINTS.ORDER_DETAIL(salesOrderId));
-  return res.data.data;
+  const res = await axios.get<OrderDetail>(SALES_ENDPOINTS.ORDER_DETAIL(salesOrderId));
+  return res.data;
 };
 
-export const postQuotationConfirm = async (quotationId: string): Promise<ApiResponseNoData> => {
-  const res = await axios.post<ApiResponseNoData>(SALES_ENDPOINTS.QUOTE_CONFIRM, {
-    quotationId: quotationId,
+export const postQuotationConfirm = async (quotationId: string): Promise<void> => {
+  await axios.post(SALES_ENDPOINTS.QUOTE_CONFIRM(quotationId));
+};
+
+export const postInventoryCheck = async (items: Inventories[]): Promise<InventoryCheckRes[]> => {
+  const res = await axios.post<InventoryCheckRes[]>(SALES_ENDPOINTS.INVENTORY_CHECK, {
+    items,
   });
   return res.data;
 };
 
-export const postInventoryCheck = async (items: Inventories[]): Promise<InventoryCheckRes[]> => {
-  const res = await axios.post<ApiResponse<{ items: InventoryCheckRes[] }>>(
-    SALES_ENDPOINTS.INVENTORY_CHECK,
-    {
-      items,
-    },
-  );
-  return res.data.data.items;
-};
-
-export const postDeliveryProcess = async (quotationId: string): Promise<ApiResponseNoData> => {
-  const res = await axios.post<ApiResponseNoData>(
-    SALES_ENDPOINTS.QUOTE_DELIVERY_PROCESS(quotationId),
-  );
-  return res.data;
+export const postDeliveryProcess = async (quotationId: string): Promise<void> => {
+  await axios.post(SALES_ENDPOINTS.QUOTE_DELIVERY_PROCESS(quotationId));
 };
 
 // ----------------------- 고객 관리 -----------------------
@@ -130,37 +114,31 @@ export const getCustomerList = async (
     ...(params?.size && { size: String(params.size) }),
   }).toString();
 
-  const res = await axios.get<ApiResponse<{ customers: SalesCustomer[]; page: Page }>>(
+  const res = await axios.get<{ customers: SalesCustomer[]; page: Page }>(
     `${SALES_ENDPOINTS.CUSTOMERS_LIST}?${query}`,
   );
-
-  return { data: res.data.data.customers, pageData: res.data.data.page };
+  return { data: res.data.customers, pageData: res.data.page };
 };
 
 export const getCustomerDetail = async (customerId: string): Promise<CustomerDetail> => {
-  const res = await axios.get<ApiResponse<CustomerDetail>>(
-    SALES_ENDPOINTS.CUSTOMER_DETAIL(customerId),
-  );
-  return res.data.data;
+  const res = await axios.get<CustomerDetail>(SALES_ENDPOINTS.CUSTOMER_DETAIL(customerId));
+  return res.data;
 };
 
 export const postCustomer = async (customer: CustomerData): Promise<ServerResponse> => {
-  const res = await axios.post<ApiResponse<ServerResponse>>(
-    SALES_ENDPOINTS.CUSTOMERS_LIST,
-    customer,
-  );
-  return res.data.data;
+  const res = await axios.post<ServerResponse>(SALES_ENDPOINTS.CUSTOMERS_LIST, customer);
+  return res.data;
 };
 
 export const patchCustomer = async (
   customerId: string,
   customer: CustomerEditData,
 ): Promise<CustomerResponse> => {
-  const res = await axios.patch<ApiResponse<CustomerResponse>>(
+  const res = await axios.patch<CustomerResponse>(
     SALES_ENDPOINTS.EDIT_CUSTOMER(customerId),
     customer,
   );
-  return res.data.data;
+  return res.data;
 };
 
 // ----------------------- 매출 분석 -----------------------
@@ -170,14 +148,12 @@ export const getAnalytics = async (params?: AnalyticsQueryParams): Promise<Sales
     ...(params?.endDate && { endDate: params.endDate }),
   }).toString();
 
-  const res = await axios.get<ApiResponse<SalesAnalysis>>(`${SALES_ENDPOINTS.ANALYTICS}?${query}`);
-  return res.data.data;
+  const res = await axios.get<SalesAnalysis>(`${SALES_ENDPOINTS.ANALYTICS}?${query}`);
+  return res.data;
 };
 
 // 신규 견적 요청을 위한 자재 가져오기
 export const getItemInfoForNewQuote = async (): Promise<ItemResponse[]> => {
-  const res = await axios.get<ApiResponse<{ products: ItemResponse[] }>>(
-    SALES_ENDPOINTS.NEW_QUOTE_ITEM_TOGGLE,
-  );
-  return res.data.data.products;
+  const res = await axios.get<ItemResponse[]>(SALES_ENDPOINTS.NEW_QUOTE_ITEM_TOGGLE);
+  return res.data;
 };
