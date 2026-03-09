@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_alarm.api.notification.DeviceTokenApi;
 import org.ever._4ever_be_alarm.common.validation.ValidUuidV7;
 import org.ever._4ever_be_alarm.notification.adapter.web.dto.request.DeviceTokenDeleteRequestDto;
 import org.ever._4ever_be_alarm.notification.adapter.web.dto.request.DeviceTokenRegisterRequestDto;
@@ -33,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/device-tokens")
 @RequiredArgsConstructor
 @Validated
-public class DeviceTokenController {
+public class DeviceTokenController implements DeviceTokenApi {
 
     private final UserDeviceTokenUseCase userDeviceTokenUseCase;
 

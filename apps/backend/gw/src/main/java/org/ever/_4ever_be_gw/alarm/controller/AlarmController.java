@@ -1,7 +1,6 @@
 package org.ever._4ever_be_gw.alarm.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.api.alarm.AlarmApi;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -33,8 +32,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Validated
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "알림", description = "알림(Notification) API")
-public class AlarmController {
+
+public class AlarmController implements AlarmApi {
 
     final static int MAX_PAGE_SIZE = 100;
 
@@ -43,7 +42,7 @@ public class AlarmController {
 
     // ===== 알림 목록 조회 =====
     @GetMapping("/list")
-    @Operation(summary = "알림 목록 조회", description = "알림 목록을 페이징/정렬/필터와 함께 조회합니다.")
+
     public ResponseEntity<Object> getNotificationList(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
@@ -97,7 +96,7 @@ public class AlarmController {
 
     // ===== 알림 갯수 조회 =====
     @GetMapping("/count")
-    @Operation(summary = "알림 갯수 조회", description = "상태별(READ/UNREAD) 알림 갯수를 조회합니다.")
+
     public ResponseEntity<Object> getNotificationCount(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
@@ -123,7 +122,7 @@ public class AlarmController {
 
     // ===== 알림 구독 요청 =====
     @GetMapping("/subscribe")
-    @Operation(summary = "알림 구독 요청", description = "SSE를 통해 실시간 알림을 구독합니다.")
+
     public SseEmitter subscribe(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
@@ -152,7 +151,7 @@ public class AlarmController {
 
     // ===== 알림 읽음 처리 (목록) =====
     @PatchMapping("/list/read")
-    @Operation(summary = "알림 읽음 처리(목록)", description = "주어진 알림 ID 목록을 읽음 처리합니다.")
+
     public ResponseEntity<Object> markReadList(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,
@@ -177,7 +176,7 @@ public class AlarmController {
 
     // ===== 알림 읽음 처리 (전체) =====
     @PatchMapping("/all/read")
-    @Operation(summary = "알림 읽음 처리(전체)", description = "모든 알림을 읽음 처리합니다.")
+
     public ResponseEntity<Object> markReadAll(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication
@@ -197,7 +196,7 @@ public class AlarmController {
 
     // ===== 알림 읽음 처리 (단일) =====
     @PatchMapping("/{notificationId}/read")
-    @Operation(summary = "알림 읽음 처리(단일)", description = "특정 알림을 읽음 처리합니다.")
+
     public ResponseEntity<Object> markReadOne(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,

@@ -1,6 +1,6 @@
 package org.ever._4ever_be_scm.scm.iv.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_scm.api.scm.iv.SalesOrderApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_scm.common.exception.BusinessException;
 import org.ever._4ever_be_scm.common.exception.ErrorCode;
@@ -18,25 +18,23 @@ import org.springframework.web.context.request.async.DeferredResult;
 /**
  * 판매 주문 관리 컨트롤러
  */
-@Tag(name = "재고관리", description = "재고 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp")
 @RequiredArgsConstructor
-public class SalesOrderController {
-    
+public class SalesOrderController implements SalesOrderApi {
+
     private final SalesOrderService salesOrderService;
-    
+
     /**
      * 생산중 목록 조회 API
-     * 
+     *
      * @param page 페이지 번호 (0부터 시작)
      * @param size 페이지 크기
      * @return 생산중 목록
      */
     @GetMapping("/sales-orders")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "판매 주문 목록 조회"
-    )
+
     public ResponseEntity<PagedResponseDto<SalesOrderDto>> getSalesOrders(
             @RequestParam String status,
             @RequestParam(defaultValue = "0") int page,
@@ -56,9 +54,7 @@ public class SalesOrderController {
     }
 
     @GetMapping("/sales-orders/{salesOrderId}")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "판매 주문 상세 조회"
-    )
+
     public ResponseEntity<SalesOrderDetailDto> getSalesOrder(@PathVariable String salesOrderId) {
         return ResponseEntity.ok(salesOrderService.getSalesOrderDetail(salesOrderId));
     }
@@ -67,10 +63,7 @@ public class SalesOrderController {
      * 출고 준비 완료를 배송중 상태로 변경
      */
     @PostMapping("/sales-orders/{salesOrderId}/shipments")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "출고 배송 상태 변경",
-            description = "출고 준비 완료 상태를 배송중 상태로 변경합니다."
-    )
+
     public DeferredResult<ResponseEntity<?>> createShipment(
             @PathVariable String salesOrderId,
             @RequestBody SalesOrderStatusChangeRequestDto requestDto,

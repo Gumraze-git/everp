@@ -1,5 +1,6 @@
 package org.ever._4ever_be_auth.auth.account.controller;
 
+import org.ever._4ever_be_auth.api.auth.LogoutApi;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +23,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class LogoutController {
+public class LogoutController implements LogoutApi {
 
     private static final String REFRESH_COOKIE_NAME = "refresh_token";
     private static final Map<String, Object> LOGOUT_RESPONSE = Map.of("success", true);

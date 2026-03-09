@@ -1,7 +1,6 @@
 package org.ever._4ever_be_gw.facade;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.api.facade.DashboardApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
@@ -19,15 +18,12 @@ import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowResponseDto;
 @RestController
 @RequestMapping("/dashboard")
 @RequiredArgsConstructor
-@Tag(name = "대시보드", description = "대시보드 워크플로우 API")
-public class DashboardController {
+
+public class DashboardController implements DashboardApi {
     private final DashboardHttpService dashboardHttpService;
 
     @GetMapping("/workflows")
-    @Operation(
-            summary = "대시보드 워크플로우 조회",
-            description = "사용자 역할 별로 2개의 탭과 n(기본 5개)개의 항목을 제공합니다."
-    )
+
     public ResponseEntity<DashboardWorkflowResponseDto> getWorkflows(
             @AuthenticationPrincipal EverUserPrincipal principal
 

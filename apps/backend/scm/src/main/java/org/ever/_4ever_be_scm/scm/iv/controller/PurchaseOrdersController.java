@@ -1,6 +1,6 @@
 package org.ever._4ever_be_scm.scm.iv.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_scm.api.scm.iv.PurchaseOrdersApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_scm.common.exception.BusinessException;
 import org.ever._4ever_be_scm.common.exception.ErrorCode;
@@ -18,25 +18,23 @@ import java.time.LocalDate;
 /**
  * 구매 발주 관리 컨트롤러
  */
-@Tag(name = "재고관리", description = "재고 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp")
 @RequiredArgsConstructor
-public class PurchaseOrdersController {
-    
+public class PurchaseOrdersController implements PurchaseOrdersApi {
+
     private final PurchaseOrdersService purchaseOrderService;
-    
+
     /**
      * 입고 준비 목록 조회 API
-     * 
+     *
      * @param page 페이지 번호 (0부터 시작)
      * @param size 페이지 크기
      * @return 입고 준비 목록
      */
     @GetMapping("/purchase-orders")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "구매 발주 목록 조회"
-    )
+
     public ResponseEntity<PagedResponseDto<PurchaseOrderDto>> getPurchaseOrders(
             @RequestParam String status,
             @RequestParam(defaultValue = "0") int page,

@@ -1,6 +1,6 @@
 package org.ever._4ever_be_scm.scm.iv.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_scm.api.scm.iv.StockTransferApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_scm.scm.iv.dto.PagedResponseDto;
 import org.ever._4ever_be_scm.scm.iv.dto.StockDeliveryRequestDto;
@@ -15,30 +15,28 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 재고 이동 관리 컨트롤러
  */
-@Tag(name = "재고관리", description = "재고 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp/iv")
 @RequiredArgsConstructor
-public class StockTransferController {
+public class StockTransferController implements StockTransferApi {
 
     private final StockTransferService stockTransferService;
-    
+
     /**
      * 재고 이동 목록 조회 API
      *
      * @return 재고 이동 목록
      */
     @GetMapping("/stock-transfers")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "재고 이동 목록 조회 (상위 5개)"
-    )
+
     public ResponseEntity<PagedResponseDto<StockTransferDto>> getStockTransfers() {
         PageRequest pageable = PageRequest.of(0, 5); // 항상 첫 페이지에서 5개만 조회
         Page<StockTransferDto> stockTransfers = stockTransferService.getStockTransfers(pageable);
         PagedResponseDto<StockTransferDto> response = PagedResponseDto.from(stockTransfers);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * 창고간 재고 이동 생성 API
      *
@@ -46,9 +44,7 @@ public class StockTransferController {
      * @return 재고 이동 결과
      */
     @PostMapping("/stock-transfers")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "창고간 재고 이동"
-    )
+
     public ResponseEntity<Void> createStockTransfer(
             @RequestBody StockTransferRequestDto request,
             @RequestParam String requesterId
@@ -56,7 +52,7 @@ public class StockTransferController {
         stockTransferService.createStockTransfer(request,requesterId);
         return ResponseEntity.noContent().build();
     }
-    
+
     /**
      * 재고 입출고 처리 API
      *
@@ -64,9 +60,7 @@ public class StockTransferController {
      * @return 재고 입출고 결과
      */
     @PostMapping("/stock-transfers/deliver")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "재고 입출고 처리"
-    )
+
     public ResponseEntity<Void> processStockDelivery(@RequestBody StockDeliveryRequestDto request) {
 //        stockTransferService.processStockDelivery(request);
         return ResponseEntity.noContent().build();

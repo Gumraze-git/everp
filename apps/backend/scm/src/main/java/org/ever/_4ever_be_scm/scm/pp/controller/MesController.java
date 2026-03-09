@@ -1,6 +1,6 @@
 package org.ever._4ever_be_scm.scm.pp.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_scm.api.scm.pp.MesApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_scm.scm.iv.dto.PagedResponseDto;
 import org.ever._4ever_be_scm.scm.mm.dto.ToggleCodeLabelDto;
@@ -16,11 +16,11 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
 
-@Tag(name = "MES 관리", description = "작업 지시 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp/pp/mes")
 @RequiredArgsConstructor
-public class MesController {
+public class MesController implements MesApi {
 
     private final MesService mesService;
 
@@ -28,18 +28,15 @@ public class MesController {
      * MES 목록 조회
      */
     @GetMapping
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "MES 목록 조회",
-            description = "작업 지시(MES) 목록을 조회합니다. 견적ID와 상태로 필터링할 수 있습니다."
-    )
+
     public ResponseEntity<PagedResponseDto<MesQueryResponseDto.MesItemDto>> getMesList(
-            @io.swagger.v3.oas.annotations.Parameter(description = "견적 ID (선택)")
+
             @RequestParam(required = false) String quotationId,
-            @io.swagger.v3.oas.annotations.Parameter(description = "상태 (ALL, PENDING, IN_PROGRESS, COMPLETED)")
+
             @RequestParam(defaultValue = "ALL") String status,
-            @io.swagger.v3.oas.annotations.Parameter(description = "페이지 번호")
+
             @RequestParam(defaultValue = "0") int page,
-            @io.swagger.v3.oas.annotations.Parameter(description = "페이지 크기")
+
             @RequestParam(defaultValue = "20") int size) {
 
         Page<MesQueryResponseDto.MesItemDto> mesList = mesService.getMesList(quotationId, status, PageRequest.of(page, size));
@@ -52,12 +49,9 @@ public class MesController {
      * MES 상세 조회
      */
     @GetMapping("/{mesId}")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "MES 상세 조회",
-            description = "작업 지시(MES)의 상세 정보와 공정별 진행 상태를 조회합니다."
-    )
+
     public ResponseEntity<MesDetailResponseDto> getMesDetail(
-            @io.swagger.v3.oas.annotations.Parameter(description = "MES ID")
+
             @PathVariable String mesId) {
 
         MesDetailResponseDto result = mesService.getMesDetail(mesId);
@@ -69,12 +63,9 @@ public class MesController {
      * MES 시작
      */
     @PostMapping("/{mesId}/starts")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "MES 시작",
-            description = "PENDING 상태의 MES를 시작하고 자재를 소비합니다."
-    )
+
     public DeferredResult<ResponseEntity<?>> startMes(
-            @io.swagger.v3.oas.annotations.Parameter(description = "MES ID")
+
             @PathVariable String mesId,
             @RequestParam String requesterId
             ) {
@@ -86,16 +77,13 @@ public class MesController {
      * 공정 시작
      */
     @PostMapping("/{mesId}/operations/{logId}/starts")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "공정 시작",
-            description = "특정 공정을 시작합니다. 이전 공정들이 모두 완료되어야 합니다. logId는 MesOperationLog의 ID입니다."
-    )
+
     public ResponseEntity<Void> startOperation(
-            @io.swagger.v3.oas.annotations.Parameter(description = "MES ID")
+
             @PathVariable String mesId,
-            @io.swagger.v3.oas.annotations.Parameter(description = "MesOperationLog ID")
+
             @PathVariable String logId,
-            @io.swagger.v3.oas.annotations.Parameter(description = "담당자 ID (선택)")
+
             @RequestParam(required = false) String managerId) {
 
         mesService.startOperation(mesId, logId, managerId);
@@ -107,14 +95,11 @@ public class MesController {
      * 공정 완료
      */
     @PostMapping("/{mesId}/operations/{logId}/completions")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "공정 완료",
-            description = "IN_PROGRESS 상태의 공정을 완료하고 진행률을 업데이트합니다. logId는 MesOperationLog의 ID입니다."
-    )
+
     public ResponseEntity<Void> completeOperation(
-            @io.swagger.v3.oas.annotations.Parameter(description = "MES ID")
+
             @PathVariable String mesId,
-            @io.swagger.v3.oas.annotations.Parameter(description = "MesOperationLog ID")
+
             @PathVariable String logId) {
 
         mesService.completeOperation(mesId, logId);
@@ -126,12 +111,9 @@ public class MesController {
      * MES 완료
      */
     @PostMapping("/{mesId}/completions")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "MES 완료",
-            description = "모든 공정이 완료된 MES를 완료 처리하고 완제품 재고를 증가시킵니다."
-    )
+
     public DeferredResult<ResponseEntity<?>> completeMes(
-            @io.swagger.v3.oas.annotations.Parameter(description = "MES ID")
+
             @PathVariable String mesId,
             @RequestParam String requesterId
             ) {

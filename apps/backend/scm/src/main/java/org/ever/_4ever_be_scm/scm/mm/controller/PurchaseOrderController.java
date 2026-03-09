@@ -1,6 +1,6 @@
 package org.ever._4ever_be_scm.scm.mm.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_scm.api.scm.mm.PurchaseOrderApi;
 import java.time.LocalDate;
 import org.ever._4ever_be_scm.common.exception.ErrorCode;
 import org.ever._4ever_be_scm.common.exception.handler.ProblemDetailFactory;
@@ -19,25 +19,25 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
 
-@Tag(name = "구매관리", description = "구매 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp/mm/purchase-orders")
 @RequiredArgsConstructor
-public class PurchaseOrderController {
-    
+public class PurchaseOrderController implements PurchaseOrderApi {
+
     private final PurchaseOrderService purchaseOrderService;
 
     @GetMapping
     public ResponseEntity<PagedResponseDto<PurchaseOrderListResponseDto>> getPurchaseOrderList(
             @RequestParam(defaultValue = "ALL") String statusCode,
-            @io.swagger.v3.oas.annotations.Parameter(description = "검색 타입 (SupplierCompanyName, PurchaseOrderNumber)")
+
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         PurchaseOrderSearchVo searchVo = PurchaseOrderSearchVo.builder()
                 .statusCode(statusCode)
                 .type(type)
@@ -47,10 +47,10 @@ public class PurchaseOrderController {
                 .page(page)
                 .size(size)
                 .build();
-        
+
         Page<PurchaseOrderListResponseDto> purchaseOrders = purchaseOrderService.getPurchaseOrderList(searchVo);
         PagedResponseDto<PurchaseOrderListResponseDto> response = PagedResponseDto.from(purchaseOrders);
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -82,9 +82,9 @@ public class PurchaseOrderController {
     @GetMapping("/{purchaseOrderId}")
     public ResponseEntity<PurchaseOrderDetailResponseDto> getPurchaseOrderDetail(
             @PathVariable String purchaseOrderId) {
-        
+
         PurchaseOrderDetailResponseDto detail = purchaseOrderService.getPurchaseOrderDetail(purchaseOrderId);
-        
+
         return ResponseEntity.ok(detail);
     }
 
