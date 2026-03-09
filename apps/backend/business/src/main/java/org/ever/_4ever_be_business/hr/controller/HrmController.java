@@ -1,6 +1,6 @@
 package org.ever._4ever_be_business.hr.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
+import org.ever._4ever_be_business.api.hr.HrmApi;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +59,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/hrm")
 @RequiredArgsConstructor
-public class HrmController {
+public class HrmController implements HrmApi {
 
     private final DepartmentService departmentService;
     private final PositionService positionService;
@@ -1066,7 +1066,7 @@ public class HrmController {
     }
 
     @PostMapping("/employee-users")
-    @Operation(summary = "내부 사용자 생성", description = "내부 사용자 생성을 비동기로 처리합니다.")
+
     public DeferredResult<ResponseEntity<?>> createEmployeeUser(
             @RequestBody @Valid EmployeeCreateRequestDto requestDto
     ) {

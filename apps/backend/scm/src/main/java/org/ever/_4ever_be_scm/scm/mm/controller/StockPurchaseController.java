@@ -1,17 +1,17 @@
 package org.ever._4ever_be_scm.scm.mm.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_scm.api.scm.mm.StockPurchaseApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_scm.scm.mm.dto.StockPurchaseRequestDto;
 import org.ever._4ever_be_scm.scm.mm.service.StockPurchaseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "구매관리", description = "구매 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp/mm/stock-purchase-requisitions")
 @RequiredArgsConstructor
-public class StockPurchaseController {
+public class StockPurchaseController implements StockPurchaseApi {
 
     private final StockPurchaseService stockPurchaseService;
 

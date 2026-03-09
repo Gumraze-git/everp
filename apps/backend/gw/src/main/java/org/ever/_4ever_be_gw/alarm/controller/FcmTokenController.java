@@ -1,6 +1,6 @@
 package org.ever._4ever_be_gw.alarm.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
+import org.ever._4ever_be_gw.api.alarm.FcmTokenApi;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 @RequiredArgsConstructor
 @Slf4j
-public class FcmTokenController {
+public class FcmTokenController implements FcmTokenApi {
 
     private final AlarmHttpService alarmHttpService;
 
 
     // ===== FCM 토큰 등록 =====
     @PostMapping("/register")
-    @Operation(summary = "FCM 토큰 등록", description = "사용자의 FCM 토큰을 등록합니다.")
+
     public ResponseEntity<Object> registerFcmToken(
         @AuthenticationPrincipal EverUserPrincipal principal,
         EverJwtAuthenticationToken authentication,

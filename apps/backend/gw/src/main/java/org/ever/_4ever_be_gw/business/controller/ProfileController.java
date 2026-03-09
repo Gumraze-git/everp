@@ -1,6 +1,6 @@
 package org.ever._4ever_be_gw.business.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.api.business.ProfileApi;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,12 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "프로필", description = "프로필 API")
+
 @RestController
 @RequestMapping("/business/profile")
 @RequiredArgsConstructor
 @Slf4j
-public class ProfileController {
+public class ProfileController implements ProfileApi {
 
     private final RestClientProvider restClientProvider;
 

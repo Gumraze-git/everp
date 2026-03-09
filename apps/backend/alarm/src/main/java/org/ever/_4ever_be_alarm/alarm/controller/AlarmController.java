@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_alarm.api.alarm.AlarmApi;
 import org.ever._4ever_be_alarm.alarm.dto.request.AlarmRequestDto;
 import org.ever._4ever_be_alarm.alarm.dto.response.AlarmResponseDto;
 import org.ever._4ever_be_alarm.alarm.service.AlarmService;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/payments")
 @RequiredArgsConstructor
-public class AlarmController {
+public class AlarmController implements AlarmApi {
 
     private final AlarmService paymentService;
 

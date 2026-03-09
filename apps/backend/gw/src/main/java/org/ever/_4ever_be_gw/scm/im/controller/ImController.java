@@ -1,6 +1,6 @@
 package org.ever._4ever_be_gw.scm.im.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.api.scm.im.ImApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
@@ -24,16 +24,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "재고관리(IM)", description = "재고 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp/iv")
 @RequiredArgsConstructor
-public class ImController {
+public class ImController implements ImApi {
 
     private final ImHttpService imHttpService;
 
     @GetMapping("/inventory-items")
-    @io.swagger.v3.oas.annotations.Operation(summary = "재고 목록 조회")
+
     public ResponseEntity<Object> getInventoryItems(
             @RequestParam(name = "type", required = false) String type,
             @RequestParam(name = "keyword", required = false) String keyword,
@@ -45,13 +45,13 @@ public class ImController {
     }
 
     @PostMapping("/items")
-    @io.swagger.v3.oas.annotations.Operation(summary = "원자재 추가 (재고관리에서 사용) ")
+
     public ResponseEntity<Object> addInventoryItem(@RequestBody AddInventoryItemRequest request) {
         return imHttpService.addInventoryItem(request);
     }
 
     @PatchMapping("/items/{itemId}/safety-stock")
-    @io.swagger.v3.oas.annotations.Operation(summary = "안전재고 수정")
+
     public ResponseEntity<Object> updateSafetyStock(
             @PathVariable String itemId,
             @RequestParam Integer safetyStock
@@ -60,13 +60,13 @@ public class ImController {
     }
 
     @GetMapping("/items/{itemId}")
-    @io.swagger.v3.oas.annotations.Operation(summary = "재고 상세 조회")
+
     public ResponseEntity<Object> getInventoryItemDetail(@PathVariable String itemId) {
         return imHttpService.getInventoryItemDetail(itemId);
     }
 
     @GetMapping("/shortage")
-    @io.swagger.v3.oas.annotations.Operation(summary = "부족 재고 목록 조회")
+
     public ResponseEntity<Object> getShortageItems(
             @RequestParam(required = false) String statusCode,
             @RequestParam(defaultValue = "0") int page,
@@ -76,26 +76,26 @@ public class ImController {
     }
 
     @GetMapping("/shortage-previews")
-    @io.swagger.v3.oas.annotations.Operation(summary = "부족 재고 간단 조회")
+
     public ResponseEntity<Object> getShortageItemsPreview() {
         return imHttpService.getShortageItemsPreview();
     }
 
     @GetMapping("/item-options")
-    @io.swagger.v3.oas.annotations.Operation(summary = "자재 추가 시 자재 토글 목록 조회")
+
     public ResponseEntity<Object> getItemToggleList() {
         return imHttpService.getItemOptions();
     }
 
     @GetMapping("/stock-transfers")
-    @io.swagger.v3.oas.annotations.Operation(summary = "재고 이동 목록 조회 (상위 5개)")
+
     public ResponseEntity<Object> getStockTransfers() {
         return imHttpService.getStockTransfers();
     }
 
     @PostMapping("/stock-transfers")
     @PreAuthorize("hasAnyAuthority('IM_USER', 'IM_ADMIN', 'ALL_ADMIN')")
-    @io.swagger.v3.oas.annotations.Operation(summary = "창고간 재고 이동")
+
     public ResponseEntity<Object> createStockTransfer(
             @RequestBody StockTransferRequestDto request,
             @AuthenticationPrincipal EverUserPrincipal principal
@@ -104,7 +104,7 @@ public class ImController {
     }
 
     @GetMapping("/warehouses")
-    @io.swagger.v3.oas.annotations.Operation(summary = "창고 목록 조회")
+
     public ResponseEntity<Object> getWarehouses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -112,7 +112,7 @@ public class ImController {
     }
 
     @GetMapping("/warehouses/{warehouseId}")
-    @io.swagger.v3.oas.annotations.Operation(summary = "창고 상세 조회")
+
     public ResponseEntity<Object> getWarehouseDetail(@PathVariable String warehouseId) {
         return imHttpService.getWarehouseDetail(warehouseId);
     }
@@ -124,20 +124,20 @@ public class ImController {
 
     @PostMapping("/warehouses")
     @PreAuthorize("hasAnyAuthority('IM_USER', 'IM_ADMIN', 'ALL_ADMIN')")
-    @io.swagger.v3.oas.annotations.Operation(summary = "창고 추가")
+
     public ResponseEntity<Object> createWarehouse(@RequestBody WarehouseCreateRequestDto request) {
         return imHttpService.createWarehouse(request);
     }
 
     @PostMapping("/items/search")
     @PreAuthorize("hasAnyAuthority('IM_USER', 'IM_ADMIN', 'ALL_ADMIN')")
-    @io.swagger.v3.oas.annotations.Operation(summary = "재고성 구매요청을 위한 item 정보 get")
+
     public ResponseEntity<Object> getItemInfoList(@RequestBody ItemInfoRequest request) {
         return imHttpService.searchItems(request);
     }
 
     @PutMapping("/warehouses/{warehouseId}")
-    @io.swagger.v3.oas.annotations.Operation(summary = "창고 정보 수정")
+
     public ResponseEntity<Object> updateWarehouse(
             @PathVariable String warehouseId,
             @RequestBody WarehouseUpdateRequestDto request
@@ -146,7 +146,7 @@ public class ImController {
     }
 
     @GetMapping("/warehouse-options")
-    @io.swagger.v3.oas.annotations.Operation(summary = "창고 드롭다운 목록 조회")
+
     public ResponseEntity<Object> getWarehouseDropdown(@RequestParam(required = false) String warehouseId) {
         return imHttpService.getWarehouseOptions(warehouseId);
     }

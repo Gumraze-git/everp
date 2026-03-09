@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_alarm.api.notification.NotificationApi;
 import org.ever._4ever_be_alarm.common.response.PageResponseDto;
 import org.ever._4ever_be_alarm.common.validation.AllowedValues;
 import org.ever._4ever_be_alarm.common.validation.ValidUuidV7;
@@ -30,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
 @Validated
-public class NotificationController {
+public class NotificationController implements NotificationApi {
 
     private final NotificationQueryUseCase notificationQueryUseCase;
 

@@ -1,6 +1,6 @@
 package org.ever._4ever_be_scm.scm.pp.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_scm.api.scm.pp.PpStatisticsApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_scm.scm.pp.dto.PpStatisticsResponseDto;
 import org.ever._4ever_be_scm.scm.pp.service.PpStatisticsService;
@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * PP 통계 관리 컨트롤러
  */
-@Tag(name = "생산관리", description = "생산 관리 통계 API")
+
 @RestController
 @RequestMapping("/scm-pp/pp")
 @RequiredArgsConstructor
-public class PpStatisticsController {
+public class PpStatisticsController implements PpStatisticsApi {
 
     private final PpStatisticsService ppStatisticsService;
 
@@ -26,10 +26,7 @@ public class PpStatisticsController {
      * @return 생산 관련 통계 정보
      */
     @GetMapping("/metrics")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "PP 통계 조회",
-            description = "생산관리의 통계를 반환합니다. 생산중인 품목, 완료된 생산, 완제품 개수 포함"
-    )
+
     public ResponseEntity<PpStatisticsResponseDto> getPpStatistic() {
         PpStatisticsResponseDto statistics = ppStatisticsService.getPpStatistics();
 

@@ -1,6 +1,6 @@
 package org.ever._4ever_be_gw.scm.pp.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.api.scm.pp.PpApi;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +24,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriBuilder;
 
-@Tag(name = "생산관리(PP)", description = "생산 관리 API")
+
 @RestController
 @RequestMapping("/scm-pp/pp")
 @RequiredArgsConstructor
-public class PpController {
+public class PpController implements PpApi {
 
     private final PpHttpService ppHttpService;
 
@@ -316,10 +316,7 @@ public class PpController {
     }
 
     @GetMapping("/metrics")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "PP 통계 조회",
-            description = "생산관리의 통계를 반환합니다. 생산중인 품목, 완료된 생산, 완제품 개수 포함"
-    )
+
     public ResponseEntity<Object> getPpStatistic() {
         return ppHttpService.get("PP 통계 조회", "/scm-pp/pp/metrics");
     }

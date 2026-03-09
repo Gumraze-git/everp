@@ -1,6 +1,6 @@
 package org.ever._4ever_be_gw.scm.im.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ever._4ever_be_gw.api.scm.im.OrderApi;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.scm.im.dto.SalesOrderStatusChangeRequestDto;
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "재고관리(IM)", description = "재고 관리 API")
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/scm-pp")
-public class OrderController {
+public class OrderController implements OrderApi {
 
     private final ImHttpService imHttpService;
 
@@ -52,10 +52,7 @@ public class OrderController {
     }
 
     @PostMapping("/sales-orders/{salesOrderId}/shipments")
-    @io.swagger.v3.oas.annotations.Operation(
-            summary = "출고 배송 상태 변경",
-            description = "출고 준비 완료 상태를 배송중 상태로 변경합니다."
-    )
+
     public ResponseEntity<Void> createShipment(
             @PathVariable String salesOrderId,
             @RequestBody SalesOrderStatusChangeRequestDto requestDto,
