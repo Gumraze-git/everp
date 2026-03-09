@@ -10,22 +10,22 @@ import org.ever._4ever_be_gw.business.service.SdHttpService;
 import org.ever._4ever_be_gw.common.exception.BusinessException;
 import org.ever._4ever_be_gw.common.exception.ErrorCode;
 import org.ever._4ever_be_gw.config.webclient.ApiClientKey;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
+import org.ever._4ever_be_gw.config.restclient.RestClientProvider;
 import org.ever._4ever_be_gw.facade.dto.DashboardWorkflowItemDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClient.RequestHeadersSpec;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SdHttpServiceImpl implements SdHttpService {
 
-    private final WebClientProvider webClientProvider;
+    private final RestClientProvider restClientProvider;
 
     @Override
     public ResponseEntity<Object> getDashboardStatistics() {
@@ -98,7 +98,7 @@ public class SdHttpServiceImpl implements SdHttpService {
         log.debug("고객사 등록 요청 - body: {}", requestBody);
         return toEntity(
             "고객사 등록",
-            businessClient().post().uri("/sd/customers").bodyValue(requestBody),
+            businessClient().post().uri("/sd/customers").body(requestBody),
             Object.class
         );
     }
@@ -118,7 +118,7 @@ public class SdHttpServiceImpl implements SdHttpService {
         log.debug("고객사 정보 수정 요청 - customerId: {}, body: {}", customerId, requestBody);
         return toEntity(
             "고객사 정보 수정",
-            businessClient().patch().uri("/sd/customers/{customerId}", customerId).bodyValue(requestBody),
+            businessClient().patch().uri("/sd/customers/{customerId}", customerId).body(requestBody),
             Object.class
         );
     }
@@ -276,7 +276,7 @@ public class SdHttpServiceImpl implements SdHttpService {
             businessClient().post()
                 .uri("/sd/quotations")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(enrichedBody),
+                .body(enrichedBody),
             Object.class
         );
     }
@@ -298,7 +298,7 @@ public class SdHttpServiceImpl implements SdHttpService {
             "견적서 승인 및 주문 생성",
             businessClient().post()
                 .uri("/sd/quotations/{quotationId}/orders", quotationId)
-                .bodyValue(enrichedBody),
+                .body(enrichedBody),
             Object.class
         );
     }
@@ -318,7 +318,7 @@ public class SdHttpServiceImpl implements SdHttpService {
         log.debug("견적서 거부 요청 - quotationId: {}, body: {}", quotationId, requestBody);
         return toEntity(
             "견적서 거부",
-            businessClient().post().uri("/sd/quotations/{quotationId}/rejections", quotationId).bodyValue(requestBody),
+            businessClient().post().uri("/sd/quotations/{quotationId}/rejections", quotationId).body(requestBody),
             Object.class
         );
     }
@@ -328,7 +328,7 @@ public class SdHttpServiceImpl implements SdHttpService {
         log.debug("재고 확인 요청 - body: {}", requestBody);
         return toEntity(
             "재고 확인",
-            businessClient().post().uri("/sd/inventory-checks").bodyValue(requestBody),
+            businessClient().post().uri("/sd/inventory-checks").body(requestBody),
             Object.class
         );
     }
@@ -449,8 +449,8 @@ public class SdHttpServiceImpl implements SdHttpService {
         );
     }
 
-    private WebClient businessClient() {
-        return webClientProvider.getWebClient(ApiClientKey.BUSINESS);
+    private RestClient businessClient() {
+        return restClientProvider.getRestClient(ApiClientKey.BUSINESS);
     }
 
     private void requireUserId(String userId, String label) {
@@ -465,8 +465,8 @@ public class SdHttpServiceImpl implements SdHttpService {
         Class<T> responseType
     ) {
         try {
-            return requireEntity(operation, requestSpec.retrieve().toEntity(responseType).block());
-        } catch (WebClientResponseException ex) {
+            return requireEntity(operation, requestSpec.retrieve().toEntity(responseType));
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - Status: {}, Body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (BusinessException ex) {
@@ -483,8 +483,8 @@ public class SdHttpServiceImpl implements SdHttpService {
         ParameterizedTypeReference<T> responseType
     ) {
         try {
-            return requireEntity(operation, requestSpec.retrieve().toEntity(responseType).block());
-        } catch (WebClientResponseException ex) {
+            return requireEntity(operation, requestSpec.retrieve().toEntity(responseType));
+        } catch (RestClientResponseException ex) {
             log.error("{} 실패 - Status: {}, Body: {}", operation, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         } catch (BusinessException ex) {
