@@ -5,11 +5,9 @@ export const dynamic = 'force-dynamic';
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <PrivateGuard>
       <Header />
-      <main className="pt-16 min-h-screen bg-gray-50">
-        <PrivateGuard>{children}</PrivateGuard>
-      </main>
-    </>
+      <main className="pt-16 min-h-screen bg-gray-50">{children}</main>
+    </PrivateGuard>
   );
 }

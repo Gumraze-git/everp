@@ -3,8 +3,8 @@
 import { QueryClientProvider, HydrationBoundary, DehydratedState } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
-import { QueryClient } from '@tanstack/react-query';
 import { ModalProvider } from './components/common/modal/ModalProvider';
+import { createQueryClient } from '@/lib/queryClient';
 
 export default function Providers({
   children,
@@ -13,7 +13,7 @@ export default function Providers({
   children: React.ReactNode;
   dehydratedState?: DehydratedState | null;
 }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => createQueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>

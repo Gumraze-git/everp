@@ -2,13 +2,20 @@
 const DEFAULT_API_BASE_URL = 'http://localhost:18080/api';
 const DEFAULT_AUTH_BASE_URL = 'http://localhost:18081';
 
-const ENV_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-const ENV_AUTH_BASE_URL = process.env.NEXT_PUBLIC_AUTH_BASE_URL?.trim();
+const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+const PUBLIC_AUTH_BASE_URL = process.env.NEXT_PUBLIC_AUTH_BASE_URL?.trim();
+const INTERNAL_API_BASE_URL = process.env.INTERNAL_API_BASE_URL?.trim();
+const INTERNAL_AUTH_BASE_URL = process.env.INTERNAL_AUTH_BASE_URL?.trim();
 
-export const API_BASE_URL =
-  ENV_API_BASE_URL && ENV_API_BASE_URL.length > 0 ? ENV_API_BASE_URL : DEFAULT_API_BASE_URL;
-export const AUTH_BASE_URL =
-  ENV_AUTH_BASE_URL && ENV_AUTH_BASE_URL.length > 0 ? ENV_AUTH_BASE_URL : DEFAULT_AUTH_BASE_URL;
+const isServer = typeof window === 'undefined';
+
+export const API_BASE_URL = isServer
+  ? INTERNAL_API_BASE_URL || PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL
+  : PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL;
+
+export const AUTH_BASE_URL = isServer
+  ? INTERNAL_AUTH_BASE_URL || PUBLIC_AUTH_BASE_URL || DEFAULT_AUTH_BASE_URL
+  : PUBLIC_AUTH_BASE_URL || DEFAULT_AUTH_BASE_URL;
 
 export const SALES_BASE_PATH = `${API_BASE_URL}/business/sd`;
 export const FINANCE_BASE_PATH = `${API_BASE_URL}/business/fcm`;

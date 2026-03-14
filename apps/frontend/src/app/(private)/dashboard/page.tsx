@@ -1,61 +1,60 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
 import QuickActions from '@/app/(private)/dashboard/components/QuickActions';
 import WorkflowStatus from '@/app/(private)/dashboard/components/WorkflowStatus';
-import Providers from '@/app/providers';
-import { getQueryClient } from '@/lib/queryClient';
-import { dehydrate } from '@tanstack/react-query';
 import StatSection from '@/app/components/common/StatSection';
 import { getDashboardStats, getWorkflowStatus } from '@/app/(private)/dashboard/dashboard.api';
 import { mapDashboardStatsToCards } from './dashboard.service';
+import { DashboardWorkflowRes } from './types/DashboardWorkflowType';
+import { EMPTY_STAT_CARDS_BY_PERIOD } from '@/app/types/StatType';
+import { useAuthStore } from '@/store/authStore';
 
-export default async function DashboardPage() {
-  const queryClient = getQueryClient();
+const EMPTY_WORKFLOW_DATA: DashboardWorkflowRes = {
+  tabs: [
+    { tabCode: 'first', items: [] },
+    { tabCode: 'second', items: [] },
+  ],
+};
 
-  await queryClient.prefetchQuery({
+export default function DashboardPage() {
+  const authStatus = useAuthStore((state) => state.authStatus);
+  const isAuthenticated = authStatus === 'authenticated';
+
+  const dashboardStatsQuery = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: getDashboardStats,
+    enabled: isAuthenticated,
   });
-  const dashboardStats = await getDashboardStats();
 
-  await queryClient.prefetchQuery({
+  const workflowStatusQuery = useQuery({
     queryKey: ['workflowStatus'],
     queryFn: getWorkflowStatus,
+    enabled: isAuthenticated,
   });
 
-  const workflowData = await getWorkflowStatus();
-
-  const dehydratedState = dehydrate(queryClient);
-  const dashboardStatsData = mapDashboardStatsToCards(dashboardStats);
+  const dashboardStatsData = dashboardStatsQuery.data
+    ? mapDashboardStatsToCards(dashboardStatsQuery.data)
+    : EMPTY_STAT_CARDS_BY_PERIOD;
+  const workflowData = workflowStatusQuery.data ?? EMPTY_WORKFLOW_DATA;
 
   return (
-    <Providers dehydratedState={dehydratedState}>
-      <div className="min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* 페이지 헤더 */}
-          <StatSection
-            title="대시보드"
-            subTitle="기업 자원 관리 현황"
-            statsData={dashboardStatsData}
-          />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 mb-8">
-            {/* 빠른 작업 */}
-            <div className="lg:col-span-1">
-              <QuickActions />
-            </div>
-
-            {/* 워크플로우 현황 */}
-            <div className="lg:col-span-2">
-              <WorkflowStatus $workflowData={workflowData} />
-            </div>
+    <div className="min-h-screen">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <StatSection
+          title="대시보드"
+          subTitle="기업 자원 관리 현황"
+          statsData={dashboardStatsData}
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 mb-8">
+          <div className="lg:col-span-1">
+            <QuickActions />
           </div>
-        </main>
-
-        {/* 리포트 다운로드 */}
-        {/* <ReportDownloadModal
-          isOpen={isDownloadModalOpen}
-          onClose={() => setIsDownloadModalOpen(false)}
-          selectedPeriod={selectedPeriod}
-        /> */}
-      </div>
-    </Providers>
+          <div className="lg:col-span-2">
+            <WorkflowStatus $workflowData={workflowData} />
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -22,3 +22,10 @@ export interface StatCardType {
   iconBg?: string;
   iconColor?: string;
 }
+
+export const EMPTY_STAT_CARDS_BY_PERIOD: Record<Period, StatCardType[]> = {
+  week: [],
+  month: [],
+  quarter: [],
+  year: [],
+};

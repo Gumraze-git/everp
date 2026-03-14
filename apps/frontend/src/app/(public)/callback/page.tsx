@@ -1,35 +1,29 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { startAuthorization } from '@/lib/auth/startAuthorization';
 import { USER_ENDPOINTS } from '@/app/types/api';
 import { getUserInfo } from './callback.api';
 import { useAuthStore } from '@/store/authStore';
 import Cookies from 'js-cookie';
-import { persistAccessToken } from '@/lib/auth/tokenStorage';
-
-// const REDIRECT_URI = 'http://localhost:13000/callback'; // 로컬 예시
-const REDIRECT_URI = 'https://everp.co.kr/callback'; // 서버용
+import { clearAccessToken, persistAccessToken } from '@/lib/auth/tokenStorage';
+import { getOauthClientId, getOauthRedirectUri } from '@/lib/auth/config';
 
 function cleanupPkce() {
   localStorage.removeItem('pkce_verifier');
   localStorage.removeItem('oauth_state');
 }
 
-// 키 생성 로직 추가
-function makeBasicAuthHeader(clientId: string, clientSecret: string): string {
-  const plain = `${clientId}:${clientSecret}`;
-  const utf8 = new TextEncoder().encode(plain);
-  let binary = '';
-  for (let i = 0; i < utf8.length; i++) binary += String.fromCharCode(utf8[i]);
-  const encoded = btoa(binary);
-  return `Basic ${encoded}`;
-}
-
 export default function CallbackPage() {
-  const { setUserInfo } = useAuthStore();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const setAuthenticatedUser = useAuthStore((state) => state.setAuthenticatedUser);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const setAuthStatus = useAuthStore((state) => state.setAuthStatus);
+
   useEffect(() => {
+    const returnTo = localStorage.getItem('oauth_return_to') || '/';
+
     (async () => {
       try {
         const q = new URLSearchParams(window.location.search);
@@ -37,24 +31,18 @@ export default function CallbackPage() {
         const state = q.get('state');
         const expected = localStorage.getItem('oauth_state');
 
-        console.log('state', state);
-        console.log('expected', expected);
-        console.log(localStorage.getItem('oauth_state'));
-
         if (!code || !state || !expected || state !== expected) {
           cleanupPkce();
           throw new Error('Invalid state or code');
         }
 
         const verifier = localStorage.getItem('pkce_verifier');
-        console.log('verify', verifier);
         if (!verifier) throw new Error('Missing PKCE verifier');
 
         const body = new URLSearchParams({
           grant_type: 'authorization_code',
-          // client_id: 'everp-spa', // 로컬용
-          client_id: 'everp', // 배포용
-          redirect_uri: REDIRECT_URI,
+          client_id: getOauthClientId(),
+          redirect_uri: getOauthRedirectUri(),
           code,
           code_verifier: verifier,
         });
@@ -62,9 +50,8 @@ export default function CallbackPage() {
         const res = await axios.post(USER_ENDPOINTS.LOGIN, body.toString(), {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            // 동적으로 키 생성
-            Authorization: makeBasicAuthHeader('everp', 'super-secret'),
           },
+          withCredentials: true,
         });
 
         const { access_token, expires_in } = res.data;
@@ -72,11 +59,9 @@ export default function CallbackPage() {
         persistAccessToken(access_token, expires_in);
 
         const userInfo = await getUserInfo();
-        setUserInfo(userInfo);
+        setAuthenticatedUser(userInfo);
         Cookies.set('role', userInfo.userRole.toUpperCase(), { path: '/', sameSite: 'lax' });
         cleanupPkce();
-
-        const returnTo = localStorage.getItem('oauth_return_to') || '/';
         localStorage.removeItem('oauth_return_to');
         localStorage.removeItem('oauth_state');
 
@@ -84,7 +69,6 @@ export default function CallbackPage() {
         window.location.replace(returnTo);
       } catch (error: unknown) {
         let errMessage = 'token_exchange_failed';
-        alert(error);
         if (axios.isAxiosError(error)) {
           errMessage =
             error.response?.data?.error ||
@@ -96,16 +80,47 @@ export default function CallbackPage() {
         }
 
         cleanupPkce();
+        clearAccessToken();
+        Cookies.remove('role', { path: '/' });
+        clearAuth();
 
-        if (errMessage === 'invalid_grant') {
-          startAuthorization('/');
+        if (errMessage === 'Invalid state or code' || errMessage === 'Missing PKCE verifier') {
+          setAuthStatus('redirecting');
+          startAuthorization(returnTo);
           return;
         }
 
-        throw new Error(errMessage);
+        if (errMessage === 'invalid_grant') {
+          setAuthStatus('redirecting');
+          startAuthorization(returnTo);
+          return;
+        }
+
+        setErrorMessage(errMessage);
       }
     })();
-  }, [setUserInfo]);
+  }, [clearAuth, setAuthenticatedUser, setAuthStatus]);
+
+  if (errorMessage) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 flex items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-3xl border border-red-200 bg-white shadow-xl shadow-slate-200/60 px-10 py-12 text-center space-y-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
+            <i className="ri-error-warning-line text-3xl" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-slate-900">로그인 처리에 실패했어요</h1>
+            <p className="text-sm leading-relaxed text-slate-600">
+              인증 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.
+            </p>
+          </div>
+          <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-left text-sm text-red-600">
+            {errorMessage}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 flex items-center justify-center px-4">

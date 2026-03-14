@@ -8,27 +8,32 @@ import NotificationDropdown from './Notification/NoificationDropdown';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationSSE } from './Notification/useNotificationSSE';
 
-function SSEConnector() {
-  const { userInfo } = useAuthStore();
-  const enabled = !!userInfo?.userId;
-
+function SSEConnector({
+  enabled,
+  onUnreadCountChange,
+}: {
+  enabled: boolean;
+  onUnreadCountChange: (count: number) => void;
+}) {
   useNotificationSSE({
-    enabled: enabled,
+    enabled,
     onAlarm: (alarm) => {
       // 알림 수신 시 처리
       console.log('Header/SSEConnector: New alarm received:', alarm);
     },
-    onUnreadCountChange: (count) => {
-      // 읽지 않은 개수 업데이트 처리
-      console.log('Header/SSEConnector: Global Unread count:', count);
-    },
+    onUnreadCountChange,
   });
 
   return null;
 }
 
 export default function Header() {
+  const authStatus = useAuthStore((state) => state.authStatus);
+  const userInfo = useAuthStore((state) => state.userInfo);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [sseUnreadCount, setSseUnreadCount] = useState<number | null>(null);
+  const isAuthenticated = authStatus === 'authenticated';
+  const sseEnabled = isAuthenticated && !!userInfo?.userId;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,7 +50,7 @@ export default function Header() {
         isScrolled ? 'bg-white shadow-sm border-gray-100' : 'bg-gray-50'
       }`}
     >
-      <SSEConnector />
+      <SSEConnector enabled={sseEnabled} onUnreadCountChange={setSseUnreadCount} />
       <div className="min-w-full mx-auto px-8 sm:px-6 lg:px-4">
         <div className="flex justify-between items-center h-16">
           {/* 좌측: 로고 + 네비게이션 바*/}
@@ -56,7 +61,7 @@ export default function Header() {
 
           {/* 우측: 알림 + 프로필 */}
           <div className="flex items-center space-x-4">
-            <NotificationDropdown />
+            <NotificationDropdown sseUnreadCount={sseUnreadCount} />
             <ProfileDropdown />
           </div>
         </div>
