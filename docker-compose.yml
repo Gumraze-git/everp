@@ -193,6 +193,8 @@ services:
       NEXT_PUBLIC_AUTH_BASE_URL: http://localhost:${EVERP_AUTH_PORT:-18081}
       NEXT_PUBLIC_OAUTH_CLIENT_ID: everp-spa
       NEXT_PUBLIC_OAUTH_REDIRECT_URI: ${EVERP_OAUTH_REDIRECT_URI:-http://localhost:13000/callback}
+      INTERNAL_API_BASE_URL: http://gw:8080/api
+      INTERNAL_AUTH_BASE_URL: http://auth:8080
       TZ: Asia/Seoul
     depends_on:
       gw:

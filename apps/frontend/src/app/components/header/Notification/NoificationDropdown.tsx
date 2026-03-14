@@ -22,13 +22,20 @@ import {
 import NotificationHeader from './NotificationHeader';
 import NotificationPagination from './NotificationPagination';
 import NotificationList from './NotificationList';
-import ErrorMessage from '../../common/ErrorMessage';
+import { useAuthStore } from '@/store/authStore';
 
-export default function NotificationDropdown() {
+interface NotificationDropdownProps {
+  sseUnreadCount?: number | null;
+}
+
+export default function NotificationDropdown({
+  sseUnreadCount = null,
+}: NotificationDropdownProps) {
+  const authStatus = useAuthStore((state) => state.authStatus);
   const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [sseUnreadCount, setSseUnreadCount] = useState<number | null>(null);
   const ITEMS_PER_PAGE = 3;
+  const isAuthenticated = authStatus === 'authenticated';
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
@@ -52,19 +59,8 @@ export default function NotificationDropdown() {
   } = useQuery({
     queryKey: ['notificationList', currentPage],
     queryFn: () => fetchNotifications(currentPage, ITEMS_PER_PAGE),
+    enabled: isAuthenticated && isOpen,
   });
-
-  // // SSE 연결 (실시간 알림)
-  // const { error } = useNotificationSSE({
-  //   enabled: true,
-  //   onAlarm: (alarm) => {
-  //     console.log('New alarm received:', alarm);
-  //     // 토스트 알림 등 추가 처리 가능
-  //   },
-  //   onUnreadCountChange: (count) => {
-  //     setSseUnreadCount(count);
-  //   },
-  // });
 
   // 알림 전체 읽기
   const { mutate: readAll } = useMutation({
@@ -126,10 +122,20 @@ export default function NotificationDropdown() {
               className="w-96 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden"
             >
               <NotificationHeader notificationCount={unreadCount} onReadAll={handleReadAll} />
-              <NotificationList
-                notifications={notifications}
-                onNotificationClick={handleNotificationClick}
-              />
+              {isLoading ? (
+                <div className="flex items-center justify-center px-6 py-10 text-sm text-gray-500">
+                  알림 목록을 불러오는 중입니다.
+                </div>
+              ) : isError ? (
+                <div className="flex items-center justify-center px-6 py-10 text-sm text-red-500">
+                  알림 목록을 불러오는 중 오류가 발생했습니다.
+                </div>
+              ) : (
+                <NotificationList
+                  notifications={notifications}
+                  onNotificationClick={handleNotificationClick}
+                />
+              )}
               {pageInfo && (
                 <NotificationPagination page={pageInfo} onPageChange={handlePageChange} />
               )}

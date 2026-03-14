@@ -129,7 +129,7 @@ export function useNotificationSSE({
       abortController.abort();
       abortControllerRef.current = null;
     };
-  }, [enabled, userId, userInfo, queryClient, onAlarm, onUnreadCountChange]);
+  }, [enabled, userId, userInfo, token, queryClient, onAlarm, onUnreadCountChange]);
   return {
     disconnect: () => {
       if (abortControllerRef.current) {
