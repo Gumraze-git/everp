@@ -7,8 +7,8 @@ import org.ever._4ever_be_auth.auth.account.handler.LoginFailureHandler;
 import org.ever._4ever_be_auth.auth.account.handler.LoginSuccessHandler;
 import org.ever._4ever_be_auth.auth.client.filter.ClientValidationFilter;
 import org.ever._4ever_be_auth.auth.client.service.ClientValidationService;
-import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticationFailureHandler;
-import org.ever._4ever_be_auth.auth.oauth.handler.RefreshTokenCookieAuthenticationSuccessHandler;
+import org.ever._4ever_be_auth.auth.oauth.handler.OAuth2TokenResponseFailureHandler;
+import org.ever._4ever_be_auth.auth.oauth.handler.OAuth2TokenResponseSuccessHandler;
 import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationConsentJpaRepository;
 import org.ever._4ever_be_auth.auth.oauth.repository.OAuth2AuthorizationJpaRepository;
 import org.ever._4ever_be_auth.auth.oauth.service.*;
@@ -70,16 +70,17 @@ public class AuthorizationServerConfig {
     ) throws Exception {
         var handler = new CsrfTokenRequestAttributeHandler();
         http
-                .securityMatcher("/login", "/error", "/css/**", "/js/**", "/images/**")
+                // 브라우저가 토큰 교환 전에 XSRF-TOKEN 쿠키를 확보하는 진입점까지 이 체인에서 처리함.
+                .securityMatcher("/login", "/error", "/css/**", "/js/**", "/images/**", "/csrf")
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**", "/csrf").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(handler)
-                        )
+                )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -153,13 +154,14 @@ public class AuthorizationServerConfig {
                 .build())
             .build();
 
-        // 2) 로컬 개발용 SPA(public) 클라이언트 추가
+        // 로컬/브라우저 SPA는 public client + PKCE + refresh grant 조합으로 등록함.
         RegisteredClient spa = RegisteredClient.withId(UuidCreator.getTimeOrdered().toString())
             .clientId("everp-spa")
             // secret 제거 (public client)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
             // Authorization Code + PKCE
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
             .redirectUri(spaRedirectUri)
             .scope("erp.user.profile")
             .scope("offline_access") // 필요 시 refresh token 발급
@@ -175,19 +177,41 @@ public class AuthorizationServerConfig {
         if (existing == null) repository.save(desired);
         else repository.save(RegisteredClient.from(existing)
             .clientSecret(passwordEncoder.encode("super-secret"))
-            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .clientAuthenticationMethods(methods -> {
+                methods.clear();
+                methods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+            })
             .build());
 
-        // spa 저장
+        // 기존 row가 있어도 보안 설정 드리프트가 남지 않도록 코드 기준으로 덮어씀.
         RegisteredClient existingSpa = repository.findByClientId("everp-spa");
         if (existingSpa == null) {
             repository.save(spa);
         } else {
             repository.save(RegisteredClient.from(existingSpa)
+                .clientAuthenticationMethods(methods -> {
+                    methods.clear();
+                    methods.add(ClientAuthenticationMethod.NONE);
+                })
+                .authorizationGrantTypes(grantTypes -> {
+                    grantTypes.clear();
+                    grantTypes.add(AuthorizationGrantType.AUTHORIZATION_CODE);
+                    grantTypes.add(AuthorizationGrantType.REFRESH_TOKEN);
+                })
                 .redirectUris(redirectUris -> {
                     redirectUris.clear();
                     redirectUris.add(spaRedirectUri);
                 })
+                .scopes(scopes -> {
+                    scopes.clear();
+                    scopes.add("erp.user.profile");
+                    scopes.add("offline_access");
+                })
+                .tokenSettings(tokenSettings)
+                .clientSettings(ClientSettings.builder()
+                    .requireProofKey(true)
+                    .requireAuthorizationConsent(false)
+                    .build())
                 .build());
         }
 
@@ -273,9 +297,10 @@ public class AuthorizationServerConfig {
             ClientValidationFilter clientValidationFilter,
             OAuth2AuthorizationService authorizationService,
             OAuth2AuthorizationConsentService authorizationConsentService,
-            RefreshTokenCookieAuthenticationSuccessHandler refreshTokenCookieAuthenticationSuccessHandler,
-            RefreshTokenCookieAuthenticationFailureHandler refreshTokenCookieAuthenticationFailureHandler
+            OAuth2TokenResponseSuccessHandler oauth2TokenResponseSuccessHandler,
+            OAuth2TokenResponseFailureHandler oauth2TokenResponseFailureHandler
     ) throws Exception {
+        var handler = new CsrfTokenRequestAttributeHandler();
 
         // RegisteredClientRepository 주입: JDBC 기반 등록 클라이언트가 애플리케이션 기동 시점에 초기화되도록 보장
         // Configurer 인스턴스를 생성해 인가/토큰/JWKS 등 표준 엔드포인트를 등록하고 OIDC(JWKS 포함)를 활성화
@@ -285,10 +310,12 @@ public class AuthorizationServerConfig {
                 .authorizationService(authorizationService)
                 .authorizationConsentService(authorizationConsentService)
                 .tokenEndpoint(endpoint -> endpoint
+                        // 토큰 발급 성공 시 SPA/기타 클라이언트 응답 전략을 success handler에서 처리함.
                         .accessTokenResponseHandler(
-                                loggingTokenSuccessHandler(refreshTokenCookieAuthenticationSuccessHandler))
+                                loggingTokenSuccessHandler(oauth2TokenResponseSuccessHandler))
+                        // 토큰 발급 실패 시 access/refresh 쿠키 정리까지 failure handler에서 같이 처리함.
                         .errorResponseHandler(
-                                loggingTokenFailureHandler(refreshTokenCookieAuthenticationFailureHandler))
+                                loggingTokenFailureHandler(oauth2TokenResponseFailureHandler))
                 )
         );
 
@@ -301,7 +328,11 @@ public class AuthorizationServerConfig {
                                 "/.well-known/jwks.json"
                         ).permitAll()
                         .anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+                .csrf(csrf -> csrf
+                        // SPA의 토큰 교환/리프레시도 XSRF 헤더를 요구하도록 쿠키 기반 CSRF를 적용함.
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(handler)
+                )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .requestCache(c -> {
                     // 인가 코드 플로우에서는 반드시 SavedRequest가 남도록 보장

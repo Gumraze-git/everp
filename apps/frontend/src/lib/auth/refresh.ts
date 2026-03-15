@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAuthBaseUrl, getOauthClientId } from './config';
+import { buildAuthXsrfHeaders } from './csrf';
 
 export async function trySilentRefresh() {
   const authUrl = getAuthBaseUrl();
@@ -10,10 +11,10 @@ export async function trySilentRefresh() {
       client_id: clientId,
     });
 
+    const headers = await buildAuthXsrfHeaders();
+
     await axios.post(`${authUrl}/oauth2/token`, body.toString(), {
-      headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers,
       withCredentials: true,
     });
   } catch (error) {

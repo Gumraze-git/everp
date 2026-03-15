@@ -7,6 +7,7 @@ import { USER_ENDPOINTS } from '@/app/types/api';
 import { useAuthStore } from '@/store/authStore';
 import Cookies from 'js-cookie';
 import { getOauthClientId, getOauthRedirectUri } from '@/lib/auth/config';
+import { buildAuthXsrfHeaders } from '@/lib/auth/csrf';
 
 function cleanupPkce() {
   localStorage.removeItem('pkce_verifier');
@@ -44,10 +45,10 @@ export default function CallbackPage() {
           code_verifier: verifier,
         });
 
+        const headers = await buildAuthXsrfHeaders();
+
         await axios.post(USER_ENDPOINTS.LOGIN, body.toString(), {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
+          headers,
           withCredentials: true,
         });
         cleanupPkce();
