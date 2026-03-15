@@ -48,7 +48,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
         HttpSecurity http,
-        CookieOrHeaderBearerTokenResolver bearerTokenResolver
+        CookieBearerTokenResolver bearerTokenResolver
     ) throws Exception {
         var handler = new CsrfTokenRequestAttributeHandler();
         http
@@ -68,7 +68,7 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
-                // 외부 클라이언트 호환을 위해 Bearer 헤더는 유지하고, 브라우저는 쿠키 fallback을 허용함.
+                // 브라우저는 access_token 쿠키만 인증 소스로 사용함.
                 .bearerTokenResolver(bearerTokenResolver)
                 .jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter()))
             );
@@ -91,7 +91,6 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(buildAllowedOriginPatterns());
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of(
-            "Authorization",
             "Content-Type",
             "Accept",
             "X-Requested-With",
