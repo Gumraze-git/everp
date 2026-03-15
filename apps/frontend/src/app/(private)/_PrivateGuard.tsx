@@ -8,6 +8,7 @@ import { getUserInfo } from '../(public)/callback/callback.api';
 import { useAuthStore } from '@/store/authStore';
 import Cookies from 'js-cookie';
 import { getCurrentReturnTo } from '@/lib/auth/config';
+import { ensureApiCsrfToken } from '@/lib/api/csrf';
 
 export default function PrivateGuard({ children }: { children: ReactNode }) {
   const authStatus = useAuthStore((state) => state.authStatus);
@@ -37,6 +38,13 @@ export default function PrivateGuard({ children }: { children: ReactNode }) {
 
           setAuthenticatedUser(userInfo);
           Cookies.set('role', userInfo.userRole.toUpperCase(), { path: '/', sameSite: 'lax' });
+
+          try {
+            // 인증 직후 GW 전용 XSRF 쿠키를 미리 확보해 변경 요청을 준비함.
+            await ensureApiCsrfToken();
+          } catch (error) {
+            console.warn('GW CSRF bootstrap failed', error);
+          }
         };
 
         try {
