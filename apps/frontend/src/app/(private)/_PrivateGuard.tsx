@@ -1,12 +1,12 @@
 'use client';
 
 import { ReactNode, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { trySilentRefresh } from '@/lib/auth/refresh';
 import { startAuthorization } from '@/lib/auth/startAuthorization';
 import { getUserInfo } from '../(public)/callback/callback.api';
 import { useAuthStore } from '@/store/authStore';
 import Cookies from 'js-cookie';
-import { clearAccessToken, readStoredToken } from '@/lib/auth/tokenStorage';
 import { getCurrentReturnTo } from '@/lib/auth/config';
 
 export default function PrivateGuard({ children }: { children: ReactNode }) {
@@ -28,31 +28,37 @@ export default function PrivateGuard({ children }: { children: ReactNode }) {
       setAuthStatus('checking');
 
       try {
-        const { token, expiresAt } = readStoredToken();
+        const applyAuthenticatedUser = async () => {
+          const userInfo = await getUserInfo();
 
-        if (!token || !expiresAt || Date.now() > expiresAt) {
-          clearAccessToken();
-          await trySilentRefresh();
-        }
+          if (cancelled) {
+            return;
+          }
 
-        const userInfo = await getUserInfo();
+          setAuthenticatedUser(userInfo);
+          Cookies.set('role', userInfo.userRole.toUpperCase(), { path: '/', sameSite: 'lax' });
+        };
 
-        if (cancelled) {
+        try {
+          await applyAuthenticatedUser();
           return;
+        } catch (error) {
+          const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+          if (status !== 401) {
+            throw error;
+          }
         }
 
-        setAuthenticatedUser(userInfo);
-        Cookies.set('role', userInfo.userRole.toUpperCase(), { path: '/', sameSite: 'lax' });
+        await trySilentRefresh();
+        await applyAuthenticatedUser();
       } catch {
-        if (cancelled) {
-          return;
+        if (!cancelled) {
+          Cookies.remove('role', { path: '/' });
+          clearAuth();
+          setAuthStatus('redirecting');
+          startAuthorization(getCurrentReturnTo());
         }
-
-        clearAccessToken();
-        Cookies.remove('role', { path: '/' });
-        clearAuth();
-        setAuthStatus('redirecting');
-        startAuthorization(getCurrentReturnTo());
       }
     };
 

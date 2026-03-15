@@ -10,19 +10,15 @@ type RetryableRequestConfig = {
   headers?: Record<string, string>;
   url?: string;
   _retry?: boolean;
+  withCredentials?: boolean;
 };
 
 let refreshPromise: Promise<void> | null = null;
-
-async function resolveAccessToken(): Promise<string | null> {
-  if (typeof window !== 'undefined') {
-    return Cookies.get('access_token') ?? null;
-  }
-
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  return cookieStore.get('access_token')?.value ?? null;
-}
+const axiosInstance = axios.create({
+  withCredentials: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+});
 
 function isAuthRequest(url?: string) {
   if (!url) {
@@ -33,27 +29,11 @@ function isAuthRequest(url?: string) {
 }
 
 function clearClientAuthArtifacts() {
-  Cookies.remove('access_token', { path: '/' });
-  Cookies.remove('access_token_expires_at', { path: '/' });
   Cookies.remove('role', { path: '/' });
   useAuthStore.getState().clearAuth();
 }
 
-axios.interceptors.request.use(
-  async (config) => {
-    const token = await resolveAccessToken();
-
-    if (token) {
-      config.headers = config.headers ?? {};
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-axios.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const responseStatus = error.response?.status;
@@ -77,14 +57,8 @@ axios.interceptors.response.use(
       });
 
       await refreshPromise;
-
-      const token = await resolveAccessToken();
-      if (token) {
-        originalRequest.headers = originalRequest.headers ?? {};
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-      }
-
-      return axios(originalRequest);
+      originalRequest.withCredentials = true;
+      return axiosInstance(originalRequest);
     } catch (refreshError) {
       clearClientAuthArtifacts();
       useAuthStore.getState().setAuthStatus('redirecting');
@@ -94,4 +68,4 @@ axios.interceptors.response.use(
   },
 );
 
-export default axios;
+export default axiosInstance;

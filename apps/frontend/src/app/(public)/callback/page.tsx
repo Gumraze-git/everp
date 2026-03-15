@@ -4,10 +4,8 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { startAuthorization } from '@/lib/auth/startAuthorization';
 import { USER_ENDPOINTS } from '@/app/types/api';
-import { getUserInfo } from './callback.api';
 import { useAuthStore } from '@/store/authStore';
 import Cookies from 'js-cookie';
-import { clearAccessToken, persistAccessToken } from '@/lib/auth/tokenStorage';
 import { getOauthClientId, getOauthRedirectUri } from '@/lib/auth/config';
 
 function cleanupPkce() {
@@ -17,7 +15,6 @@ function cleanupPkce() {
 
 export default function CallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const setAuthenticatedUser = useAuthStore((state) => state.setAuthenticatedUser);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const setAuthStatus = useAuthStore((state) => state.setAuthStatus);
 
@@ -47,26 +44,20 @@ export default function CallbackPage() {
           code_verifier: verifier,
         });
 
-        const res = await axios.post(USER_ENDPOINTS.LOGIN, body.toString(), {
+        await axios.post(USER_ENDPOINTS.LOGIN, body.toString(), {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           withCredentials: true,
         });
-
-        const { access_token, expires_in } = res.data;
-
-        persistAccessToken(access_token, expires_in);
-
-        const userInfo = await getUserInfo();
-        setAuthenticatedUser(userInfo);
-        Cookies.set('role', userInfo.userRole.toUpperCase(), { path: '/', sameSite: 'lax' });
         cleanupPkce();
         localStorage.removeItem('oauth_return_to');
         localStorage.removeItem('oauth_state');
+        Cookies.remove('role', { path: '/' });
+        clearAuth();
+        setAuthStatus('checking');
 
-        window.history.replaceState({}, '', new URL(returnTo, window.location.origin).toString());
-        window.location.replace(returnTo);
+        window.location.replace(new URL(returnTo, window.location.origin).toString());
       } catch (error: unknown) {
         let errMessage = 'token_exchange_failed';
         if (axios.isAxiosError(error)) {
@@ -80,7 +71,6 @@ export default function CallbackPage() {
         }
 
         cleanupPkce();
-        clearAccessToken();
         Cookies.remove('role', { path: '/' });
         clearAuth();
 
@@ -99,7 +89,7 @@ export default function CallbackPage() {
         setErrorMessage(errMessage);
       }
     })();
-  }, [clearAuth, setAuthenticatedUser, setAuthStatus]);
+  }, [clearAuth, setAuthStatus]);
 
   if (errorMessage) {
     return (
@@ -144,7 +134,7 @@ export default function CallbackPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-1 text-red-400">•</span>
-              <span>사용자 정보를 불러와 역할을 확인하는 중입니다.</span>
+              <span>브라우저 쿠키를 정리한 뒤 원래 화면으로 돌아갑니다.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-1 text-red-400">•</span>

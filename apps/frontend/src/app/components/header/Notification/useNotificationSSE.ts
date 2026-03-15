@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { NOTIFICATION_ENDPOINTS } from '@/lib/api/notification.endpoints';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { readStoredToken } from '@/lib/auth/tokenStorage';
 import { useAuthStore } from '@/store/authStore';
 
 interface Alarm {
@@ -28,19 +27,19 @@ export function useNotificationSSE({
   onAlarm,
   onUnreadCountChange,
 }: UseNotificationSSEOptions) {
-  const { token } = readStoredToken(); // 토큰
-  const { userInfo } = useAuthStore();
+  const authStatus = useAuthStore((state) => state.authStatus);
+  const userInfo = useAuthStore((state) => state.userInfo);
   const userId = userInfo?.userId || '';
+  const isAuthenticated = authStatus === 'authenticated';
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !userId) {
-      console.info('[SSE] Not connecting: enabled is false or userId is missing.', { userId });
+    if (!enabled || !isAuthenticated || !userId) {
+      console.info('[SSE] Not connecting: auth is not ready or userId is missing.', { userId });
 
-      // 기존 연결이 있다면 종료합니다.
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
@@ -51,10 +50,6 @@ export function useNotificationSSE({
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    // const getToken = () => {
-    //   return localStorage.getItem('accessToken') || '';
-    // };
-
     const connectSSE = async () => {
       const url = NOTIFICATION_ENDPOINTS.SUBSCRIBE;
       console.info('[SSE] Connecting to:', url);
@@ -62,9 +57,7 @@ export function useNotificationSSE({
       try {
         await fetchEventSource(url, {
           signal: abortController.signal,
-          headers: {
-            Authorization: `Bearer ${token}`, // 헤더에 토큰 추가
-          },
+          credentials: 'include',
           onopen: async (response) => {
             if (response.ok) {
               console.info('[SSE] Connection opened successfully');
@@ -80,7 +73,6 @@ export function useNotificationSSE({
           onmessage: (event) => {
             console.log('[SSE] Message received:', event);
 
-            // event.event는 이벤트 타입 (keepalive, alarm, unreadCount)
             switch (event.event) {
               case 'keepalive':
                 console.log('[SSE] Keepalive:', event.data);
@@ -129,7 +121,7 @@ export function useNotificationSSE({
       abortController.abort();
       abortControllerRef.current = null;
     };
-  }, [enabled, userId, userInfo, token, queryClient, onAlarm, onUnreadCountChange]);
+  }, [enabled, isAuthenticated, userId, queryClient, onAlarm, onUnreadCountChange]);
   return {
     disconnect: () => {
       if (abortControllerRef.current) {
