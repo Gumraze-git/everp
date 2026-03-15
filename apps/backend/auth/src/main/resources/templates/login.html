@@ -104,6 +104,44 @@
 
                 <button type="submit" class="submit-button" id="submitBtn">로그인</button>
 
+                <div class="demo-login" th:if="${demoLoginEnabled}">
+                    <button
+                            type="button"
+                            class="demo-login-toggle"
+                            id="demoLoginToggle"
+                            aria-expanded="false"
+                            aria-controls="demoLoginMenu"
+                    >
+                        테스트 계정으로 로그인하기
+                    </button>
+
+                    <div class="demo-login-menu" id="demoLoginMenu" hidden>
+                        <p class="demo-login-caption">카테고리별 대표 테스트 계정을 선택하면 바로 로그인합니다.</p>
+                        <div class="demo-login-groups">
+                            <section class="demo-login-group" th:each="group : ${demoAccountGroups}">
+                                <div class="demo-login-group-header">
+                                    <h2 class="demo-login-group-title" th:text="${group.label}">모듈 사용자</h2>
+                                    <p class="demo-login-group-description" th:text="${group.description}">설명</p>
+                                </div>
+                                <div
+                                        class="demo-login-grid"
+                                        th:classappend="${#lists.size(group.accounts) == 1} ? ' demo-login-grid--single' : ''"
+                                >
+                                    <button
+                                            type="button"
+                                            class="demo-login-item"
+                                            th:each="account : ${group.accounts}"
+                                            th:attr="data-email=${account.email},data-password=${account.password}"
+                                    >
+                                        <span class="demo-login-item-label" th:text="${account.label}">전사 관리자</span>
+                                        <span class="demo-login-item-email" th:text="${account.email}">admin@everp.com</span>
+                                    </button>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="auth-switch">
                     <span>비밀번호를 잊으셨나요?</span>
                     <a th:href="@{/password/reset}">비밀번호 재설정</a>

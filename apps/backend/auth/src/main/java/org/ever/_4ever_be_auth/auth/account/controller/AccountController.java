@@ -4,9 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.ever._4ever_be_auth.auth.account.demo.DemoLoginAccountCatalog;
 import org.ever._4ever_be_auth.auth.account.service.AccountService;
 import org.ever._4ever_be_auth.common.exception.BusinessException;
 import org.ever._4ever_be_auth.common.exception.ErrorCode;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
@@ -22,11 +24,19 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AccountController {
 
     private final AccountService accountService;
+    private final DemoLoginAccountCatalog demoLoginAccountCatalog;
     private static final String AUTHZ_ORIGINAL_URL_KEY = "AUTHZ_ORIGINAL_URL";
+
+    @Value("${everp.auth.demo-login.enabled:false}")
+    private boolean demoLoginEnabled;
 
     // 로그인
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(Model model) {
+        model.addAttribute("demoLoginEnabled", demoLoginEnabled);
+        if (demoLoginEnabled) {
+            model.addAttribute("demoAccountGroups", demoLoginAccountCatalog.loginGroups());
+        }
         return "login";
     }
 
