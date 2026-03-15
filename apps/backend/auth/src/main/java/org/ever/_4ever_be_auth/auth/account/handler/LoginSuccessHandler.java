@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_auth.user.entity.User;
 import org.ever._4ever_be_auth.user.enums.UserType;
 import org.ever._4ever_be_auth.user.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
@@ -35,6 +36,9 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
 
     private final UserRepository userRepository;
     private final RequestCache requestCache = new HttpSessionRequestCache();
+
+    @Value("${EVERP_FRONTEND_ORIGIN:http://localhost:13000}")
+    private String frontendOrigin;
 
     @Override
     public void onAuthenticationSuccess(
@@ -83,7 +87,20 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
             return;
         }
 
+        // 직접 /login으로 진입한 경우에는 프론트 앱으로 보내고 인증 부트스트랩을 이어서 수행함.
+        if (savedRequest == null && originalAuthUrl == null) {
+            getRedirectStrategy().sendRedirect(request, response, buildDirectLoginFallbackUrl());
+            return;
+        }
+
         super.onAuthenticationSuccess(request, response, authentication);
+    }
+
+    private String buildDirectLoginFallbackUrl() {
+        return UriComponentsBuilder.fromUriString(frontendOrigin)
+                .path("/dashboard")
+                .build(true)
+                .toUriString();
     }
 
     private boolean shouldDenyForClient(User user, String originalAuthUrl) {
