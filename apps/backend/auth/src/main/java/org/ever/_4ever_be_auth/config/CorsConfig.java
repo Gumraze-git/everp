@@ -21,7 +21,15 @@ public class CorsConfig {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(buildAllowedOrigins());
         cfg.setAllowedMethods(List.of("GET","POST","OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","X-Requested-With"));
+        // callback/refresh의 cross-origin token POST에서 XSRF 헤더를 허용하기 위함.
+        cfg.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Requested-With",
+                "X-XSRF-TOKEN",
+                "X-CSRF-TOKEN"
+        ));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
 

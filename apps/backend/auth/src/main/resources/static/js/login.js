@@ -26,6 +26,11 @@ const emailError = document.getElementById('emailError');
 const passwordError = document.getElementById('passwordError');
 const submitBtn = document.getElementById('submitBtn');
 const loginForm = document.getElementById('loginForm');
+const demoLoginToggle = document.getElementById('demoLoginToggle');
+const demoLoginMenu = document.getElementById('demoLoginMenu');
+const demoLoginItems = Array.from(document.querySelectorAll('.demo-login-item'));
+const demoLoginContainer = document.querySelector('.demo-login');
+let isSubmitting = false;
 
 // 정규식
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -87,6 +92,71 @@ function validatePassword() {
     return true;
 }
 
+function closeDemoLoginMenu() {
+    if (!demoLoginToggle || !demoLoginMenu) {
+        return;
+    }
+
+    demoLoginToggle.setAttribute('aria-expanded', 'false');
+    demoLoginMenu.hidden = true;
+}
+
+function openDemoLoginMenu() {
+    if (!demoLoginToggle || !demoLoginMenu) {
+        return;
+    }
+
+    demoLoginToggle.setAttribute('aria-expanded', 'true');
+    demoLoginMenu.hidden = false;
+}
+
+function toggleDemoLoginMenu() {
+    if (!demoLoginToggle || !demoLoginMenu) {
+        return;
+    }
+
+    const expanded = demoLoginToggle.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+        closeDemoLoginMenu();
+        return;
+    }
+
+    openDemoLoginMenu();
+}
+
+function disableLoginActions() {
+    submitBtn.disabled = true;
+
+    if (demoLoginToggle) {
+        demoLoginToggle.disabled = true;
+    }
+
+    demoLoginItems.forEach((item) => {
+        item.disabled = true;
+    });
+}
+
+function submitDemoLogin(email, password) {
+    if (isSubmitting) {
+        return;
+    }
+
+    emailInput.value = email;
+    passwordInput.value = password;
+
+    const isEmailValid = validateEmail();
+    const isPasswordValid = validatePassword();
+
+    if (!isEmailValid || !isPasswordValid) {
+        alert('테스트 계정 정보를 다시 확인해주세요.');
+        return;
+    }
+
+    isSubmitting = true;
+    disableLoginActions();
+    loginForm.requestSubmit();
+}
+
 // blur 이벤트 (포커스를 잃을 때 검사)
 emailInput.addEventListener('blur', validateEmail);
 passwordInput.addEventListener('blur', validatePassword);
@@ -106,6 +176,10 @@ passwordInput.addEventListener('input', function() {
 
 // 폼 제출 시 최종 검사
 loginForm.addEventListener('submit', function(e) {
+    if (isSubmitting) {
+        return;
+    }
+
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
@@ -116,7 +190,8 @@ loginForm.addEventListener('submit', function(e) {
     }
 
     // 중복 제출 방지
-    submitBtn.disabled = true;
+    isSubmitting = true;
+    disableLoginActions();
 });
 
 const retryButton = document.getElementById('retryButton');
@@ -127,6 +202,54 @@ if (retryButton) {
         }
         if (emailInput) {
             emailInput.focus();
+        }
+    });
+}
+
+if (demoLoginToggle && demoLoginMenu) {
+    demoLoginToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        if (isSubmitting) {
+            return;
+        }
+
+        toggleDemoLoginMenu();
+    });
+
+    demoLoginItems.forEach((item) => {
+        item.addEventListener('click', (event) => {
+            event.stopPropagation();
+
+            if (isSubmitting) {
+                return;
+            }
+
+            const email = item.dataset.email;
+            const password = item.dataset.password;
+
+            if (!email || !password) {
+                return;
+            }
+
+            closeDemoLoginMenu();
+            submitDemoLogin(email, password);
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!demoLoginContainer || demoLoginMenu.hidden) {
+            return;
+        }
+
+        if (!demoLoginContainer.contains(event.target)) {
+            closeDemoLoginMenu();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeDemoLoginMenu();
         }
     });
 }

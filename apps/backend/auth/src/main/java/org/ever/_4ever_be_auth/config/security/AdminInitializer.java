@@ -2,6 +2,8 @@ package org.ever._4ever_be_auth.config.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_auth.auth.account.demo.DemoLoginAccount;
+import org.ever._4ever_be_auth.auth.account.demo.DemoLoginAccountCatalog;
 import org.ever._4ever_be_auth.user.entity.User;
 import org.ever._4ever_be_auth.user.enums.UserRole;
 import org.ever._4ever_be_auth.user.repository.UserRepository;
@@ -20,12 +22,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminInitializer implements CommandLineRunner {
 
-    private static final String ADMIN_LOGIN_EMAIL = "admin@everp.com";
-    private static final String DEFAULT_PASSWORD = "password";
     private static final String ADMIN_USER_ID = "019a3dee-732c-79a4-916a-09336277ee92"; // fixed UUID v7
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DemoLoginAccountCatalog demoLoginAccountCatalog;
 
     @Override
     public void run(String... args) {
@@ -34,43 +35,43 @@ public class AdminInitializer implements CommandLineRunner {
     }
 
     private void createAdminIfAbsent() {
-        if (userRepository.existsByLoginEmail(ADMIN_LOGIN_EMAIL)) {
+        DemoLoginAccount adminAccount = demoLoginAccountCatalog.primaryAdminAccount();
+        String adminLoginEmail = adminAccount.getEmail();
+
+        if (userRepository.existsByLoginEmail(adminLoginEmail)) {
             return;
         }
-        String encodedPassword = passwordEncoder.encode(DEFAULT_PASSWORD);
+        String encodedPassword = passwordEncoder.encode(adminAccount.getPassword());
         User admin = User.createWithExternalId(
                 ADMIN_USER_ID,
-                ADMIN_LOGIN_EMAIL,
-                ADMIN_LOGIN_EMAIL,
+                adminLoginEmail,
+                adminLoginEmail,
                 encodedPassword,
-                UserRole.ALL_ADMIN
+                adminAccount.getRole()
         );
-        admin.updateContactEmail(ADMIN_LOGIN_EMAIL);
+        admin.updateContactEmail(adminLoginEmail);
         admin.updatePassword(encodedPassword, LocalDateTime.now());
         userRepository.save(admin);
 
-        log.info("[INFO] 테스트용 ADMIN 계정이 생성되었습니다. {}", ADMIN_LOGIN_EMAIL);
+        log.info("[INFO] 테스트용 ADMIN 계정이 생성되었습니다. {}", adminLoginEmail);
     }
 
     private void seedModuleAccounts() {
         log.info("[INFO] 테스트용 모듈 계정 시드를 시작합니다.");
         List<ModuleAccount> accounts = new ArrayList<>();
 
-        // base accounts
-        accounts.add(moduleAccount("mm-user@everp.com", UserRole.MM_USER));
+        // 대표 데모 계정은 로그인 화면과 같은 카탈로그를 기준으로 유지함.
+        for (DemoLoginAccount account : demoLoginAccountCatalog.representativeAccounts()) {
+            accounts.add(moduleAccount(account.getEmail(), account.getRole()));
+        }
+
+        // base admin accounts
         accounts.add(moduleAccount("mm-admin@everp.com", UserRole.MM_ADMIN));
-        accounts.add(moduleAccount("sd-user@everp.com", UserRole.SD_USER));
         accounts.add(moduleAccount("sd-admin@everp.com", UserRole.SD_ADMIN));
-        accounts.add(moduleAccount("im-user@everp.com", UserRole.IM_USER));
         accounts.add(moduleAccount("im-admin@everp.com", UserRole.IM_ADMIN));
-        accounts.add(moduleAccount("fcm-user@everp.com", UserRole.FCM_USER));
         accounts.add(moduleAccount("fcm-admin@everp.com", UserRole.FCM_ADMIN));
-        accounts.add(moduleAccount("hrm-user@everp.com", UserRole.HRM_USER));
         accounts.add(moduleAccount("hrm-admin@everp.com", UserRole.HRM_ADMIN));
-        accounts.add(moduleAccount("pp-user@everp.com", UserRole.PP_USER));
         accounts.add(moduleAccount("pp-admin@everp.com", UserRole.PP_ADMIN));
-        accounts.add(moduleAccount("customer-admin@everp.com", UserRole.CUSTOMER_ADMIN));
-        accounts.add(moduleAccount("supplier-admin@everp.com", UserRole.SUPPLIER_ADMIN));
 
         // additional admins
         addRange(accounts, "admin", 1, 5, UserRole.ALL_ADMIN);
@@ -102,7 +103,7 @@ public class AdminInitializer implements CommandLineRunner {
                 continue;
             }
 
-            String encodedPassword = passwordEncoder.encode(DEFAULT_PASSWORD);
+            String encodedPassword = passwordEncoder.encode(demoLoginAccountCatalog.defaultPassword());
             String fixedId = ACCOUNT_IDS.get(account.loginEmail);
             try {
                 User user = (fixedId != null)
