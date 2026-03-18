@@ -9,9 +9,6 @@ import org.ever._4ever_be_business.sd.integration.port.InventoryServicePort;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-
 /**
  * InventoryServicePort의 Mock 구현체
  * dev 환경에서 사용
@@ -27,13 +24,6 @@ public class MockInventoryServiceAdapter implements InventoryServicePort {
     @Override
     public InventoryCheckResponseDto checkInventory(InventoryCheckRequestDto requestDto) {
         log.info("[MOCK ADAPTER] checkInventory 호출 - items count: {}", requestDto.getItems() != null ? requestDto.getItems().size() : 0);
-
-        var itemIds = requestDto.getItems() != null ?
-                requestDto.getItems().stream()
-                        .map(item -> item.getItemId())
-                        .collect(Collectors.toList()) :
-                new ArrayList<String>();
-
-        return mockDataProvider.createMockInventoryCheck(itemIds);
+        return mockDataProvider.createMockInventoryCheck(requestDto != null ? requestDto.getItems() : null);
     }
 }

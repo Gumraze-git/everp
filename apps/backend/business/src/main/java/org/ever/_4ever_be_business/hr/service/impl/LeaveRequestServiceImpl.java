@@ -2,6 +2,7 @@ package org.ever._4ever_be_business.hr.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.mock.VehiclePartsMockCatalog;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.dto.request.CreateLeaveRequestDto;
@@ -31,7 +32,6 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -102,14 +102,17 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         int itemCount = Math.min(size > 0 ? size : DEFAULT_DASHBOARD_SIZE, DEFAULT_DASHBOARD_SIZE);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle("휴가 신청 " + (i + 1))
-                        .itemNumber(String.format("LV-MOCK-%04d", i + 1))
-                        .name("사원" + (i + 1))
-                        .statusCode(i % 2 == 0 ? LeaveRequestStatus.PENDING.name() : LeaveRequestStatus.APPROVED.name())
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.leaveRequestScenario(i);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .collect(Collectors.toList());
     }
 

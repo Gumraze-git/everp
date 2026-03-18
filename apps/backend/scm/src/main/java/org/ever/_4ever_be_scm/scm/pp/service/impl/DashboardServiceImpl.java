@@ -2,6 +2,7 @@ package org.ever._4ever_be_scm.scm.pp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_scm.common.mock.VehiclePartsMockCatalog;
 import org.ever._4ever_be_scm.scm.iv.entity.Product;
 import org.ever._4ever_be_scm.scm.iv.entity.ProductStock;
 import org.ever._4ever_be_scm.scm.iv.entity.ProductStockLog;
@@ -32,7 +33,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -345,14 +345,17 @@ public class DashboardServiceImpl implements DashboardService {
         int itemCount = Math.min(size > 0 ? size : DEFAULT_SIZE, DEFAULT_SIZE);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle("긴급 구매요청 " + (i + 1))
-                        .itemNumber(String.format("REQ-MOCK-%04d", i + 1))
-                        .name("요청자 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "REQUESTED" : "APPROVED")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.purchaseRequestScenario(i);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
@@ -360,31 +363,35 @@ public class DashboardServiceImpl implements DashboardService {
         int itemCount = Math.min(size > 0 ? size : DEFAULT_SIZE, DEFAULT_SIZE);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle("예비부품 발주 " + (i + 1))
-                        .itemNumber(String.format("PO-MOCK-%04d", i + 1))
-                        .name("담당자 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "APPROVED" : "IN_PROGRESS")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.purchaseOrderScenario(i);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
     private List<DashboardWorkflowItemDto> buildMockSupplierPurchaseOrders(int size, String supplierCompanyName, String productTitle) {
         int itemCount = Math.min(size > 0 ? size : DEFAULT_SIZE, DEFAULT_SIZE);
-        String titleBase = (productTitle != null ? productTitle : "공급사 제품") + " 발주";
-        String nameBase = supplierCompanyName != null ? supplierCompanyName : "공급사 담당자";
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle(titleBase)
-                        .itemNumber(String.format("PO-MOCK-%04d", i + 1))
-                        .name(nameBase)
-                        .statusCode(i % 2 == 0 ? "REQUESTED" : "APPROVED")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.supplierPurchaseOrderScenario(i, supplierCompanyName, productTitle);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
@@ -393,14 +400,17 @@ public class DashboardServiceImpl implements DashboardService {
         boolean inbound = MOVEMENT_TYPE_INBOUND.equals(movementType);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle(String.format("창고 A · %s", inbound ? "입고" : "출고"))
-                        .itemNumber(String.format("%s-MOCK-%04d", inbound ? "IN" : "OUT", i + 1))
-                        .name("재고 담당자 " + (i + 1))
-                        .statusCode(inbound ? "COMPLETED" : (i % 2 == 0 ? "IN_PROGRESS" : "COMPLETED"))
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.stockLogScenario(i, inbound);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
@@ -408,14 +418,17 @@ public class DashboardServiceImpl implements DashboardService {
         int itemCount = Math.min(size > 0 ? size : DEFAULT_SIZE, DEFAULT_SIZE);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle("생산 전환 견적 목업 " + (i + 1))
-                        .itemNumber(String.format("QT-MOCK-%04d", i + 1))
-                        .name("생산 담당자 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "APPROVED" : "PENDING")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.productionQuotationScenario(i);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
@@ -423,14 +436,17 @@ public class DashboardServiceImpl implements DashboardService {
         int itemCount = Math.min(size > 0 ? size : DEFAULT_SIZE, DEFAULT_SIZE);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle("MES 작업 목업 " + (i + 1))
-                        .itemNumber(String.format("MES-MOCK-%04d", i + 1))
-                        .name("라인 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "IN_PROGRESS" : "READY")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.mesScenario(i);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 

@@ -1,7 +1,6 @@
 package org.ever._4ever_be_business.config;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.hr.entity.Deducation;
 import org.ever._4ever_be_business.hr.entity.Employee;
 import org.ever._4ever_be_business.hr.entity.Payroll;
@@ -19,25 +18,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
-import java.util.Random;
 
 /**
  * 급여 데이터 초기화
- * InternalUserInitializer에서 생성된 직원들의 9월, 10월 급여 데이터 생성
+ * InternalUserInitializer에서 생성된 직원들의 최근 6개월 급여 데이터를 생성
  */
-@Slf4j
 @Component
 @Order(100) // InternalUserInitializer 이후에 실행
 @RequiredArgsConstructor
 public class PayrollInitializer implements CommandLineRunner {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PayrollInitializer.class);
+
     private final EmployeeRepository employeeRepository;
     private final PayrollRepository payrollRepository;
     private final DeducationRepository deducationRepository;
     private final PayrollDeducationRepository payrollDeducationRepository;
-
-    private static final Random RANDOM = new Random();
 
     // 공제 항목들 (전역으로 관리)
     private Deducation nationalPension;
@@ -66,54 +64,41 @@ public class PayrollInitializer implements CommandLineRunner {
 
             log.info("[PayrollInitializer] 총 {} 명의 직원에 대한 급여 데이터 생성", employees.size());
 
-        // 현재 연도 기준
-        int currentYear = LocalDateTime.now().getYear();
-
-        // 9월 급여 (지급 완료)
-        LocalDateTime septemberBaseDate = LocalDateTime.of(currentYear, 9, 1, 0, 0);
-        LocalDateTime septemberPayDate = LocalDateTime.of(currentYear, 10, 5, 10, 0);
-
-        // 10월 급여 (대부분 지급 완료, 20개 중 1개만 미지급)
-        LocalDateTime octoberBaseDate = LocalDateTime.of(currentYear, 10, 1, 0, 0);
-        LocalDateTime octoberPayDate = LocalDateTime.of(currentYear, 11, 5, 10, 0);
-
         int employeeCount = 0;
         for (Employee employee : employees) {
             employeeCount++;
 
-            // 9월 급여 (이미 존재하면 건너뛰기)
-            if (!payrollRepository.existsByEmployeeAndBaseDateBetween(
-                    employee,
-                    septemberBaseDate,
-                    septemberBaseDate.plusMonths(1))) {
-                Payroll septemberPayroll = createPayrollWithDeductions(
-                        employee,
-                        septemberBaseDate,
-                        PayrollStatus.PAYROLL_PAID,
-                        septemberPayDate
-                );
-                log.debug("[Initializer] 9월 급여 생성 - employeeId: {}, netSalary: {}",
-                        employee.getId(), septemberPayroll.getNetSalary());
-            }
+            for (int monthOffset = 5; monthOffset >= 0; monthOffset--) {
+                LocalDateTime baseDate = LocalDateTime.now()
+                        .minusMonths(monthOffset)
+                        .with(TemporalAdjusters.firstDayOfMonth())
+                        .withHour(0)
+                        .withMinute(0)
+                        .withSecond(0)
+                        .withNano(0);
 
-            // 10월 급여 (20개 중 1개만 미지급)
-            if (!payrollRepository.existsByEmployeeAndBaseDateBetween(
-                    employee,
-                    octoberBaseDate,
-                    octoberBaseDate.plusMonths(1))) {
-                // 20개 중 1개만 UNPAID (5% 확률)
-                boolean isUnpaid = (employeeCount % 20 == 0);
+                if (payrollRepository.existsByEmployeeAndBaseDateBetween(
+                        employee,
+                        baseDate,
+                        baseDate.plusMonths(1))) {
+                    continue;
+                }
+
+                boolean isUnpaid = (monthOffset == 0 && employeeCount % 18 == 0)
+                        || (monthOffset == 1 && employeeCount % 27 == 0);
                 PayrollStatus status = isUnpaid ? PayrollStatus.PAYROLL_UNPAID : PayrollStatus.PAYROLL_PAID;
-                LocalDateTime payDate = isUnpaid ? null : octoberPayDate;
+                LocalDateTime payDate = isUnpaid ? null : baseDate.plusMonths(1).withDayOfMonth(5).withHour(10);
 
-                Payroll octoberPayroll = createPayrollWithDeductions(
+                Payroll payroll = createPayrollWithDeductions(
                         employee,
-                        octoberBaseDate,
+                        baseDate,
                         status,
-                        payDate
+                        payDate,
+                        employeeCount,
+                        monthOffset
                 );
-                log.debug("[PayrollInitializer] 10월 급여 생성 - employeeId: {}, status: {}, netSalary: {}",
-                        employee.getId(), status, octoberPayroll.getNetSalary());
+                log.debug("[PayrollInitializer] 급여 생성 - employeeId: {}, monthOffset: {}, status: {}, netSalary: {}",
+                        employee.getId(), monthOffset, status, payroll.getNetSalary());
             }
         }
 
@@ -179,13 +164,15 @@ public class PayrollInitializer implements CommandLineRunner {
             Employee employee,
             LocalDateTime baseDate,
             PayrollStatus status,
-            LocalDateTime payDate
+            LocalDateTime payDate,
+            int employeeIndex,
+            int monthOffset
     ) {
         // 직급에 따른 기본급 설정
-        BigDecimal baseSalary = calculateBaseSalary(employee);
+        BigDecimal baseSalary = calculateBaseSalary(employee, employeeIndex);
 
-        // 초과근무 수당 (랜덤: 0 ~ 500,000)
-        BigDecimal overtimeSalary = BigDecimal.valueOf(RANDOM.nextInt(6) * 100_000);
+        // 월별 추세가 보이도록 결정적 패턴을 사용한다.
+        BigDecimal overtimeSalary = BigDecimal.valueOf(((employeeIndex + monthOffset) % 6) * 80_000L);
 
         // 총 지급액 = 기본급 + 초과근무 수당
         BigDecimal totalPay = baseSalary.add(overtimeSalary);
@@ -266,7 +253,7 @@ public class PayrollInitializer implements CommandLineRunner {
     /**
      * 직급에 따른 기본급 계산
      */
-    private BigDecimal calculateBaseSalary(Employee employee) {
+    private BigDecimal calculateBaseSalary(Employee employee, int employeeIndex) {
         String positionCode = employee.getInternelUser().getPosition().getPositionCode();
 
         // 관리자 (차장급 이상): 5,000,000 ~ 6,000,000
@@ -276,10 +263,10 @@ public class PayrollInitializer implements CommandLineRunner {
                 positionCode.equals("POS-00506") || // 부장
                 positionCode.equals("POS-00507")    // 이사
         )) {
-            return BigDecimal.valueOf(5_000_000 + RANDOM.nextInt(11) * 100_000);
+            return BigDecimal.valueOf(5_000_000L + (employeeIndex % 11) * 100_000L);
         }
 
         // 일반 사원: 3,000,000 ~ 3,500,000
-        return BigDecimal.valueOf(3_000_000 + RANDOM.nextInt(6) * 100_000);
+        return BigDecimal.valueOf(3_000_000L + (employeeIndex % 6) * 100_000L);
     }
 }
