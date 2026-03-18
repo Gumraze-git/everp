@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="fe1fa9c5-a4e4-4c7b-b8e9-8b5ed18e5bc8" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/api/hr/HrmApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/api/hr/HrmApi.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/common/mock/MockDataProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/common/mock/MockDataProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/config/CustomerUserInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/config/CustomerUserInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/config/DataPreloader.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/config/DataPreloader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/config/PayrollInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/config/PayrollInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/controller/FcmController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/controller/FcmController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/controller/FcmDashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/controller/FcmDashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/integration/adapter/MockProductServiceAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/integration/adapter/MockProductServiceAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/integration/adapter/MockSupplierCompanyServiceAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/integration/adapter/MockSupplierCompanyServiceAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/service/impl/CustomerDashboardInvoiceServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/service/impl/CustomerDashboardInvoiceServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/service/impl/SupplierDashboardInvoiceServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/fcm/service/impl/SupplierDashboardInvoiceServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/hr/controller/HrmController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/hr/controller/HrmController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/hr/service/impl/LeaveRequestServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/hr/service/impl/LeaveRequestServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/integration/adapter/MockInventoryServiceAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/integration/adapter/MockInventoryServiceAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/integration/adapter/MockSupplierQuotationServiceAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/integration/adapter/MockSupplierQuotationServiceAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/service/impl/DashboardCustomerQuotationServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/service/impl/DashboardCustomerQuotationServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/service/impl/DashboardOrderServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/sd/service/impl/DashboardOrderServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/tam/service/impl/AttendanceServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/business/src/main/java/org/ever/_4ever_be_business/tam/service/impl/AttendanceServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/controller/FcmController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/controller/FcmController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/controller/HrmController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/controller/HrmController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/controller/ProfileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/controller/ProfileController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/service/impl/FcmHttpServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/service/impl/FcmHttpServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/service/impl/HrmHttpServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/business/service/impl/HrmHttpServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/dashboard/service/impl/DashboardServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/dashboard/service/impl/DashboardServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/facade/dto/DashboardWorkflowTabDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/facade/dto/DashboardWorkflowTabDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/im/controller/ImController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/im/controller/ImController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/im/controller/OrderController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/im/controller/OrderController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/im/service/impl/ImHttpServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/im/service/impl/ImHttpServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/mm/controller/MmController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/mm/controller/MmController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/pp/controller/PpController.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/scm/pp/controller/PpController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/user/client/UserProfileRemoteClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/main/java/org/ever/_4ever_be_gw/user/client/UserProfileRemoteClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/test/java/org/ever/_4ever_be_gw/scm/im/controller/ImControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/test/java/org/ever/_4ever_be_gw/scm/im/controller/ImControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/gw/src/test/java/org/ever/_4ever_be_gw/scm/mm/controller/MmControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/gw/src/test/java/org/ever/_4ever_be_gw/scm/mm/controller/MmControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/scm/src/main/java/org/ever/_4ever_be_scm/config/ProductInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/scm/src/main/java/org/ever/_4ever_be_scm/config/ProductInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/scm/src/main/java/org/ever/_4ever_be_scm/scm/pp/config/OperationInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/scm/src/main/java/org/ever/_4ever_be_scm/scm/pp/config/OperationInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/backend/scm/src/main/java/org/ever/_4ever_be_scm/scm/pp/service/impl/DashboardServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/apps/backend/scm/src/main/java/org/ever/_4ever_be_scm/scm/pp/service/impl/DashboardServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/components/ReportDownloadModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/components/ReportDownloadModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/components/WorkflowStatus.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/components/WorkflowStatus.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/dashboard.utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/dashboard.utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/types/DashboardWorkflowType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/dashboard/types/DashboardWorkflowType.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/finance/finance.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/finance/finance.api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/hrm/api/hrm.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/hrm/api/hrm.api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/hrm/api/hrm.endpoints.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/hrm/api/hrm.endpoints.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/production/api/production.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/production/api/production.api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/production/api/production.endpoints.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/production/api/production.endpoints.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/production/components/modals/BomInputFormModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/production/components/modals/BomInputFormModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/purchase/api/purchase.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/purchase/api/purchase.api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(private)/purchase/api/purchase.endpoints.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(private)/purchase/api/purchase.endpoints.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/(public)/profile/profile.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/(public)/profile/profile.api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/frontend/src/app/types/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/frontend/src/app/types/api.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="4509" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4
+}]]></component>
+  <component name="ProjectId" id="3B0v48JETOuecgVCJL4fuWmoL8U" />
+  <component name="ProjectViewState">
+    <option name="compactDirectories" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "refac/restate-api-contracts",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/dkim/DKim_Workspace/1_Projects/Active/everp",
+    "to.speed.mode.migration.done": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="디폴트 작업">
+      <changelist id="fe1fa9c5-a4e4-4c7b-b8e9-8b5ed18e5bc8" name="변경" comment="" />
+      <created>1773638607860</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1773638607860</updated>
+      <workItem from="1773638608958" duration="1325000" />
+    </task>
+    <servers />
+  </component>
+</project>
