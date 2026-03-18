@@ -35,7 +35,7 @@ public class ProfileController implements ProfileApi {
 
         switch (userType.toLowerCase()) {
             case "customer":
-                result = fetchEntity(client.get().uri("/hrm/customer-users/{customerUserId}/profile", userId));
+                result = fetchEntity(client.get().uri("/hrm/customers/by-customer-user/{customerUserId}/profile", userId));
                 break;
 
             case "supplier":
@@ -44,7 +44,7 @@ public class ProfileController implements ProfileApi {
 
             case "internal":
             default:
-                result = fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/profile", userId));
+                result = fetchEntity(client.get().uri("/hrm/employees/by-internel-user/{internalUserId}/profile", userId));
                 break;
         }
 
@@ -60,7 +60,7 @@ public class ProfileController implements ProfileApi {
 
         var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
-        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/attendance-history-items", internalUserId));
+        return fetchEntity(client.get().uri("/hrm/employees/by-internel-user/{internalUserId}/attendance-records/history", internalUserId));
     }
 
     @GetMapping("/today-attendance")
@@ -71,7 +71,7 @@ public class ProfileController implements ProfileApi {
 
         var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
-        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/today-attendance", internalUserId));
+        return fetchEntity(client.get().uri("/hrm/employees/by-internel-user/{internalUserId}/today-attendance", internalUserId));
     }
 
     @GetMapping("/training-items/in-progress")
@@ -82,7 +82,7 @@ public class ProfileController implements ProfileApi {
 
         var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
-        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/in-progress-training-items", internalUserId));
+        return fetchEntity(client.get().uri("/hrm/employees/by-internel-user/{internalUserId}/trainings/in-progress", internalUserId));
     }
 
     @GetMapping("/training-items/available")
@@ -93,7 +93,7 @@ public class ProfileController implements ProfileApi {
 
         var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
-        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/available-training-items", internalUserId));
+        return fetchEntity(client.get().uri("/hrm/employees/by-internel-user/{internalUserId}/trainings/available", internalUserId));
     }
 
     @GetMapping("/training-items/completed")
@@ -104,7 +104,7 @@ public class ProfileController implements ProfileApi {
         String internalUserId = user.getUserId();
         var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
-        return fetchEntity(client.get().uri("/hrm/internal-users/{internalUserId}/completed-training-items", internalUserId));
+        return fetchEntity(client.get().uri("/hrm/employees/by-internel-user/{internalUserId}/trainings/completed", internalUserId));
     }
 
     @PostMapping("/training-enrollments")
@@ -117,9 +117,12 @@ public class ProfileController implements ProfileApi {
         var client = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
         return fetchEntity(client.post()
-                .uri("/hrm/internal-users/{internalUserId}/training-enrollments", internalUserId)
+                .uri(uriBuilder -> uriBuilder
+                        .path("/hrm/employees/by-internel-user/{internelUserId}/programs")
+                        .queryParam("programId", trainingId)
+                        .build(internalUserId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("programId", trainingId)));
+                .body(Map.of()));
     }
 
     @PatchMapping
@@ -133,7 +136,7 @@ public class ProfileController implements ProfileApi {
 
         return fetchEntity(client.patch()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/hrm/internal-users/{internalUserId}/profile")
+                        .path("/hrm/employees/by-internel-user/{internalUserId}/profile")
                         .build(internalUserId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(requestDto));

@@ -3,8 +3,8 @@ package org.ever._4ever_be_business.fcm.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.fcm.dto.request.SupplierPurchaseInvoiceRequestDto;
+import org.ever._4ever_be_business.fcm.dto.request.UpdateAPInvoiceDto;
 import org.ever._4ever_be_business.fcm.dto.request.UpdateARInvoiceDto;
-import org.ever._4ever_be_business.fcm.dto.request.UpdateVoucherStatusDto;
 import org.ever._4ever_be_business.fcm.dto.response.*;
 import org.ever._4ever_be_business.fcm.service.*;
 import org.ever._4ever_be_business.hr.dto.response.PageResponseDto;
@@ -39,7 +39,7 @@ public class FcmController {
      * 재무관리 통계 조회 (주/월/분기/년)
      *
      */
-    @GetMapping("/statistics")
+    @GetMapping("/metrics")
     public ResponseEntity<FcmStatisticsDto> getFcmStatistics() {
         log.info("재무관리 통계 조회 API 호출");
         FcmStatisticsDto result = fcmStatisticsService.getFcmStatistics();
@@ -52,7 +52,7 @@ public class FcmController {
      *
      * @param supplierUserId 공급사 사용자 ID
      */
-    @GetMapping("/statistics/supplier/{supplierUserId}/total-sales")
+    @GetMapping("/metrics/suppliers/{supplierUserId}/total-sales")
     public ResponseEntity<TotalAmountDto> getTotalPurchaseAmountBySupplierUserId(
             @PathVariable String supplierUserId) {
         log.info("공급사별 총 매출 금액 조회 API 호출 - supplierUserId: {}", supplierUserId);
@@ -67,7 +67,7 @@ public class FcmController {
      *
      * @param customerUserId 고객사 사용자 ID
      */
-    @GetMapping("/statistics/customer/{customerUserId}/total-purchases")
+    @GetMapping("/metrics/customers/{customerUserId}/total-purchases")
     public ResponseEntity<TotalAmountDto> getTotalSalesAmountByCustomerUserId(
             @PathVariable String customerUserId) {
         log.info("고객사별 총 매입 금액 조회 API 호출 - customerUserId: {}", customerUserId);
@@ -140,7 +140,7 @@ public class FcmController {
         log.info("매입전표 목록 조회 API 호출 - company: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 company, status, startDate, endDate, page, size);
 
-        if(status.equals("ALL"))
+        if ("ALL".equals(status))
             status = null;
 
         Pageable pageable = PageRequest.of(page, size);
@@ -213,7 +213,7 @@ public class FcmController {
     /**
      * AP 전표 상세 정보 조회
      */
-    @GetMapping("/invoice/ap/{invoiceId}")
+    @GetMapping("/invoices/purchase/{invoiceId}")
     public ResponseEntity<APInvoiceDetailDto> getAPInvoiceDetail(@PathVariable String invoiceId) {
         log.info("AP 전표 상세 정보 조회 API 호출 - invoiceId: {}", invoiceId);
         APInvoiceDetailDto result = apInvoiceService.getAPInvoiceDetail(invoiceId);
@@ -224,11 +224,19 @@ public class FcmController {
     /**
      * 바우처 상태 수동 업데이트
      */
-    @PostMapping("/invoice/ap/receivable/request")
-    public ResponseEntity<Void> updateVoucherStatus(@RequestBody UpdateVoucherStatusDto requestDto) {
-        log.info("바우처 상태 업데이트 API 호출 - voucherId: {}, statusCode: {}", requestDto.getVoucherId(), requestDto.getStatusCode());
-        voucherStatusService.updateVoucherStatus(requestDto.getVoucherId(), requestDto.getStatusCode());
-        log.info("바우처 상태 업데이트 성공 - voucherId: {}", requestDto.getVoucherId());
+    @PatchMapping("/invoices/purchase/{invoiceId}")
+    public ResponseEntity<Void> updateAPInvoice(
+            @PathVariable String invoiceId,
+            @RequestBody UpdateAPInvoiceDto requestDto) {
+        log.info("AP 전표 정보 업데이트 API 호출 - invoiceId: {}, status: {}", invoiceId, requestDto.getStatus());
+
+        if ("PAID".equalsIgnoreCase(requestDto.getStatus())) {
+            apInvoiceService.completePayable(invoiceId);
+        } else {
+            voucherStatusService.updateVoucherStatus(invoiceId, requestDto.getStatus());
+        }
+
+        log.info("AP 전표 정보 업데이트 성공 - invoiceId: {}", invoiceId);
         return ResponseEntity.noContent().build();
     }
 
@@ -237,7 +245,7 @@ public class FcmController {
     /**
      * AR 전표 목록 조회
      */
-    @GetMapping("/invoice/ar")
+    @GetMapping("/invoices/sales")
     public ResponseEntity<PageResponseDto<ARInvoiceListItemDto>> getARInvoiceList(
             @RequestParam(required = false) String company,
             @RequestParam(required = false) String status,
@@ -248,7 +256,7 @@ public class FcmController {
         log.info("AR 전표 목록 조회 API 호출 - company: {}, status: {}, startDate: {}, endDate: {}, page: {}, size: {}",
                 company, status, startDate, endDate, page, size);
 
-        if(status.equals("ALL"))
+        if ("ALL".equals(status))
             status = null;
 
         Page<ARInvoiceListItemDto> result = arInvoiceService.getARInvoiceList(company, status, startDate, endDate, page, size);
@@ -274,7 +282,7 @@ public class FcmController {
     /**
      * CustomerUserId 기반 AR 전표 목록 조회 (CUSTOMER 사용자용)
      */
-    @GetMapping("/invoice/ar/customer/{customerUserId}")
+    @GetMapping("/invoices/sales/customers/{customerUserId}")
     public ResponseEntity<PageResponseDto<ARInvoiceListItemDto>> getARInvoiceListByCustomerUserId(
             @PathVariable String customerUserId,
             @RequestParam(required = false) String status,
@@ -311,7 +319,7 @@ public class FcmController {
     /**
      * SupplierCompanyId 기반 AP 전표 목록 조회 (SUPPLIER 사용자용)
      */
-    @GetMapping("/invoice/ap/supplier/{supplierUserId}")
+    @GetMapping("/invoices/purchase/suppliers/{supplierUserId}")
     public ResponseEntity<PageResponseDto<APInvoiceListItemDto>> getAPInvoiceListBySupplierCompanyId(
             @PathVariable String supplierUserId,
             @RequestParam(required = false) String status,
@@ -348,7 +356,7 @@ public class FcmController {
     /**
      * AR 전표 상세 정보 조회
      */
-    @GetMapping("/invoice/ar/{invoiceId}")
+    @GetMapping("/invoices/sales/{invoiceId}")
     public ResponseEntity<ARInvoiceDetailDto> getARInvoiceDetail(@PathVariable String invoiceId) {
         log.info("AR 전표 상세 정보 조회 API 호출 - invoiceId: {}", invoiceId);
         ARInvoiceDetailDto result = arInvoiceService.getARInvoiceDetail(invoiceId);
@@ -359,7 +367,7 @@ public class FcmController {
     /**
      * AR 전표 정보 업데이트
      */
-    @PatchMapping("/invoice/ar/{invoiceId}")
+    @PatchMapping("/invoices/sales/{invoiceId}")
     public ResponseEntity<Void> updateARInvoice(
             @PathVariable String invoiceId,
             @RequestBody UpdateARInvoiceDto requestDto) {

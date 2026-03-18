@@ -2,15 +2,14 @@
 
 import { useState } from 'react';
 import { DashboardProps } from '../types/DashboardWorkflowType';
-import { getTabCodeText } from '../dashboard.utils';
 import StatusLabel from '@/app/components/common/StatusLabel';
 import { formatDateTime } from '@/app/utils/date';
 
 const WorkflowStatus = ({ $workflowData }: DashboardProps) => {
   const [activeTab, setActiveTab] = useState('first');
 
-  const firstTabCode = $workflowData?.tabs[0].tabCode;
-  const secondTabCode = $workflowData?.tabs[1].tabCode;
+  const firstTabLabel = $workflowData?.tabs[0].label ?? '워크플로우';
+  const secondTabLabel = $workflowData?.tabs[1].label ?? '워크플로우';
 
   const firstTabItems = $workflowData?.tabs[0].items ?? [];
   const secondTabItems = $workflowData?.tabs[1].items ?? [];
@@ -32,7 +31,7 @@ const WorkflowStatus = ({ $workflowData }: DashboardProps) => {
               activeTab === 'first' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 '
             }`}
           >
-            {getTabCodeText(firstTabCode)}
+            {firstTabLabel}
           </button>
           <button
             onClick={() => setActiveTab('second')}
@@ -42,7 +41,7 @@ const WorkflowStatus = ({ $workflowData }: DashboardProps) => {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            {getTabCodeText(secondTabCode)}
+            {secondTabLabel}
           </button>
         </div>
       </div>

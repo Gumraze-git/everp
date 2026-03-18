@@ -6,10 +6,14 @@ import org.ever._4ever_be_business.common.mock.MockDataProvider;
 import org.ever._4ever_be_business.fcm.integration.dto.SupplierCompaniesResponseDto;
 import org.ever._4ever_be_business.fcm.integration.dto.SupplierCompanyResponseDto;
 import org.ever._4ever_be_business.fcm.integration.port.SupplierCompanyServicePort;
+import org.ever._4ever_be_business.voucher.entity.PurchaseVoucher;
+import org.ever._4ever_be_business.voucher.repository.PurchaseVoucherRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * SupplierCompanyServicePort의 Mock 구현체
@@ -22,6 +26,7 @@ import java.util.List;
 public class MockSupplierCompanyServiceAdapter implements SupplierCompanyServicePort {
 
     private final MockDataProvider mockDataProvider;
+    private final PurchaseVoucherRepository purchaseVoucherRepository;
 
     @Override
     public SupplierCompanyResponseDto getSupplierCompanyById(String supplierCompanyId) {
@@ -38,7 +43,19 @@ public class MockSupplierCompanyServiceAdapter implements SupplierCompanyService
     @Override
     public String getSupplierCompanyIdByUserId(String supplierUserId) {
         log.info("[MOCK ADAPTER] getSupplierCompanyIdByUserId 호출 - supplierUserId: {}", supplierUserId);
-        // Mock 데이터: supplierUserId를 기반으로 고정된 supplierCompanyId 반환
-        return "mock-supplier-company-" + supplierUserId.substring(0, Math.min(8, supplierUserId.length()));
+
+        List<String> existingSupplierCompanyIds = purchaseVoucherRepository.findAll().stream()
+                .map(PurchaseVoucher::getSupplierCompanyId)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .sorted()
+                .toList();
+
+        if (!existingSupplierCompanyIds.isEmpty()) {
+            int index = Math.floorMod(Objects.hashCode(supplierUserId), existingSupplierCompanyIds.size());
+            return existingSupplierCompanyIds.get(index);
+        }
+
+        return mockDataProvider.createMockSupplierCompanyId(supplierUserId);
     }
 }

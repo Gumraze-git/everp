@@ -38,7 +38,7 @@ public class BusinessQuotationServiceAdapter implements BusinessQuotationService
         try {
             // URI 빌더를 사용하여 쿼리 파라미터 구성
             UriComponentsBuilder uriBuilder = UriComponentsBuilder
-                    .fromUriString(businessServiceUrl + "/business/sd/scm/quotations")
+                    .fromUriString(businessServiceUrl + "/sd/scm/quotations")
                     .queryParam("statusCode", statusCode != null ? statusCode : "ALL")
                     .queryParam("availableStatus", availableStatus != null ? availableStatus : "ALL")
                     .queryParam("page", page)
@@ -78,7 +78,7 @@ public class BusinessQuotationServiceAdapter implements BusinessQuotationService
         log.info("Business 서비스 호출 - 견적 상세 조회: quotationId={}", quotationId);
 
         try {
-            String uri = businessServiceUrl + "/business/sd/quotations/" + quotationId;
+            String uri = businessServiceUrl + "/sd/quotations/" + quotationId;
             log.debug("호출 URI: {}", uri);
 
             BusinessQuotationDto response = restClient.get()

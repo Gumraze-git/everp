@@ -46,7 +46,7 @@ public class OrderController implements OrderApi {
         return imHttpService.getSalesOrder(salesOrderId);
     }
 
-    @GetMapping("/product-options")
+    @GetMapping("/products/options")
     public ResponseEntity<Object> getItemCategoryProducts() {
         return imHttpService.getProductOptions();
     }

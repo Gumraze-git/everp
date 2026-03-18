@@ -9,23 +9,14 @@ import java.util.List;
 
 /**
  * 대시보드 워크플로우 단일 탭 DTO
- * - code/label과 해당 탭의 items(최대 5개)를 포함합니다. <br>
- * 탭 코드<br>
- * - PO: 발주 프로세스 <br>
- * - AP: 매입 프로세스 <br>
- * - AR: 매출 프로세스 <br>
- * - SO: 주문 프로세스 <br>
- * - PR: 구매 프로세스 <br>
- * - ATT: 근태 프로세스 <br>
- * - LV: 휴가 프로세스(Leave) <br>
- * - QT: 견적 프로세스 <br>
- * - MES: 생산 프로세스 <br>
+ * - 프론트가 추론하지 않도록 탭 식별자와 표시 라벨을 모두 포함합니다.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardWorkflowTabDto {
-    private String tabCode; // 탭 코드
+    private String tabId; // 탭 식별자
+    private String label; // 탭 라벨
     private List<DashboardWorkflowItemDto> items; // 탭 항목 목록
 }

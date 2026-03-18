@@ -229,7 +229,7 @@ public class ImHttpServiceImpl implements ImHttpService {
         return fetchObject(
             ApiClientKey.BUSINESS,
             "창고 관리자 옵션 조회",
-            uriBuilder -> uriBuilder.path("/hrm/manager-options").build()
+            uriBuilder -> uriBuilder.path("/hrm/departments/inventory/employees").build()
         );
     }
 

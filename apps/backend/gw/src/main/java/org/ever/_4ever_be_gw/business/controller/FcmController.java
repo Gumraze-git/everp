@@ -30,7 +30,7 @@ public class FcmController implements FcmApi {
 
     private final FcmHttpService fcmHttpService;
 
-    @GetMapping("/statictics")
+    @GetMapping("/metrics")
 
     public ResponseEntity<?> getStatistics(
 
@@ -40,7 +40,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.getFcmStatistics(periods);
     }
 
-    @GetMapping("/invoice/ap")
+    @GetMapping("/invoices/purchase")
 
     public ResponseEntity<?> getApInvoices(
         @AuthenticationPrincipal EverUserPrincipal principal,
@@ -75,7 +75,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.getApInvoices(company, status, startDate, endDate, page, size);
     }
 
-    @GetMapping("/invoice/ar")
+    @GetMapping("/invoices/sales")
 
     public ResponseEntity<?> getArInvoices(
         @AuthenticationPrincipal EverUserPrincipal principal,
@@ -110,7 +110,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.getArInvoices(company, status, startDate, endDate, page, size);
     }
 
-    @GetMapping("/invoice/ap/{invoiceId}")
+    @GetMapping("/invoices/purchase/{invoiceId}")
 
     public ResponseEntity<?> getApInvoiceDetail(
 
@@ -120,7 +120,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.getApInvoiceDetail(invoiceId);
     }
 
-    @GetMapping("/invoice/ar/{invoiceId}")
+    @GetMapping("/invoices/sales/{invoiceId}")
 
     public ResponseEntity<?> getArInvoiceDetail(
 
@@ -130,7 +130,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.getArInvoiceDetail(invoiceId);
     }
 
-    @PatchMapping("/invoice/ap/{invoiceId}")
+    @PatchMapping("/invoices/purchase/{invoiceId}")
 
     public ResponseEntity<?> patchApInvoice(
 
@@ -141,7 +141,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.patchApInvoice(invoiceId, toRequestBody(request));
     }
 
-    @PatchMapping("/invoice/ar/{invoiceId}")
+    @PatchMapping("/invoices/sales/{invoiceId}")
 
     public ResponseEntity<?> patchArInvoice(
 
@@ -196,7 +196,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.updateApInvoicesResponsePending(request.getInvoiceIds());
     }
 
-    @GetMapping("/statistics/supplier/total-sales")
+    @GetMapping("/suppliers/me/metrics/total-sales")
 
     public ResponseEntity<?> getTotalPurchaseAmountBySupplierUserId(
         @AuthenticationPrincipal EverUserPrincipal everUserPrincipal
@@ -205,7 +205,7 @@ public class FcmController implements FcmApi {
         return fcmHttpService.getSupplierTotalSales(supplierUserId);
     }
 
-    @GetMapping("/statistics/customer/total-purchases")
+    @GetMapping("/customers/me/metrics/total-purchases")
 
     public ResponseEntity<?> getTotalSalesAmountByCustomerUserId(
         @AuthenticationPrincipal EverUserPrincipal everUserPrincipal

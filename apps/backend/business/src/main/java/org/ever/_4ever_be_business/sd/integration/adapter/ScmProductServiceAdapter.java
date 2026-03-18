@@ -35,7 +35,7 @@ public class ScmProductServiceAdapter implements ProductServicePort {
 
         try {
             ProductInfoResponseDto response = restClient.post()
-                    .uri(scmServiceUrl + "/scm/scm-pp/product/multiple")
+                    .uri(scmServiceUrl + "/scm-pp/products/search")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestDto)
                     .retrieve()

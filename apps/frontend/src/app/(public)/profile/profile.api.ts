@@ -18,11 +18,11 @@ export const postTraining = async (trainingId: string): Promise<void> => {
 };
 
 export const patchCheckIn = async (): Promise<void> => {
-  await axios.patch(PROFILE_ENDPOINTS.CHECK_IN);
+  await axios.patch(PROFILE_ENDPOINTS.CHECK_IN, { status: 'CHECKED_IN' });
 };
 
 export const patchCheckout = async (): Promise<void> => {
-  await axios.patch(PROFILE_ENDPOINTS.CHECK_OUT);
+  await axios.patch(PROFILE_ENDPOINTS.CHECK_OUT, { status: 'CHECKED_OUT' });
 };
 
 export const getProfile = async (): Promise<ProfileInfoResponse> => {

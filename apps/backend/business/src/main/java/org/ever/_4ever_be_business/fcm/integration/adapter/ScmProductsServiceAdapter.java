@@ -36,7 +36,7 @@ public class ScmProductsServiceAdapter implements ProductsServicePort {
             Map<String, List<String>> requestBody = Map.of("productIds", productIds);
 
             ProductMultipleResponseDto response = restClient.post()
-                    .uri(scmServiceUrl + "/scm/scm-pp/product/multiple")
+                    .uri(scmServiceUrl + "/scm-pp/products/search")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<ProductMultipleResponseDto>() {});

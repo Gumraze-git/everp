@@ -10,7 +10,6 @@ import org.ever._4ever_be_gw.common.dto.ValueKeyOptionDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.scm.PeriodStatDto;
 import org.ever._4ever_be_gw.scm.mm.service.MmHttpService;
 import org.ever._4ever_be_gw.scm.mm.service.MmService;
@@ -25,9 +24,6 @@ import org.springframework.http.ResponseEntity;
 class MmControllerTest {
 
     @Mock
-    private WebClientProvider webClientProvider;
-
-    @Mock
     private MmService mmService;
 
     @Mock
@@ -37,7 +33,7 @@ class MmControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new MmController(webClientProvider, mmService, mmHttpService);
+        controller = new MmController(mmService, mmHttpService);
     }
 
     @Test

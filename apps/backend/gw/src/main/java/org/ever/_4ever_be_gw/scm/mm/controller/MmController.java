@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 
 @RestController
@@ -139,6 +140,31 @@ public class MmController implements MmApi {
         return mmHttpService.approvePurchaseRequisition(purchaseRequisitionId, principal.getUserId());
     }
 
+    @PatchMapping("/purchase-requisitions/{purchaseRequisitionId}")
+    @PreAuthorize("hasAnyAuthority('MM_USER', 'MM_ADMIN', 'ALL_ADMIN')")
+    public ResponseEntity<Object> updatePurchaseRequisitionStatus(
+            @PathVariable String purchaseRequisitionId,
+            @AuthenticationPrincipal EverUserPrincipal principal,
+            @RequestBody Map<String, String> requestDto
+    ) {
+        String status = requestDto.get("status");
+
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            return mmHttpService.approvePurchaseRequisition(purchaseRequisitionId, principal.getUserId());
+        }
+        if ("REJECTED".equalsIgnoreCase(status)) {
+            return mmHttpService.rejectPurchaseRequisition(
+                purchaseRequisitionId,
+                principal.getUserId(),
+                PurchaseRequisitionRejectRequestDto.builder()
+                    .comment(requestDto.get("comment"))
+                    .build()
+            );
+        }
+
+        return ResponseEntity.badRequest().build();
+    }
+
 
     // 구매요청서 반려
     @PostMapping("/purchase-requisitions/{purchaseRequisitionId}/rejections")
@@ -199,6 +225,32 @@ public class MmController implements MmApi {
             @AuthenticationPrincipal EverUserPrincipal principal
             ) {
         return mmHttpService.approvePurchaseOrder(purchaseOrderId, principal.getUserId());
+    }
+
+    @PatchMapping("/purchase-orders/{purchaseOrderId}")
+    public ResponseEntity<Object> updatePurchaseOrderStatus(
+            @PathVariable String purchaseOrderId,
+            @RequestBody Map<String, String> requestDto,
+            @AuthenticationPrincipal EverUserPrincipal principal
+    ) {
+        String status = requestDto.get("status");
+
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            return mmHttpService.approvePurchaseOrder(purchaseOrderId, principal.getUserId());
+        }
+        if ("REJECTED".equalsIgnoreCase(status)) {
+            PurchaseOrderRejectRequestDto rejectRequestDto = new PurchaseOrderRejectRequestDto();
+            rejectRequestDto.setReason(requestDto.get("reason"));
+            return mmHttpService.rejectPurchaseOrder(purchaseOrderId, principal.getUserId(), rejectRequestDto);
+        }
+        if ("DELIVERY_STARTED".equalsIgnoreCase(status)) {
+            return mmHttpService.startDelivery(purchaseOrderId);
+        }
+        if ("DELIVERY_COMPLETED".equalsIgnoreCase(status)) {
+            return mmHttpService.completeDelivery(purchaseOrderId);
+        }
+
+        return ResponseEntity.badRequest().build();
     }
 
     // 발주서 반려

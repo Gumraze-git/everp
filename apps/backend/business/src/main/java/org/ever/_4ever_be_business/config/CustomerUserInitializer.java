@@ -6,18 +6,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.company.entity.CustomerCompany;
 import org.ever._4ever_be_business.company.repository.CustomerCompanyRepository;
 import org.ever._4ever_be_business.hr.entity.CustomerUser;
 import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
+@Order(2)
 @RequiredArgsConstructor
 public class CustomerUserInitializer implements CommandLineRunner {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomerUserInitializer.class);
 
     private final CustomerUserRepository customerUserRepository;
     private final CustomerCompanyRepository customerCompanyRepository;

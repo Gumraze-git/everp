@@ -2,6 +2,7 @@ package org.ever._4ever_be_business.fcm.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.mock.VehiclePartsMockCatalog;
 import org.ever._4ever_be_business.fcm.dto.response.PurchaseInvoiceListDto;
 import org.ever._4ever_be_business.fcm.dto.response.SupplierPurchaseInvoiceListItemDto;
 import org.ever._4ever_be_business.fcm.service.PurchaseStatementService;
@@ -15,7 +16,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -120,14 +120,17 @@ public class SupplierDashboardInvoiceServiceImpl implements SupplierDashboardInv
         int itemCount = Math.min(size > 0 ? size : 5, 5);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> SupplierPurchaseInvoiceListItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemNumber(String.format("AR-MOCK-%04d", i + 1))
-                        .itemTitle(supplierName + " 목업 매출 전표 " + (i + 1))
-                        .name(supplierName)
-                        .statusCode(i % 2 == 0 ? "ISSUED" : "PAID")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.supplierPurchaseInvoiceScenario(i, supplierName);
+                    return SupplierPurchaseInvoiceListItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemNumber(scenario.itemNumber())
+                        .itemTitle(scenario.itemTitle())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(OffsetDateTime.now().minusDays(i).toLocalDate().format(DATE_FORMATTER))
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
@@ -135,14 +138,17 @@ public class SupplierDashboardInvoiceServiceImpl implements SupplierDashboardInv
         int itemCount = Math.min(size > 0 ? size : 5, 5);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> SupplierPurchaseInvoiceListItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemNumber(String.format("AR-MOCK-%04d", i + 1))
-                        .itemTitle("기업 매출 전표 목업 " + (i + 1))
-                        .name("재무 담당자 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "ISSUED" : "PAID")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.companySalesInvoiceScenario(i);
+                    return SupplierPurchaseInvoiceListItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemNumber(scenario.itemNumber())
+                        .itemTitle(scenario.itemTitle())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
@@ -150,14 +156,17 @@ public class SupplierDashboardInvoiceServiceImpl implements SupplierDashboardInv
         int itemCount = Math.min(size > 0 ? size : 5, 5);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> SupplierPurchaseInvoiceListItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemNumber(String.format("AP-MOCK-%04d", i + 1))
-                        .itemTitle("기업 매입 전표 목업 " + (i + 1))
-                        .name("재무 담당자 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "REQUESTED" : "APPROVED")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.companyPurchaseInvoiceScenario(i);
+                    return SupplierPurchaseInvoiceListItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemNumber(scenario.itemNumber())
+                        .itemTitle(scenario.itemTitle())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 }

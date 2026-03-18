@@ -3,6 +3,7 @@ package org.ever._4ever_be_gw.scm.pp.controller;
 import org.ever._4ever_be_gw.api.scm.pp.PpApi;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.ever._4ever_be_gw.config.security.principal.EverUserPrincipal;
 import org.ever._4ever_be_gw.scm.pp.PpHttpService;
@@ -105,6 +106,24 @@ public class PpController implements PpApi {
         );
     }
 
+    @PatchMapping("/mes/{mesId}")
+    public ResponseEntity<Object> updateMesStatus(
+            @PathVariable String mesId,
+            @AuthenticationPrincipal EverUserPrincipal principal,
+            @RequestBody Map<String, String> requestDto
+    ) {
+        String status = requestDto.get("status");
+
+        if ("IN_PROGRESS".equalsIgnoreCase(status)) {
+            return startMes(mesId, principal);
+        }
+        if ("COMPLETED".equalsIgnoreCase(status)) {
+            return completeMes(mesId, principal);
+        }
+
+        return ResponseEntity.badRequest().build();
+    }
+
     @PostMapping("/mes/{mesId}/operations/{operationId}/starts")
     public ResponseEntity<Object> startOperation(
             @PathVariable String mesId,
@@ -117,6 +136,25 @@ public class PpController implements PpApi {
                 .queryParam("managerId", everUserPrincipal.getUserId())
                 .build(mesId, operationId)
         );
+    }
+
+    @PatchMapping("/mes/{mesId}/operations/{operationId}")
+    public ResponseEntity<Object> updateOperationStatus(
+            @PathVariable String mesId,
+            @PathVariable String operationId,
+            @AuthenticationPrincipal EverUserPrincipal principal,
+            @RequestBody Map<String, String> requestDto
+    ) {
+        String status = requestDto.get("status");
+
+        if ("IN_PROGRESS".equalsIgnoreCase(status)) {
+            return startOperation(mesId, operationId, principal);
+        }
+        if ("COMPLETED".equalsIgnoreCase(status)) {
+            return completeOperation(mesId, operationId);
+        }
+
+        return ResponseEntity.badRequest().build();
     }
 
     @PostMapping("/mes/{mesId}/operations/{operationId}/completions")

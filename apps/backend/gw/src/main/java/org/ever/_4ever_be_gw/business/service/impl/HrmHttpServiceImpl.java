@@ -47,7 +47,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/statistics")
+                    .uri("/hrm/metrics")
                     .retrieve()
                     .body(Object.class);
 
@@ -166,7 +166,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/departments/simple")
+                    .uri("/hrm/departments/options")
                     .retrieve()
                     .body(Object.class);
 
@@ -243,7 +243,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/" + departmentId + "/positions/all")
+                    .uri("/hrm/departments/{departmentId}/positions/options", departmentId)
                     .retrieve()
                     .body(Object.class);
 
@@ -298,7 +298,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/hrm/employee");
+                        var builder = uriBuilder.path("/hrm/employees");
                         if (departmentId != null) builder.queryParam("departmentId", departmentId);
                         if (positionId != null) builder.queryParam("positionId", positionId);
                         if (name != null) builder.queryParam("name", name);
@@ -330,7 +330,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/employee/{employeeId}", employeeId)
+                    .uri("/hrm/employees/{employeeId}", employeeId)
                     .retrieve()
                     .body(Object.class);
 
@@ -355,7 +355,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/employees/{internelUserId}", internelUserId)
+                    .uri("/hrm/employees/by-internel-user/{internelUserId}", internelUserId)
                     .retrieve()
                     .body(Object.class);
 
@@ -380,7 +380,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/employees/{internelUserId}/available-trainings", internelUserId)
+                    .uri("/hrm/employees/by-internel-user/{internelUserId}/available-trainings", internelUserId)
                     .retrieve()
                     .body(Object.class);
 
@@ -430,7 +430,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
-                    .uri("/hrm/employee/{employeeId}", employeeId)
+                    .uri("/hrm/employees/{employeeId}", employeeId)
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);
@@ -456,7 +456,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
-                    .uri("/hrm/employee/request")
+                    .uri("/hrm/training-enrollments")
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);
@@ -482,7 +482,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
-                    .uri("/hrm/program/{employeeId}", employeeId)
+                    .uri("/hrm/employees/{employeeId}/programs", employeeId)
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);
@@ -513,7 +513,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/hrm/leave/request");
+                        var builder = uriBuilder.path("/hrm/leave-requests");
                         if (department != null) builder.queryParam("department", department);
                         if (position != null) builder.queryParam("position", position);
                         if (name != null) builder.queryParam("name", name);
@@ -547,7 +547,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
-                    .uri("/hrm/leave/request")
+                    .uri("/hrm/leave-requests")
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);
@@ -573,7 +573,8 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
-                    .uri("/hrm/leave/request/{requestId}/release", requestId)
+                    .uri("/hrm/leave-requests/{requestId}", requestId)
+                    .body(Map.of("status", "APPROVED"))
                     .retrieve()
                     .body(Object.class);
 
@@ -598,7 +599,8 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
-                    .uri("/hrm/leave/request/{requestId}/reject", requestId)
+                    .uri("/hrm/leave-requests/{requestId}", requestId)
+                    .body(Map.of("status", "REJECTED"))
                     .retrieve()
                     .body(Object.class);
 
@@ -793,7 +795,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/trainings/program/{programId}", programId)
+                    .uri("/hrm/programs/{programId}", programId)
                     .retrieve()
                     .body(Object.class);
 
@@ -821,7 +823,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/hrm/trainings/program");
+                        var builder = uriBuilder.path("/hrm/programs");
                         if (name != null) builder.queryParam("name", name);
                         if (status != null) builder.queryParam("status", status);
                         if (category != null) builder.queryParam("category", category);
@@ -853,7 +855,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
-                    .uri("/hrm/trainings/program")
+                    .uri("/hrm/programs")
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);
@@ -879,7 +881,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
-                    .uri("/hrm/program/{programId}", programId)
+                    .uri("/hrm/programs/{programId}", programId)
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);
@@ -1072,7 +1074,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/trainings/employee/{employeeId}/training-history", employeeId)
+                    .uri("/hrm/training-records/{employeeId}", employeeId)
                     .retrieve()
                     .body(Object.class);
 
@@ -1135,7 +1137,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/hrm/trainings/training-status");
+                        var builder = uriBuilder.path("/hrm/training-records");
                         if (department != null) builder.queryParam("department", department);
                         if (position != null) builder.queryParam("position", position);
                         if (name != null) builder.queryParam("name", name);
@@ -1167,7 +1169,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/trainings/training/employee/{employeeId}", employeeId)
+                    .uri("/hrm/training-records/{employeeId}/summary", employeeId)
                     .retrieve()
                     .body(Object.class);
 
@@ -1194,7 +1196,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/time-records/time-record/{timerecordId}", timerecordId)
+                    .uri("/hrm/attendance-records/{timerecordId}", timerecordId)
                     .retrieve()
                     .body(Object.class);
 
@@ -1219,7 +1221,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.patch()
-                    .uri("/hrm/time-records/time-record/{timerecordId}", timerecordId)
+                    .uri("/hrm/attendance-records/{timerecordId}", timerecordId)
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);
@@ -1248,7 +1250,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/hrm/time-records/time-record");
+                        var builder = uriBuilder.path("/hrm/attendance-records");
                         if (department != null) builder.queryParam("department", department);
                         if (position != null) builder.queryParam("position", position);
                         if (statusCode != null) builder.queryParam("statusCode", statusCode);
@@ -1319,10 +1321,10 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         try {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
-            Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
+            Map<String, Object> requestBody = Map.of("employeeId", internelUserId, "status", "CHECKED_IN");
 
             Object response = businessClient.patch()
-                    .uri("/hrm/attendance/check-in")
+                    .uri("/hrm/attendance/self")
                     .body(requestBody)
                     .retrieve()
                     .body(Object.class);
@@ -1347,10 +1349,10 @@ public class HrmHttpServiceImpl implements HrmHttpService {
         try {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
-            Map<String, Object> requestBody = Map.of("employeeId", internelUserId);
+            Map<String, Object> requestBody = Map.of("employeeId", internelUserId, "status", "CHECKED_OUT");
 
             Object response = businessClient.patch()
-                    .uri("/hrm/attendance/check-out")
+                    .uri("/hrm/attendance/self")
                     .body(requestBody)
                     .retrieve()
                     .body(Object.class);
@@ -1376,7 +1378,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.get()
-                    .uri("/hrm/employees/{internelUserId}/attendance-records", internelUserId)
+                    .uri("/hrm/employees/by-internel-user/{internelUserId}/attendance-records", internelUserId)
                     .retrieve()
                     .body(Object.class);
 
@@ -1402,9 +1404,9 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             Object response = businessClient.post()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/hrm/leave/request")  // URL 경로 설정
-                            .queryParam("InternelUserId", internelUserId)
-                            .build())  // queryParam 오타 수정
+                            .path("/hrm/leave-requests")
+                            .queryParam("internelUserId", internelUserId)
+                            .build())
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);  // 동기식 호출
@@ -1434,7 +1436,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
 
             Object response = businessClient.get()
                     .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/hrm/trainings/program");
+                        var builder = uriBuilder.path("/hrm/programs");
                         if (programName != null) builder.queryParam("name", programName);
                         if (status != null) builder.queryParam("status", status);
                         if (category != null) builder.queryParam("category", category);
@@ -1466,7 +1468,7 @@ public class HrmHttpServiceImpl implements HrmHttpService {
             RestClient businessClient = restClientProvider.getRestClient(ApiClientKey.BUSINESS);
 
             Object response = businessClient.post()
-                    .uri("/hrm/program/{employeeId}", employeeId)
+                    .uri("/hrm/employees/{employeeId}/programs", employeeId)
                     .body(requestDto)
                     .retrieve()
                     .body(Object.class);

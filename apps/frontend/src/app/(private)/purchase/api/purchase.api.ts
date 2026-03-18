@@ -66,12 +66,15 @@ export const fetchPurchaseReqList = async (
 
 // 구매 요청 승인
 export const postApporvePurchaseReq = async (prId: string): Promise<void> => {
-  await axios.post(`${PURCHASE_ENDPOINTS.PURCHASE_REQUISITION_RELEASE(prId)}`);
+  await axios.patch(`${PURCHASE_ENDPOINTS.PURCHASE_REQUISITION_DETAIL(prId)}`, {
+    status: 'APPROVED',
+  });
 };
 
 // 구매 요청 반려
 export const postRejectPurchaseReq = async (prId: string, body: string): Promise<void> => {
-  await axios.post(`${PURCHASE_ENDPOINTS.PURCHASE_REQUISITION_REJECT(prId)}`, {
+  await axios.patch(`${PURCHASE_ENDPOINTS.PURCHASE_REQUISITION_DETAIL(prId)}`, {
+    status: 'REJECTED',
     comment: body,
   });
 };
@@ -108,17 +111,24 @@ export const fetchPurchaseOrderList = async (
 
 // 발주서 승인
 export const postApprovePurchaseOrder = async (poId: string): Promise<void> => {
-  await axios.post(`${PURCHASE_ENDPOINTS.PURCHASE_ORDER_APPROVE(poId)}`);
+  await axios.patch(`${PURCHASE_ENDPOINTS.PURCHASE_ORDER_DETAIL(poId)}`, {
+    status: 'APPROVED',
+  });
 };
 
 // 발주서 반려
 export const postRejectPurchaseOrder = async (poId: string, body: string): Promise<void> => {
-  await axios.post(`${PURCHASE_ENDPOINTS.PURCHASE_ORDER_REJECT(poId)}`, { comment: body });
+  await axios.patch(`${PURCHASE_ENDPOINTS.PURCHASE_ORDER_DETAIL(poId)}`, {
+    status: 'REJECTED',
+    reason: body,
+  });
 };
 
 // 승인된 발주서 배송
 export const postDeliveryStartOrder = async (purchaseOrderId: string): Promise<void> => {
-  await axios.post(`${PURCHASE_ENDPOINTS.PURCHASE_ORDER_DELIVERY(purchaseOrderId)}`);
+  await axios.patch(`${PURCHASE_ENDPOINTS.PURCHASE_ORDER_DETAIL(purchaseOrderId)}`, {
+    status: 'DELIVERY_STARTED',
+  });
 };
 
 // 발주서 상세정보

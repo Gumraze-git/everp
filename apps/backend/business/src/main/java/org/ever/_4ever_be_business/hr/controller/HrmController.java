@@ -54,6 +54,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -82,7 +83,7 @@ public class HrmController implements HrmApi {
     /**
      * HR 대시보드 통계 조회
      */
-    @GetMapping("/statistics")
+    @GetMapping("/metrics")
     public HRStatisticsResponseDto getHRStatistics() {
         log.info("HR 대시보드 통계 조회 API 호출");
         HRStatisticsResponseDto result = statisticsService.getHRStatistics();
@@ -138,7 +139,7 @@ public class HrmController implements HrmApi {
     /**
      * 전체 부서 목록 조회 (ID, Name만)
      */
-    @GetMapping("/departments/simple")
+    @GetMapping("/departments/options")
     public List<DepartmentSimpleDto> getAllDepartments() {
         log.info("전체 부서 목록 조회 API 호출");
 
@@ -231,7 +232,7 @@ public class HrmController implements HrmApi {
     /**
      * 특정 부서의 직급 목록 조회 (ID, Name만)
      */
-    @GetMapping("/{departmentId}/positions/all")
+    @GetMapping("/departments/{departmentId}/positions/options")
     public List<PositionSimpleDto> getPositionsByDepartmentId(@PathVariable String departmentId) {
         log.info("부서별 직급 목록 조회 API 호출 - departmentId: {}", departmentId);
 
@@ -248,7 +249,7 @@ public class HrmController implements HrmApi {
     /**
      * 직원 목록 조회
      */
-    @GetMapping("/employee")
+    @GetMapping("/employees")
     public EmployeeListResponseDto getEmployeeList(
             @RequestParam(required = false) String departmentId,
             @RequestParam(required = false) String positionId,
@@ -282,7 +283,7 @@ public class HrmController implements HrmApi {
     /**
      * 직원 상세 정보 조회
      */
-    @GetMapping("/employee/{employeeId}")
+    @GetMapping("/employees/{employeeId}")
     public EmployeeDetailDto getEmployeeDetail(@PathVariable String employeeId) {
         log.info("직원 상세 정보 조회 API 호출 - employeeId: {}", employeeId);
         EmployeeDetailDto result = employeeService.getEmployeeDetail(employeeId);
@@ -293,7 +294,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUser ID로 직원 정보 및 교육 이력 조회
      */
-    @GetMapping("/employees/{internelUserId}")
+    @GetMapping("/employees/by-internel-user/{internelUserId}")
     public EmployeeWithTrainingDto getEmployeeWithTrainingByInternelUserId(@PathVariable String internelUserId) {
         log.info("InternelUser ID로 직원 정보 및 교육 이력 조회 API 호출 - internelUserId: {}", internelUserId);
         EmployeeWithTrainingDto result = employeeService.getEmployeeWithTrainingByInternelUserId(internelUserId);
@@ -306,7 +307,7 @@ public class HrmController implements HrmApi {
      * InternelUser ID로 수강 가능한 교육 프로그램 목록 조회
      * (수강 중이지 않고, 모집 중이 아닌 교육 프로그램)
      */
-    @GetMapping("/employees/{internelUserId}/available-trainings")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/available-trainings")
     public List<TrainingProgramSimpleDto> getAvailableTrainingsByInternelUserId(@PathVariable String internelUserId) {
         log.info("InternelUser ID로 수강 가능한 교육 프로그램 목록 조회 API 호출 - internelUserId: {}", internelUserId);
         List<TrainingProgramSimpleDto> result = employeeService.getAvailableTrainingsByInternelUserId(internelUserId);
@@ -362,7 +363,7 @@ public class HrmController implements HrmApi {
     /**
      * 직원 정보 수정
      */
-    @PatchMapping("/employee/{employeeId}")
+    @PatchMapping("/employees/{employeeId}")
     public ResponseEntity<Void> updateEmployee(
             @PathVariable String employeeId,
             @RequestBody UpdateEmployeeRequestDto requestDto) {
@@ -375,7 +376,7 @@ public class HrmController implements HrmApi {
     /**
      * 교육 프로그램 신청
      */
-    @PostMapping("/employee/request")
+    @PostMapping("/training-enrollments")
     public ResponseEntity<Void> requestTraining(@RequestBody TrainingRequestDto requestDto) {
         log.info("교육 프로그램 신청 API 호출 - employeeId: {}, programId: {}", requestDto.getEmployeeId(), requestDto.getProgramId());
         employeeService.requestTraining(requestDto);
@@ -386,7 +387,7 @@ public class HrmController implements HrmApi {
     /**
      * 직원 교육 프로그램 등록
      */
-    @PostMapping("/program/{employeeId}")
+    @PostMapping("/employees/{employeeId}/programs")
     public ResponseEntity<Void> enrollTrainingProgram(
             @PathVariable String employeeId,
             @RequestBody TrainingRequestDto requestDto) {
@@ -402,7 +403,7 @@ public class HrmController implements HrmApi {
     /**
      * 휴가 신청 목록 조회
      */
-    @GetMapping("/leave/request")
+    @GetMapping("/leave-requests")
     public LeaveRequestListResponseDto getLeaveRequestList(
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String position,
@@ -439,37 +440,37 @@ public class HrmController implements HrmApi {
     /**
      * 휴가 신청
      */
-    @PostMapping("/leave/request")
+    @PostMapping("/leave-requests")
     public ResponseEntity<Void> createLeaveRequest(
             @RequestBody CreateLeaveRequestDto requestDto,
-            @RequestParam String InternelUserId
+            @RequestParam String internelUserId
     ) {
         log.info("휴가 신청 API 호출 - internelUserId: {}, leaveType: {}, startDate: {}, endDate: {}",
-                InternelUserId, requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
-        leaveRequestService.createLeaveRequest(requestDto, InternelUserId);
-        log.info("휴가 신청 성공 - internelUserId: {}", InternelUserId);
+                internelUserId, requestDto.getLeaveType(), requestDto.getStartDate(), requestDto.getEndDate());
+        leaveRequestService.createLeaveRequest(requestDto, internelUserId);
+        log.info("휴가 신청 성공 - internelUserId: {}", internelUserId);
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * 휴가 신청 승인
+     * 휴가 신청 상태 변경
      */
-    @PatchMapping("/leave/request/{requestId}/release")
-    public ResponseEntity<Void> approveLeaveRequest(@PathVariable String requestId) {
-        log.info("휴가 신청 승인 API 호출 - requestId: {}", requestId);
-        leaveRequestService.approveLeaveRequest(requestId);
-        log.info("휴가 신청 승인 성공 - requestId: {}", requestId);
-        return ResponseEntity.noContent().build();
-    }
+    @PatchMapping("/leave-requests/{requestId}")
+    public ResponseEntity<Void> updateLeaveRequestStatus(
+            @PathVariable String requestId,
+            @RequestBody Map<String, String> requestDto) {
+        String status = requestDto.get("status");
+        log.info("휴가 신청 상태 변경 API 호출 - requestId: {}, status: {}", requestId, status);
 
-    /**
-     * 휴가 신청 반려
-     */
-    @PatchMapping("/leave/request/{requestId}/reject")
-    public ResponseEntity<Void> rejectLeaveRequest(@PathVariable String requestId) {
-        log.info("휴가 신청 반려 API 호출 - requestId: {}", requestId);
-        leaveRequestService.rejectLeaveRequest(requestId);
-        log.info("휴가 신청 반려 성공 - requestId: {}", requestId);
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            leaveRequestService.approveLeaveRequest(requestId);
+        } else if ("REJECTED".equalsIgnoreCase(status)) {
+            leaveRequestService.rejectLeaveRequest(requestId);
+        } else {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "지원하지 않는 휴가 신청 상태입니다.");
+        }
+
+        log.info("휴가 신청 상태 변경 성공 - requestId: {}, status: {}", requestId, status);
         return ResponseEntity.noContent().build();
     }
 
@@ -588,7 +589,7 @@ public class HrmController implements HrmApi {
     /**
      * 교육 프로그램 상세 정보 조회
      */
-    @GetMapping("/trainings/program/{programId}")
+    @GetMapping("/programs/{programId}")
     public DeferredResult<ResponseEntity<?>> getProgramDetailInfo(@PathVariable String programId) {
         log.info("교육 프로그램 상세 정보 조회 요청 - programId: {}", programId);
 
@@ -636,7 +637,7 @@ public class HrmController implements HrmApi {
     /**
      * 교육 프로그램 목록 조회
      */
-    @GetMapping("/trainings/program")
+    @GetMapping("/programs")
     public TrainingListResponseDto getTrainingList(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) TrainingStatus status,
@@ -671,7 +672,7 @@ public class HrmController implements HrmApi {
     /**
      * 교육 프로그램 생성
      */
-    @PostMapping("/trainings/program")
+    @PostMapping("/programs")
     public ResponseEntity<Void> createTrainingProgram(@RequestBody CreateTrainingProgramDto requestDto) {
         log.info("교육 프로그램 생성 API 호출 - programName: {}, category: {}", requestDto.getProgramName(), requestDto.getCategory());
         trainingService.createTrainingProgram(requestDto);
@@ -682,7 +683,7 @@ public class HrmController implements HrmApi {
     /**
      * 교육 프로그램 수정
      */
-    @PatchMapping("/program/{programId}")
+    @PatchMapping("/programs/{programId}")
     public ResponseEntity<Void> updateTrainingProgram(
             @PathVariable String programId,
             @RequestBody UpdateTrainingProgramDto requestDto) {
@@ -761,7 +762,7 @@ public class HrmController implements HrmApi {
     /**
      * 직원 교육 이력 조회
      */
-    @GetMapping("/trainings/employee/{employeeId}/training-history")
+    @GetMapping("/training-records/{employeeId}")
     public EmployeeTrainingHistoryDto getEmployeeTrainingHistory(@PathVariable String employeeId) {
         log.info("직원 교육 이력 조회 요청 - employeeId: {}", employeeId);
         EmployeeTrainingHistoryVo vo = new EmployeeTrainingHistoryVo(employeeId);
@@ -795,7 +796,7 @@ public class HrmController implements HrmApi {
     /**
      * 직원 교육 현황 통계 조회
      */
-    @GetMapping("/trainings/training-status")
+    @GetMapping("/training-records")
     public TrainingStatusResponseDto getTrainingStatusList(
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String position,
@@ -816,7 +817,7 @@ public class HrmController implements HrmApi {
     /**
      * 직원별 교육 요약 정보 조회
      */
-    @GetMapping("/trainings/training/employee/{employeeId}")
+    @GetMapping("/training-records/{employeeId}/summary")
     public EmployeeTrainingSummaryDto getEmployeeTrainingSummary(@PathVariable String employeeId) {
         log.info("직원별 교육 요약 정보 조회 API 호출 - employeeId: {}", employeeId);
         EmployeeTrainingSummaryDto result = trainingService.getEmployeeTrainingSummary(employeeId);
@@ -829,7 +830,7 @@ public class HrmController implements HrmApi {
     /**
      * 근태 기록 상세 정보 조회
      */
-    @GetMapping("/time-records/time-record/{timerecordId}")
+    @GetMapping("/attendance-records/{timerecordId}")
     public TimeRecordDetailDto getTimeRecordDetail(@PathVariable String timerecordId) {
         log.info("근태 기록 상세 정보 조회 요청 - timerecordId: {}", timerecordId);
         TimeRecordDetailVo vo = new TimeRecordDetailVo(timerecordId);
@@ -842,7 +843,7 @@ public class HrmController implements HrmApi {
     /**
      * 근태 기록 수정
      */
-    @PatchMapping("/time-records/time-record/{timerecordId}")
+    @PatchMapping("/attendance-records/{timerecordId}")
     public ResponseEntity<Void> updateTimeRecord(
             @PathVariable String timerecordId,
             @RequestBody UpdateTimeRecordDto requestDto) {
@@ -855,7 +856,7 @@ public class HrmController implements HrmApi {
     /**
      * 근태 기록 목록 조회
      */
-    @GetMapping("/time-records/time-record")
+    @GetMapping("/attendance-records")
     public TimeRecordListResponseDto getAttendanceList(
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String position,
@@ -949,6 +950,25 @@ public class HrmController implements HrmApi {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/attendance/self")
+    public ResponseEntity<Void> updateAttendanceStatus(@RequestBody Map<String, String> requestDto) {
+        String internelUserId = requestDto.get("employeeId");
+        String status = requestDto.get("status");
+
+        log.info("출퇴근 상태 변경 API 호출 - internelUserId: {}, status: {}", internelUserId, status);
+
+        if ("CHECKED_IN".equalsIgnoreCase(status)) {
+            attendanceService.checkInByInternelUserId(internelUserId);
+        } else if ("CHECKED_OUT".equalsIgnoreCase(status)) {
+            attendanceService.checkOutByInternelUserId(internelUserId);
+        } else {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "지원하지 않는 출퇴근 상태입니다.");
+        }
+
+        log.info("출퇴근 상태 변경 성공 - internelUserId: {}, status: {}", internelUserId, status);
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * InternelUser ID로 출근 처리
      */
@@ -974,7 +994,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUser ID로 출퇴근 기록 목록 조회
      */
-    @GetMapping("/employees/{internelUserId}/attendance-records")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/attendance-records")
     public List<AttendanceRecordDto> getAttendanceRecordsByInternelUserId(@PathVariable String internelUserId) {
         log.info("InternelUser ID로 출퇴근 기록 목록 조회 API 호출 - internelUserId: {}", internelUserId);
         List<AttendanceRecordDto> result = attendanceService.getAttendanceRecordsByInternelUserId(internelUserId);
@@ -1095,7 +1115,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUserId로 프로필 조회
      */
-    @GetMapping("/employees/profile/{internelUserId}")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/profile")
     public EmployeeProfileDto getEmployeeProfile(@PathVariable String internelUserId) {
         log.info("프로필 조회 API 호출 - internelUserId: {}", internelUserId);
         EmployeeProfileDto result = employeeService.getProfileByInternelUserId(internelUserId);
@@ -1106,7 +1126,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUserId로 근태 기록 조회 (오늘 제외)
      */
-    @GetMapping("/employees/attendance-records/{internelUserId}")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/attendance-records/history")
     public List<EmployeeAttendanceRecordDto> getEmployeeAttendanceRecords(@PathVariable String internelUserId) {
         log.info("근태 기록 조회 API 호출 (오늘 제외) - internelUserId: {}", internelUserId);
         List<EmployeeAttendanceRecordDto> result = employeeService.getAttendanceRecordsByInternelUserId(internelUserId);
@@ -1117,7 +1137,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUserId로 오늘 근태 기록 조회
      */
-    @GetMapping("/employees/today-attendance/{internelUserId}")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/today-attendance")
     public TodayAttendanceDto getTodayAttendance(@PathVariable String internelUserId) {
         log.info("오늘 근태 기록 조회 API 호출 - internelUserId: {}", internelUserId);
         TodayAttendanceDto result = employeeService.getTodayAttendanceByInternelUserId(internelUserId);
@@ -1128,7 +1148,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUserId로 수강중인 교육 목록 조회
      */
-    @GetMapping("/employees/trainings/in-progress/{internelUserId}")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/trainings/in-progress")
     public List<TrainingItemDto> getInProgressTrainings(@PathVariable String internelUserId) {
         log.info("수강중인 교육 목록 조회 API 호출 - internelUserId: {}", internelUserId);
         List<TrainingItemDto> result = employeeService.getInProgressTrainingsByInternelUserId(internelUserId);
@@ -1139,7 +1159,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUserId로 신청가능한 교육 목록 조회
      */
-    @GetMapping("/employees/trainings/available/{internelUserId}")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/trainings/available")
     public List<TrainingItemDto> getAvailableTrainings(@PathVariable String internelUserId) {
         log.info("신청가능한 교육 목록 조회 API 호출 - internelUserId: {}", internelUserId);
         List<TrainingItemDto> result = employeeService.getAvailableTrainingsForApplyByInternelUserId(internelUserId);
@@ -1150,7 +1170,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUserId로 수료한 교육 목록 조회
      */
-    @GetMapping("/employees/trainings/completed/{internelUserId}")
+    @GetMapping("/employees/by-internel-user/{internelUserId}/trainings/completed")
     public List<TrainingItemDto> getCompletedTrainings(@PathVariable String internelUserId) {
         log.info("수료한 교육 목록 조회 API 호출 - internelUserId: {}", internelUserId);
         List<TrainingItemDto> result = employeeService.getCompletedTrainingsByInternelUserId(internelUserId);
@@ -1161,7 +1181,7 @@ public class HrmController implements HrmApi {
     /**
      * InternelUserId로 프로필 수정 (전화번호, 주소)
      */
-    @PatchMapping("/employees/profile/{internelUserId}")
+    @PatchMapping("/employees/by-internel-user/{internelUserId}/profile")
     public ResponseEntity<Void> updateProfile(
             @PathVariable String internelUserId,
             @RequestBody UpdateProfileRequestDto requestDto) {
@@ -1174,7 +1194,7 @@ public class HrmController implements HrmApi {
     /**
      * CustomerUserId로 고객 정보 조회 (고객사 + 고객 담당자)
      */
-    @GetMapping("/customers/profile/{customerUserId}")
+    @GetMapping("/customers/by-customer-user/{customerUserId}/profile")
     public org.ever._4ever_be_business.hr.dto.response.CustomerInfoDto getCustomerInfo(
             @PathVariable String customerUserId) {
         log.info("고객 정보 조회 API 호출 - customerUserId: {}", customerUserId);
@@ -1187,9 +1207,9 @@ public class HrmController implements HrmApi {
     /**
      * 직원 교육 프로그램 등록
      */
-    @PostMapping("internelUser/program")
+    @PostMapping("/employees/by-internel-user/{internelUserId}/programs")
     public ResponseEntity<Void> postTrainingProgram(
-            @RequestParam String internelUserId,
+            @PathVariable String internelUserId,
             @RequestParam String programId) {
         log.info("교육 프로그램 등록 API 호출 - employeeId: {}, programId: {}", internelUserId, programId);
 

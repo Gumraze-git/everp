@@ -2,6 +2,7 @@ package org.ever._4ever_be_business.sd.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.mock.VehiclePartsMockCatalog;
 import org.ever._4ever_be_business.hr.entity.CustomerUser;
 import org.ever._4ever_be_business.hr.repository.CustomerUserRepository;
 import org.ever._4ever_be_business.order.entity.Order;
@@ -176,14 +177,17 @@ public class DashboardOrderServiceImpl implements DashboardOrderService {
         int itemCount = Math.min(size > 0 ? size : 5, 5);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle("내부 주문 " + (i + 1))
-                        .itemNumber(String.format("SO-MOCK-%04d", i + 1))
-                        .name("영업 담당자 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "RELEASED" : "IN_PROGRESS")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.salesOrderScenario(i);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 }

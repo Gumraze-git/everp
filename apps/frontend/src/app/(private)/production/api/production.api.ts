@@ -193,22 +193,30 @@ export const fetchMesDetail = async (mesId: string) => {
 
 // MES 시작
 export const startMes = async (mesId: string): Promise<void> => {
-  await axios.post(PRODUCTION_ENDPOINTS.MES_START(mesId));
+  await axios.patch(PRODUCTION_ENDPOINTS.MES_STATUS(mesId), {
+    status: 'IN_PROGRESS',
+  });
 };
 
 // MES 완료
 export const completeMes = async (mesId: string): Promise<void> => {
-  await axios.post(PRODUCTION_ENDPOINTS.MES_COMPLETE(mesId));
+  await axios.patch(PRODUCTION_ENDPOINTS.MES_STATUS(mesId), {
+    status: 'COMPLETED',
+  });
 };
 
 // 공정 시작
 export const startMesOperation = async (mesId: string, operationId: string): Promise<void> => {
-  await axios.post(PRODUCTION_ENDPOINTS.MES_OPERATION_START(mesId, operationId));
+  await axios.patch(PRODUCTION_ENDPOINTS.MES_OPERATION_STATUS(mesId, operationId), {
+    status: 'IN_PROGRESS',
+  });
 };
 
 // 공정 완료
 export const completeMesOperation = async (mesId: string, operationId: string): Promise<void> => {
-  await axios.post(PRODUCTION_ENDPOINTS.MES_OPERATION_COMPLETE(mesId, operationId));
+  await axios.patch(PRODUCTION_ENDPOINTS.MES_OPERATION_STATUS(mesId, operationId), {
+    status: 'COMPLETED',
+  });
 };
 
 // --- 드롭다운 조회 ---

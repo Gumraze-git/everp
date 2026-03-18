@@ -11,12 +11,9 @@ export const PRODUCTION_ENDPOINTS = {
   // MES 작업 목록
   MES_LIST: `${PRODUCTION_BASE_PATH}/mes`, // MES 목록 조회
   MES_WORK_ORDER_DETAIL: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}`, // MES 상세 조회
-  MES_START: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}/starts`, // MES 시작
-  MES_COMPLETE: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}/completions`, // MES 완료
-  MES_OPERATION_START: (mesId: string, operationId: string) =>
-    `${PRODUCTION_BASE_PATH}/mes/${mesId}/operations/${operationId}/starts`, // 공정 시작
-  MES_OPERATION_COMPLETE: (mesId: string, operationId: string) =>
-    `${PRODUCTION_BASE_PATH}/mes/${mesId}/operations/${operationId}/completions`, // 공정 완료
+  MES_STATUS: (mesId: string) => `${PRODUCTION_BASE_PATH}/mes/${mesId}`, // MES 상태 변경
+  MES_OPERATION_STATUS: (mesId: string, operationId: string) =>
+    `${PRODUCTION_BASE_PATH}/mes/${mesId}/operations/${operationId}`, // 공정 상태 변경
 
   // MRP 순소요 목록
   MRP_ORDERS: `${PRODUCTION_BASE_PATH}/quotations/mrp`, // MRP 순소요 목록 조회

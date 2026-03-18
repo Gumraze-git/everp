@@ -33,7 +33,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "재무관리 통계 조회",
             uriBuilder -> {
-                UriBuilder builder = uriBuilder.path("/fcm/statistics");
+                UriBuilder builder = uriBuilder.path("/fcm/metrics");
                 if (periods != null && !periods.isBlank()) {
                     builder.queryParam("periods", periods);
                 }
@@ -56,7 +56,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "매입 전표 목록 조회",
             uriBuilder -> {
-                UriBuilder builder = uriBuilder.path("/fcm/statement/ap");
+                UriBuilder builder = uriBuilder.path("/fcm/invoices/purchase");
                 if (company != null) {
                     builder.queryParam("company", company);
                 }
@@ -90,7 +90,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "공급사 매입 전표 목록 조회",
             uriBuilder -> {
-                UriBuilder builder = uriBuilder.path("/fcm/invoice/ap/supplier/{supplierUserId}");
+                UriBuilder builder = uriBuilder.path("/fcm/invoices/purchase/suppliers/{supplierUserId}");
                 if (status != null) {
                     builder.queryParam("status", status);
                 }
@@ -121,7 +121,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "매출 전표 목록 조회",
             uriBuilder -> {
-                UriBuilder builder = uriBuilder.path("/fcm/invoice/ar");
+                UriBuilder builder = uriBuilder.path("/fcm/invoices/sales");
                 if (company != null) {
                     builder.queryParam("company", company);
                 }
@@ -155,7 +155,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "고객사 매출 전표 목록 조회",
             uriBuilder -> {
-                UriBuilder builder = uriBuilder.path("/fcm/invoice/ar/customer/{customerUserId}");
+                UriBuilder builder = uriBuilder.path("/fcm/invoices/sales/customers/{customerUserId}");
                 if (status != null) {
                     builder.queryParam("status", status);
                 }
@@ -175,20 +175,19 @@ public class FcmHttpServiceImpl implements FcmHttpService {
     @Override
     public ResponseEntity<?> getApInvoiceDetail(String invoiceId) {
         log.debug("매입 전표 상세 조회 요청 - invoiceId: {}", invoiceId);
-        return get("매입 전표 상세 조회", "/fcm/invoice/ap/{invoiceId}", invoiceId);
+        return get("매입 전표 상세 조회", "/fcm/invoices/purchase/{invoiceId}", invoiceId);
     }
 
     @Override
     public ResponseEntity<?> getArInvoiceDetail(String invoiceId) {
         log.debug("매출 전표 상세 조회 요청 - invoiceId: {}", invoiceId);
-        return get("매출 전표 상세 조회", "/fcm/invoice/ar/{invoiceId}", invoiceId);
+        return get("매출 전표 상세 조회", "/fcm/invoices/sales/{invoiceId}", invoiceId);
     }
 
     @Override
     public ResponseEntity<?> patchApInvoice(String invoiceId, Map<String, Object> requestBody) {
         log.debug("매입 전표 수정 요청 - invoiceId: {}, body: {}", invoiceId, requestBody);
-        log.warn("매입 전표 수정 엔드포인트가 Business 서비스에 구현되지 않아 204 응답으로 처리합니다.");
-        return ResponseEntity.noContent().build();
+        return patch("매입 전표 수정", "/fcm/invoices/purchase/{invoiceId}", requestBody, invoiceId);
     }
 
     @Override
@@ -200,7 +199,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
             convertedBody.put("dueDate", dueDate.toString());
         }
 
-        return patch("매출 전표 수정", "/fcm/invoice/ar/{invoiceId}", convertedBody, invoiceId);
+        return patch("매출 전표 수정", "/fcm/invoices/sales/{invoiceId}", convertedBody, invoiceId);
     }
 
     @Override
@@ -245,13 +244,13 @@ public class FcmHttpServiceImpl implements FcmHttpService {
     @Override
     public ResponseEntity<?> getSupplierTotalSales(String supplierUserId) {
         log.debug("공급사 총 매출 통계 조회 요청 - supplierUserId: {}", supplierUserId);
-        return get("공급사 총 매출 통계 조회", "/fcm/statistics/supplier/{supplierUserId}/total-sales", supplierUserId);
+        return get("공급사 총 매출 통계 조회", "/fcm/metrics/suppliers/{supplierUserId}/total-sales", supplierUserId);
     }
 
     @Override
     public ResponseEntity<?> getCustomerTotalPurchases(String customerUserId) {
         log.debug("고객사 총 매입 통계 조회 요청 - customerUserId: {}", customerUserId);
-        return get("고객사 총 매입 통계 조회", "/fcm/statistics/customer/{customerUserId}/total-purchases", customerUserId);
+        return get("고객사 총 매입 통계 조회", "/fcm/metrics/customers/{customerUserId}/total-purchases", customerUserId);
     }
 
     @Override
@@ -263,7 +262,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "대시보드 공급사 매출 전표 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/fcm/dashboard/invoice/ap/supplier")
+                .path("/fcm/dashboard/invoices/purchase/suppliers")
                 .queryParam("userId", userId)
                 .queryParam("size", normalizeSize(size))
                 .build()
@@ -279,7 +278,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "대시보드 고객사 매입 전표 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/fcm/dashboard/invoice/ar/customer")
+                .path("/fcm/dashboard/invoices/sales/customers")
                 .queryParam("userId", userId)
                 .queryParam("size", normalizeSize(size))
                 .build()
@@ -292,7 +291,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "대시보드 기업 매출 전표 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/fcm/dashboard/invoice/ar")
+                .path("/fcm/dashboard/invoices/sales")
                 .queryParam("size", normalizeSize(size))
                 .build()
         );
@@ -304,7 +303,7 @@ public class FcmHttpServiceImpl implements FcmHttpService {
         return get(
             "대시보드 기업 매입 전표 목록 조회",
             uriBuilder -> uriBuilder
-                .path("/fcm/dashboard/invoice/ap")
+                .path("/fcm/dashboard/invoices/purchase")
                 .queryParam("size", normalizeSize(size))
                 .build()
         );

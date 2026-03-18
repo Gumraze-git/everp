@@ -51,29 +51,26 @@ export const SALES_ENDPOINTS = {
   EDIT_CUSTOMER: (id: string) => `${SALES_BASE_PATH}/customers/${id}`,
   ANALYTICS: `${SALES_BASE_PATH}/analytics/sales`,
   NEW_ORDER: `${SALES_BASE_PATH}/quotations`,
-  NEW_QUOTE_ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/product-options`,
-  CSUTOMER_STATISTICS: `${SALES_BASE_PATH}/customer-users/me/metrics/quotation-counts`,
+  NEW_QUOTE_ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/products/options`,
+  CSUTOMER_STATISTICS: `${SALES_BASE_PATH}/customers/me/metrics/quotations`,
 } as const;
 
 // ----------------------- FINANCE -----------------------
 
 export const FINANCE_ENDPOINTS = {
-  STATISTICS: `${FINANCE_BASE_PATH}/statictics`,
-  PURCHASE_INVOICES_LIST: `${FINANCE_BASE_PATH}/invoice/ap`,
-  PURCHASE_INVOICE_DETAIL: (invoiceId: string) => `${FINANCE_BASE_PATH}/invoice/ap/${invoiceId}`,
-  SALES_INVOICES_LIST: `${FINANCE_BASE_PATH}/invoice/ar`,
-  SALES_INVOICE_DETAIL: (invoiceId: string) => `${FINANCE_BASE_PATH}/invoice/ar/${invoiceId}`,
-
+  STATISTICS: `${FINANCE_BASE_PATH}/metrics`,
+  PURCHASE_INVOICES_LIST: `${FINANCE_BASE_PATH}/invoices/purchase`,
+  PURCHASE_INVOICE_DETAIL: (invoiceId: string) => `${FINANCE_BASE_PATH}/invoices/purchase/${invoiceId}`,
+  SALES_INVOICES_LIST: `${FINANCE_BASE_PATH}/invoices/sales`,
+  SALES_INVOICE_DETAIL: (invoiceId: string) => `${FINANCE_BASE_PATH}/invoices/sales/${invoiceId}`,
   PURCHASE_INVOICE_REQUEST: (invoiceId: string) =>
-    `${FINANCE_BASE_PATH}/invoice/ap/receivable/request?invoiceId=${invoiceId}`,
+    `${FINANCE_BASE_PATH}/invoices/purchase/${invoiceId}`,
   SALES_INVOICE_COMPLETE: (invoiceId: string) =>
-    `${FINANCE_BASE_PATH}/invoice/ar/${invoiceId}/receivable/complete`,
+    `${FINANCE_BASE_PATH}/invoices/sales/${invoiceId}`,
   SUPPLIER_AP_COMPLETE: (invoiceId: string) =>
-    `${FINANCE_BASE_PATH}/invoice/ap/${invoiceId}/payable/complete`,
-  // SUPPLIER_AP_COMPLETE: (invoiceId: string) =>
-  //   `${FINANCE_BASE_PATH}/invoice/ap/${invoiceId}/payable/complete`,
-  CUSTOMER_STATISTICS: `${FINANCE_BASE_PATH}/statistics/customer/total-purchases`,
-  SUPPLIER_STATISTICS: `${FINANCE_BASE_PATH}/statistics/supplier/total-sales`,
+    `${FINANCE_BASE_PATH}/invoices/purchase/${invoiceId}`,
+  CUSTOMER_STATISTICS: `${FINANCE_BASE_PATH}/customers/me/metrics/total-purchases`,
+  SUPPLIER_STATISTICS: `${FINANCE_BASE_PATH}/suppliers/me/metrics/total-sales`,
 } as const;
 
 // ----------------------- DASHBOARD -----------------------
@@ -102,8 +99,8 @@ export const INVENTORY_ENDPOINTS = {
   EDIT_SAFETY_STOCK: (itemId: string, safetyStock: number) =>
     `${INVENTORY_BASE_PATH}/iv/items/${itemId}/safety-stock?safetyStock=${safetyStock}`,
   // ---------- 메뉴 조회 ----------
-  ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/iv/item-options`,
-  WAREHOUSE_TOGGLE: `${INVENTORY_BASE_PATH}/iv/warehouse-options`,
+  ITEM_TOGGLE: `${INVENTORY_BASE_PATH}/iv/items/options`,
+  WAREHOUSE_TOGGLE: `${INVENTORY_BASE_PATH}/iv/warehouses/options`,
 } as const;
 
 // ----------------------- LOWSTOCK -----------------------
@@ -119,7 +116,7 @@ export const WAREHOUSE_ENDPOINTS = {
   WAREHOUSE_DETAIL: (warehouseId: string) => `${INVENTORY_BASE_PATH}/iv/warehouses/${warehouseId}`,
   WAREHOUSE_MANAGE: (warehouseId: string) => `${INVENTORY_BASE_PATH}/iv/warehouses/${warehouseId}`,
   ADD_WAREHOUSE: `${INVENTORY_BASE_PATH}/iv/warehouses`,
-  WAREHOUSE_MANAGER_INFO: `${INVENTORY_BASE_PATH}/iv/warehouse-manager-options`,
+  WAREHOUSE_MANAGER_INFO: `${INVENTORY_BASE_PATH}/iv/warehouse-managers/options`,
 };
 
 // ----------------------- USER -----------------------
@@ -127,12 +124,12 @@ export const USER_ENDPOINTS = {
   LOGIN: `${AUTH_BASE_URL}/oauth2/token`,
   LOGOUT: `${AUTH_BASE_URL}/logout`,
   USER_INFO: `${API_BASE_URL}/user`,
-  USER_PROFILE_INFO: `${HRM_BASE_PATH}/employees/by-internel-user`,
+  USER_PROFILE_INFO: `${HRM_BASE_PATH}/employees/by-internal-user`,
 };
 
 // ----------------------- PROFILE -----------------------
 export const PROFILE_ENDPOINTS = {
-  VACATION: `${HRM_BASE_PATH}/leave/request`,
+  VACATION: `${HRM_BASE_PATH}/leave-requests`,
   PROFILE_INFO: `${PROFILE_BASE_PATH}`,
   ATTENDANCE_RECORDS: `${PROFILE_BASE_PATH}/attendance-records`,
   TODAY_ATTENDANCE: `${PROFILE_BASE_PATH}/today-attendance`,
@@ -141,7 +138,7 @@ export const PROFILE_ENDPOINTS = {
   PROGRESS_TRAINING: `${PROFILE_BASE_PATH}/training-items/in-progress`,
   REGISTER_TRAINING: (trainingId: string) =>
     `${PROFILE_BASE_PATH}/training-enrollments?trainingId=${trainingId}`,
-  CHECK_IN: `${HRM_BASE_PATH}/attendance/check-in`,
-  CHECK_OUT: `${HRM_BASE_PATH}/attendance/check-out`,
+  CHECK_IN: `${HRM_BASE_PATH}/attendance/self`,
+  CHECK_OUT: `${HRM_BASE_PATH}/attendance/self`,
   EDIT_PROFILE: `${PROFILE_BASE_PATH}`,
 };

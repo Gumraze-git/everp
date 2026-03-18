@@ -2,6 +2,7 @@ package org.ever._4ever_be_business.sd.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ever._4ever_be_business.common.mock.VehiclePartsMockCatalog;
 import org.ever._4ever_be_business.common.exception.BusinessException;
 import org.ever._4ever_be_business.common.exception.ErrorCode;
 import org.ever._4ever_be_business.hr.entity.CustomerUser;
@@ -235,14 +236,17 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
         int itemCount = Math.min(limit, 5);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle(companyName)
-                        .itemNumber(String.format("QT-MOCK-%04d", i + 1))
-                        .name(requesterName)
-                        .statusCode(i % 2 == 0 ? "PENDING" : "APPROVED")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.customerQuotationScenario(i, requesterName, companyName);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(OffsetDateTime.now().minusDays(i).toLocalDate().format(ISO_FORMATTER))
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 
@@ -251,14 +255,17 @@ public class DashboardCustomerQuotationServiceImpl implements DashboardCustomerQ
         int itemCount = Math.min(limit, 5);
 
         return IntStream.range(0, itemCount)
-                .mapToObj(i -> DashboardWorkflowItemDto.builder()
-                        .itemId(UUID.randomUUID().toString())
-                        .itemTitle("내부 견적 요청 " + (i + 1))
-                        .itemNumber(String.format("QT-MOCK-%04d", i + 1))
-                        .name("영업 담당자 " + (i + 1))
-                        .statusCode(i % 2 == 0 ? "IN_REVIEW" : "APPROVED")
+                .mapToObj(i -> {
+                    var scenario = VehiclePartsMockCatalog.internalQuotationScenario(i);
+                    return DashboardWorkflowItemDto.builder()
+                        .itemId(scenario.itemId())
+                        .itemTitle(scenario.itemTitle())
+                        .itemNumber(scenario.itemNumber())
+                        .name(scenario.name())
+                        .statusCode(scenario.statusCode())
                         .date(LocalDate.now().minusDays(i).toString())
-                        .build())
+                        .build();
+                })
                 .toList();
     }
 }

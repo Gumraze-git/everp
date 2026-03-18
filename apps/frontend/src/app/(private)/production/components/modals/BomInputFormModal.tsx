@@ -74,60 +74,60 @@ interface BomItem {
   sequence: number;
 }
 
-// 목업 데이터
+// 데모 데이터
 const MOCK_MATERIALS: MaterialInfo[] = [
   {
     id: 'M001',
-    name: '디스플레이 패널',
-    productCode: 'DP-2024-001',
-    type: '전자부품',
-    supplier: '삼성디스플레이',
-    unit: '개',
-    unitPrice: 150000,
+    name: '알루미늄 패널 시트',
+    productCode: 'MAT-AL-2401',
+    type: '원자재',
+    supplier: 'Seohan Body Panels',
+    unit: 'KG',
+    unitPrice: 78000,
   },
   {
     id: 'M002',
-    name: 'AP 칩셋',
-    productCode: 'AP-2024-002',
-    type: '반도체',
-    supplier: '퀄컴',
-    unit: '개',
-    unitPrice: 80000,
+    name: 'ABS 레진 펠렛',
+    productCode: 'MAT-ABS-2402',
+    type: '원자재',
+    supplier: '한빛 오토 외장',
+    unit: 'KG',
+    unitPrice: 31000,
   },
   {
     id: 'M003',
-    name: '배터리',
-    productCode: 'BT-2024-003',
-    type: '전지',
-    supplier: 'LG에너지솔루션',
-    unit: '개',
-    unitPrice: 45000,
+    name: '크롬 트림 스트립',
+    productCode: 'MAT-CT-2403',
+    type: '원자재',
+    supplier: 'Prime Bumper & Grill',
+    unit: 'M',
+    unitPrice: 43000,
   },
   {
     id: 'M004',
-    name: '카메라 모듈',
-    productCode: 'CM-2024-004',
-    type: '광학부품',
-    supplier: '소니',
-    unit: '개',
-    unitPrice: 35000,
+    name: '구조용 접착제 팩',
+    productCode: 'MAT-SA-2404',
+    type: '원자재',
+    supplier: '성우 모터스 트림',
+    unit: 'KG',
+    unitPrice: 38000,
   },
   {
     id: 'M005',
-    name: '케이스',
-    productCode: 'CS-2024-005',
-    type: '외장재',
-    supplier: '폭스콘',
-    unit: '개',
-    unitPrice: 12000,
+    name: '하드웨어 체결 키트',
+    productCode: 'MAT-HK-2405',
+    type: '부자재',
+    supplier: 'AutoX Korea',
+    unit: 'SET',
+    unitPrice: 42000,
   },
 ];
 
 const MOCK_OPERATIONS: OperationInfo[] = [
-  { id: 'OP001', name: '조립' },
-  { id: 'OP002', name: '검사' },
-  { id: 'OP003', name: '테스트' },
-  { id: 'OP004', name: '포장' },
+  { id: 'OP001', name: '사출' },
+  { id: 'OP002', name: '도장' },
+  { id: 'OP003', name: '조립' },
+  { id: 'OP004', name: '검사' },
 ];
 
 interface SortableRowProps {
@@ -351,7 +351,7 @@ export default function BomInputFormModal({ editMode = false, onClose }: BomInpu
             <Input
               label="제품명"
               type="text"
-              placeholder="휴대폰"
+              placeholder="전방 범퍼 커버"
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               required

@@ -33,11 +33,8 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
         log.info("SCM SupplierCompany 서비스 호출 - supplierCompanyId: {}", supplierCompanyId);
 
         try {
-            Map<String, String> requestBody = Map.of("supplierCompanyId", supplierCompanyId);
-
-            SupplierCompanyResponseDto response = restClient.post()
-                    .uri(scmServiceUrl + "/scm/scm-pp/company/supplier/single")
-                    .body(requestBody)
+            SupplierCompanyResponseDto response = restClient.get()
+                    .uri(scmServiceUrl + "/scm-pp/supplier-companies/{supplierCompanyId}", supplierCompanyId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<SupplierCompanyResponseDto>() {});
 
@@ -62,7 +59,7 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
             Map<String, List<String>> requestBody = Map.of("supplierCompanyIds", supplierCompanyIds);
 
             SupplierCompaniesResponseDto response = restClient.post()
-                    .uri(scmServiceUrl + "/scm/scm-pp/company/supplier/multiple")
+                    .uri(scmServiceUrl + "/scm-pp/supplier-companies/search")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<SupplierCompaniesResponseDto>() {});
@@ -88,7 +85,7 @@ public class ScmSupplierCompanyServiceAdapter implements SupplierCompanyServiceP
             Map<String, String> requestBody = Map.of("supplierUserId", supplierUserId);
 
             Map<String, String> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm/scm-pp/company/supplier")
+                    .uri(scmServiceUrl + "/scm-pp/supplier-companies/ids/search")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<Map<String, String>>() {});
