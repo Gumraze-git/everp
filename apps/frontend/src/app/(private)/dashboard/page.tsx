@@ -12,8 +12,8 @@ import { useAuthStore } from '@/store/authStore';
 
 const EMPTY_WORKFLOW_DATA: DashboardWorkflowRes = {
   tabs: [
-    { tabCode: 'first', items: [] },
-    { tabCode: 'second', items: [] },
+    { tabId: 'first', label: '워크플로우', items: [] },
+    { tabId: 'second', label: '워크플로우', items: [] },
   ],
 };
 

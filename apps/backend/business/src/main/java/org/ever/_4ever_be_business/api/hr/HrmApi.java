@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ever._4ever_be_business.api.common.ApiServerErrorResponse;
@@ -123,9 +124,9 @@ public interface HrmApi {
             @RequestParam String InternelUserId
     );
 
-    public ResponseEntity<Void> approveLeaveRequest(@PathVariable String requestId);
-
-    public ResponseEntity<Void> rejectLeaveRequest(@PathVariable String requestId);
+    public ResponseEntity<Void> updateLeaveRequestStatus(
+            @PathVariable String requestId,
+            @RequestBody Map<String, String> requestDto);
 
     public RemainingLeaveDaysDto getRemainingLeaveDays(@RequestParam String userId);
 

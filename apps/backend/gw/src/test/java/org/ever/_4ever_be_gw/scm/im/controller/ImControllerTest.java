@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import org.ever._4ever_be_gw.common.dto.stats.StatsMetricsDto;
 import org.ever._4ever_be_gw.common.dto.stats.StatsResponseDto;
-import org.ever._4ever_be_gw.config.webclient.WebClientProvider;
 import org.ever._4ever_be_gw.scm.im.service.ImHttpService;
 import org.ever._4ever_be_gw.scm.mm.dto.ItemInfoRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,16 +19,13 @@ import org.springframework.http.ResponseEntity;
 class ImControllerTest {
 
     @Mock
-    private WebClientProvider webClientProvider;
-
-    @Mock
     private ImHttpService imHttpService;
 
     private ImController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new ImController(webClientProvider, imHttpService);
+        controller = new ImController(imHttpService);
     }
 
     @Test

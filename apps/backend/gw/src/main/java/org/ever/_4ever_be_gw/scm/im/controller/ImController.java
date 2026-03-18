@@ -81,7 +81,7 @@ public class ImController implements ImApi {
         return imHttpService.getShortageItemsPreview();
     }
 
-    @GetMapping("/item-options")
+    @GetMapping("/items/options")
 
     public ResponseEntity<Object> getItemToggleList() {
         return imHttpService.getItemOptions();
@@ -117,7 +117,7 @@ public class ImController implements ImApi {
         return imHttpService.getWarehouseDetail(warehouseId);
     }
 
-    @GetMapping("/warehouse-manager-options")
+    @GetMapping("/warehouse-managers/options")
     public ResponseEntity<Object> getInventoryEmployees() {
         return imHttpService.getWarehouseManagerOptions();
     }
@@ -145,7 +145,7 @@ public class ImController implements ImApi {
         return imHttpService.updateWarehouse(warehouseId, request);
     }
 
-    @GetMapping("/warehouse-options")
+    @GetMapping("/warehouses/options")
 
     public ResponseEntity<Object> getWarehouseDropdown(@RequestParam(required = false) String warehouseId) {
         return imHttpService.getWarehouseOptions(warehouseId);

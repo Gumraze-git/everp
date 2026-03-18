@@ -23,8 +23,8 @@ import org.springframework.web.client.RestClientResponseException;
 @RequiredArgsConstructor
 public class UserProfileRemoteClient {
 
-    private static final String INTERNAL_PROFILE_PATH = "/hrm/internal-users/{userId}";
-    private static final String CUSTOMER_PROFILE_PATH = "/hrm/customer-users/{userId}";
+    private static final String INTERNAL_PROFILE_PATH = "/hrm/users/internal/{userId}";
+    private static final String CUSTOMER_PROFILE_PATH = "/hrm/users/customer/{userId}";
     private static final String SUPPLIER_PROFILE_PATH = "/scm-pp/mm/supplier-users/{userId}";
 
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);

@@ -1,6 +1,7 @@
 export interface DashboardWorkflowRes {
   tabs: {
-    tabCode: string;
+    tabId: string;
+    label: string;
     items: {
       itemId: string;
       itemTitle: string;

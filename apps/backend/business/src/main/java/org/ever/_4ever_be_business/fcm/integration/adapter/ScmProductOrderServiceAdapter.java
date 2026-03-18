@@ -36,7 +36,7 @@ public class ScmProductOrderServiceAdapter implements ProductOrderServicePort {
             Map<String, String> requestBody = Map.of("productOrderId", productOrderId);
 
             ProductOrderInfoResponseDto response = restClient.post()
-                    .uri(scmServiceUrl + "/scm/scm-pp/product/orderItem")
+                    .uri(scmServiceUrl + "/scm-pp/product-order-items/search")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<ProductOrderInfoResponseDto>() {});
@@ -62,7 +62,7 @@ public class ScmProductOrderServiceAdapter implements ProductOrderServicePort {
             Map<String, List<String>> requestBody = Map.of("productOrderIds", productOrderIds);
 
             List<ProductOrderInfosResponseDto.ProductOrderInfoItem> response = restClient.post()
-                    .uri(scmServiceUrl + "/scm/scm-pp/product/orderInfos")
+                    .uri(scmServiceUrl + "/scm-pp/product-orders/search")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<ProductOrderInfosResponseDto.ProductOrderInfoItem>>() {});

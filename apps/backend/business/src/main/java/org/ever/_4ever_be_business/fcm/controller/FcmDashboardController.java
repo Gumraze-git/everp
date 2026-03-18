@@ -15,14 +15,14 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/fcm/dashboard")
+@RequestMapping("/fcm/dashboard/invoices")
 @RequiredArgsConstructor
 public class FcmDashboardController {
 
     private final SupplierDashboardInvoiceService supplierDashboardInvoiceService;
     private final CustomerDashboardInvoiceService customerDashboardInvoiceService;
 
-    @GetMapping("/invoice/ap/supplier")
+    @GetMapping("/purchase/suppliers")
     public ResponseEntity<List<SupplierPurchaseInvoiceListItemDto>> getSupplierApInvoices(
             @RequestParam("userId") String userId,
             @RequestParam(value = "size", defaultValue = "5") int size
@@ -35,7 +35,7 @@ public class FcmDashboardController {
         return ResponseEntity.ok(invoices);
     }
 
-    @GetMapping("/invoice/ar/customer")
+    @GetMapping("/sales/customers")
     public ResponseEntity<List<SupplierPurchaseInvoiceListItemDto>> getCustomerApInvoices(
             @RequestParam("userId") String userId,
             @RequestParam(value = "size", defaultValue = "5") int size
@@ -48,7 +48,7 @@ public class FcmDashboardController {
         return ResponseEntity.ok(invoices);
     }
 
-    @GetMapping("/invoice/ar")
+    @GetMapping("/sales")
     public ResponseEntity<List<SupplierPurchaseInvoiceListItemDto>> getCompanyArInvoices(
             @RequestParam(value = "size", defaultValue = "5") int size
     ) {
@@ -60,7 +60,7 @@ public class FcmDashboardController {
         return ResponseEntity.ok(invoices);
     }
 
-    @GetMapping("/invoice/ap")
+    @GetMapping("/purchase")
     public ResponseEntity<List<SupplierPurchaseInvoiceListItemDto>> getCompanyApInvoices(
             @RequestParam(value = "size", defaultValue = "5") int size
     ) {

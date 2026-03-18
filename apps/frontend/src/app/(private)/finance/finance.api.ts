@@ -48,15 +48,21 @@ export const getPurchaseInvoiceDetail = async (invoiceId: string): Promise<Invoi
 };
 
 export const postApInvoice = async (invoiceId: string): Promise<void> => {
-  await axios.post(FINANCE_ENDPOINTS.PURCHASE_INVOICE_REQUEST(invoiceId));
+  await axios.patch(FINANCE_ENDPOINTS.PURCHASE_INVOICE_REQUEST(invoiceId), {
+    status: 'PENDING',
+  });
 };
 
 export const postArInvoice = async (invoiceId: string): Promise<void> => {
-  await axios.post(FINANCE_ENDPOINTS.SALES_INVOICE_COMPLETE(invoiceId));
+  await axios.patch(FINANCE_ENDPOINTS.SALES_INVOICE_COMPLETE(invoiceId), {
+    status: 'PAID',
+  });
 };
 
 export const postSupplierApInvoice = async (invoiceId: string): Promise<void> => {
-  await axios.post(FINANCE_ENDPOINTS.SUPPLIER_AP_COMPLETE(invoiceId));
+  await axios.patch(FINANCE_ENDPOINTS.SUPPLIER_AP_COMPLETE(invoiceId), {
+    status: 'PAID',
+  });
 };
 
 // ----------------------- 매출 전표(AS) -----------------------

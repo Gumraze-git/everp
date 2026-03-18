@@ -43,7 +43,7 @@ public class HrmController implements HrmApi {
 
     // ==================== 인적자원 통계 ====================
 
-    @GetMapping("/statistics")
+    @GetMapping("/metrics")
 
     public ResponseEntity<?> getEmployeeStatistics(
 
@@ -54,7 +54,7 @@ public class HrmController implements HrmApi {
 
     // ==================== 직원 관리 ====================
 
-    @PostMapping("/employee/signup")
+    @PostMapping("/employees")
     @PreAuthorize("hasAnyAuthority('HRM_USER', 'HRM_ADMIN', 'ALL_ADMIN')")
 
     public Mono<ResponseEntity<CreateAuthUserResultDto>> signupEmployee(
@@ -64,7 +64,7 @@ public class HrmController implements HrmApi {
                 .map(ResponseEntity::ok);
     }
 
-    @PatchMapping("/employee/{employeeId}")
+    @PatchMapping("/employees/{employeeId}")
     @PreAuthorize("hasAnyAuthority('HRM_USER', 'HRM_ADMIN', 'ALL_ADMIN')")
 
     public ResponseEntity<?> updateEmployee(
@@ -75,7 +75,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.updateEmployee(employeeId, requestDto);
     }
 
-    @GetMapping("/employee")
+    @GetMapping("/employees")
 
     public ResponseEntity<?> getEmployees(
 
@@ -102,7 +102,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.getEmployeeDetail(employeeId);
     }
 
-    @GetMapping("/employees/by-internel-user/{internelUserId}")
+    @GetMapping("/employees/by-internal-user/{internelUserId}")
 
     public ResponseEntity<?> getEmployeeWithTrainingByInternelUserId(
 
@@ -111,7 +111,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.getEmployeeWithTrainingByInternelUserId(internelUserId);
     }
 
-    @GetMapping("/employees/by-internel-user/{internelUserId}/available-trainings")
+    @GetMapping("/employees/by-internal-user/{internelUserId}/available-trainings")
 
     public ResponseEntity<?> getAvailableTrainingsByInternelUserId(
 
@@ -144,7 +144,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.getDepartmentList(status, page, size);
     }
 
-    @GetMapping("/departments/all")
+    @GetMapping("/departments/options")
 
     public ResponseEntity<?> getAllDepartmentsSimple() {
         return hrmHttpService.getAllDepartmentsSimple();
@@ -184,7 +184,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.getPositionDetail(positionId);
     }
 
-    @GetMapping("/{departmentId}/positions/all")
+    @GetMapping("/departments/{departmentId}/positions/options")
 
     public ResponseEntity<?> getPositionsByDepartmentId(
 
@@ -236,7 +236,28 @@ public class HrmController implements HrmApi {
         return hrmHttpService.checkOut(targetInternelUserId);
     }
 
-    @GetMapping("/employees/by-internel-user/{internelUserId}/attendance-records")
+    @PatchMapping("/attendance/self")
+    public ResponseEntity<?> updateOwnAttendance(
+        @AuthenticationPrincipal EverUserPrincipal principal,
+        @RequestBody Map<String, String> requestBody
+    ) {
+        String targetInternelUserId = principal.getUserId();
+        String status = requestBody.get("status");
+
+        if ("CHECKED_IN".equalsIgnoreCase(status)) {
+            return hrmHttpService.checkIn(targetInternelUserId);
+        }
+        if ("CHECKED_OUT".equalsIgnoreCase(status)) {
+            return hrmHttpService.checkOut(targetInternelUserId);
+        }
+
+        throw new ValidationException(
+            ErrorCode.VALIDATION_FAILED,
+            List.of(Map.of("field", "status", "reason", "ALLOWED_VALUES: CHECKED_IN, CHECKED_OUT"))
+        );
+    }
+
+    @GetMapping("/employees/by-internal-user/{internelUserId}/attendance-records")
 
     public ResponseEntity<?> getAttendanceRecordsByInternelUserId(
 
@@ -335,7 +356,7 @@ public class HrmController implements HrmApi {
 
     // ==================== 근태 기록 관리 ====================
 
-    @PutMapping("/time-record/{timerecordId}")
+    @PutMapping("/attendance-records/{timerecordId}")
 
     public ResponseEntity<?> updateTimeRecord(
 
@@ -347,7 +368,7 @@ public class HrmController implements HrmApi {
 
     // ==================== 휴가 관리 ====================
 
-    @PostMapping("/leave/request")
+    @PostMapping("/leave-requests")
 
     public ResponseEntity<?> requestLeave(
         @AuthenticationPrincipal EverUserPrincipal principal,
@@ -377,7 +398,7 @@ public class HrmController implements HrmApi {
 
     // ==================== 기존 조회 API들 ====================
     // GET /api/business/tam/time-record?department=&position=&name=&date=&page=&size=
-    @GetMapping("/time-record")
+    @GetMapping("/attendance-records")
 
     public ResponseEntity<?> getTimeRecords(
 
@@ -421,7 +442,7 @@ public class HrmController implements HrmApi {
 
     // 출퇴근 기록 상세 조회
     // GET /api/business/tam/time-record/{timerecordId}
-    @GetMapping("/time-record/{timerecordId}")
+    @GetMapping("/attendance-records/{timerecordId}")
 
     public ResponseEntity<?> getTimeRecordDetail(
 
@@ -439,7 +460,7 @@ public class HrmController implements HrmApi {
 
     // 휴가 신청 목록 조회
     // GET /api/business/tam/leave-request?department=&position=&name=&type=&page=&size=&sortOrder=
-    @GetMapping("/leave-request")
+    @GetMapping("/leave-requests")
 
     public ResponseEntity<?> getLeaveRequestList(
 
@@ -485,7 +506,7 @@ public class HrmController implements HrmApi {
 
     // ==================== 교육 신청 및 프로그램 관리 ====================
 
-    @PostMapping("/employee/request")
+    @PostMapping("/training-enrollments")
 
     public ResponseEntity<?> requestTraining(
         @Valid @RequestBody TrainingRequestDto requestDto
@@ -493,7 +514,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.requestTraining(requestDto);
     }
 
-    @PostMapping("/program/{employeeId}")
+    @PostMapping("/employees/{employeeId}/programs")
 
     public ResponseEntity<?> assignProgramToEmployee(
 
@@ -508,7 +529,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.assignProgramToEmployee(employeeId, requestDto);
     }
 
-    @PostMapping("/program")
+    @PostMapping("/programs")
 
     public ResponseEntity<?> createProgram(
         @Valid @RequestBody ProgramCreateRequestDto requestDto
@@ -516,7 +537,7 @@ public class HrmController implements HrmApi {
         return hrmHttpService.createTrainingProgram(requestDto);
     }
 
-    @PatchMapping("/program/{programId}")
+    @PatchMapping("/programs/{programId}")
 
     public ResponseEntity<?> modifyProgram(
 
@@ -550,7 +571,7 @@ public class HrmController implements HrmApi {
     }
 
     // ==================== 직원 교육 현황 조회 ====================
-    @GetMapping("/training-status")
+    @GetMapping("/training-records")
 
     public ResponseEntity<?> getTrainingStatusList(
 
@@ -598,7 +619,7 @@ public class HrmController implements HrmApi {
 //        return hrmHttpService.getEmployeeTrainingSummary(employeeId);
 //    }
 
-    @GetMapping("/training/employee/{employeeId}")
+    @GetMapping("/training-records/{employeeId}")
 
     public ResponseEntity<?> getEmployeeTrainingHistory(
             @PathVariable String employeeId
@@ -613,7 +634,7 @@ public class HrmController implements HrmApi {
     }
 
     // 교육 프로그램 목록 조회
-    @GetMapping("/program")
+    @GetMapping("/programs")
 
     public ResponseEntity<?> getTrainingPrograms(
 
@@ -657,8 +678,7 @@ public class HrmController implements HrmApi {
     }
 
     // 교육 프로그램 상세 조회
-    @GetMapping("/program/{programId}")
-
+    @GetMapping("/programs/{programId}")
     public ResponseEntity<?> getTrainingProgramDetail(
 
         @PathVariable("programId") String programId
@@ -669,5 +689,25 @@ public class HrmController implements HrmApi {
         }
 
         return hrmHttpService.getProgramDetailInfo(programId);
+    }
+
+    @PatchMapping("/leave-requests/{requestId}")
+    public ResponseEntity<?> updateLeaveRequestStatus(
+        @PathVariable("requestId") String requestId,
+        @RequestBody Map<String, String> requestBody
+    ) {
+        String status = requestBody.get("status");
+
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            return hrmHttpService.approveLeaveRequest(requestId);
+        }
+        if ("REJECTED".equalsIgnoreCase(status)) {
+            return hrmHttpService.rejectLeaveRequest(requestId);
+        }
+
+        throw new ValidationException(
+            ErrorCode.VALIDATION_FAILED,
+            List.of(Map.of("field", "status", "reason", "ALLOWED_VALUES: APPROVED, REJECTED"))
+        );
     }
 }

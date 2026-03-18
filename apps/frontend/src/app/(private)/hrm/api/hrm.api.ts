@@ -167,12 +167,12 @@ export const putEmployee = async (
 
 // 휴가 신청 승인
 export const postLeaveRelease = async (requestId: string) => {
-  await axios.patch(`${HRM_ENDPOINTS.LEAVE_REQUEST_RELEASE(requestId)}`);
+  await axios.patch(`${HRM_ENDPOINTS.LEAVE_REQUEST_DETAIL(requestId)}`, { status: 'APPROVED' });
 };
 
 // 휴가 신청 반려
 export const postLeaveReject = async (requestId: string) => {
-  await axios.patch(`${HRM_ENDPOINTS.LEAVE_REQUEST_REJECT(requestId)}`);
+  await axios.patch(`${HRM_ENDPOINTS.LEAVE_REQUEST_DETAIL(requestId)}`, { status: 'REJECTED' });
 };
 
 // 교육 프로그램 추가
@@ -192,7 +192,7 @@ export const patchProgram = async (params: UpdateProgramRequest) => {
 // 교육 대상자에게 교육 프로그램 지정
 export const postProgramToEmployee = async (params: UpdateProgramToEmployeeRequest) => {
   const { employeeId, programId } = params;
-  await axios.post(`${HRM_ENDPOINTS.PROGRAM_DETAIL(employeeId)}`, {
+  await axios.post(`${HRM_ENDPOINTS.PROGRAM_EMPLOYEE_ADD(employeeId)}`, {
     programId,
   });
 };

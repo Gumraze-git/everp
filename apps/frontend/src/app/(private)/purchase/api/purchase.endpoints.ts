@@ -22,23 +22,17 @@ export const PURCHASE_ENDPOINTS = {
 
   PURCHASE_REQUISITION_DETAIL: (prId: string) =>
     `${PURCHASE_BASE_PATH}/purchase-requisitions/${prId}`, // 구매 요청서 상세조회, 수정, 삭제
-  PURCHASE_REQUISITION_RELEASE: (prId: string) =>
-    `${PURCHASE_BASE_PATH}/purchase-requisitions/${prId}/approvals`, // 구매요청서 승인
-  PURCHASE_REQUISITION_REJECT: (prId: string) =>
-    `${PURCHASE_BASE_PATH}/purchase-requisitions/${prId}/rejections`, // 구매요청서 반려
+  PURCHASE_REQUISITION_STATUS: (prId: string) =>
+    `${PURCHASE_BASE_PATH}/purchase-requisitions/${prId}`, // 구매요청서 상태 변경
   // PURCHASE_REQUISITION_BY_PURCHASE: (purchaseId: string) =>
   //   `${PURCHASE_BASE_PATH}/purchase-requisitions/${purchaseId}`, // 구매요청 상세 조회
 
   // --- 발주서 ---
   PURCHASE_ORDERS: `${PURCHASE_BASE_PATH}/purchase-orders`, // 발주서 목록 조회
-  PURCHASE_ORDER_APPROVE: (poId: string) =>
-    `${PURCHASE_BASE_PATH}/purchase-orders/${poId}/approvals`, // 발주서 승인
-  PURCHASE_ORDER_REJECT: (poId: string) =>
-    `${PURCHASE_BASE_PATH}/purchase-orders/${poId}/rejections`, // 발주서 반려
   PURCHASE_ORDER_DETAIL: (purchaseId: string) =>
     `${PURCHASE_BASE_PATH}/purchase-orders/${purchaseId}`, // 발주서 상세 조회
-  PURCHASE_ORDER_DELIVERY: (purchaseOrderId: string) =>
-    `${PURCHASE_BASE_PATH}/purchase-orders/${purchaseOrderId}/delivery-starts`, // 배송 시작
+  PURCHASE_ORDER_STATUS: (purchaseOrderId: string) =>
+    `${PURCHASE_BASE_PATH}/purchase-orders/${purchaseOrderId}`, // 발주서 상태 변경
   // --- 공급업체 ---
   SUPPLIER: `${PURCHASE_BASE_PATH}/suppliers`, // 공급업체 목록 조회, 등록
   SUPPLIER_DETAIL: (supplierId: string) => `${PURCHASE_BASE_PATH}/suppliers/${supplierId}`, // 공급업체 상세 조회, 수정
